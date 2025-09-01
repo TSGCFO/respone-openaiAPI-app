@@ -13,6 +13,7 @@ export default function McpConfig() {
       server_url: "",
       allowed_tools: "",
       skip_approval: false,
+  mcpAuthToken: "",
     });
   };
 
@@ -20,12 +21,13 @@ export default function McpConfig() {
     <div>
       <div className="flex items-center justify-between">
         <div className="text-zinc-600 text-sm">Server details</div>
-        <div
-          className="text-zinc-400 text-sm px-1 transition-colors hover:text-zinc-600 cursor-pointer"
+        <button
+          type="button"
+          className="text-zinc-400 text-sm px-1 transition-colors hover:text-zinc-600 underline-offset-2 hover:underline"
           onClick={handleClear}
         >
           Clear
-        </div>
+        </button>
       </div>
       <div className="mt-3 space-y-3 text-zinc-400">
         <div className="flex items-center gap-2">
@@ -82,6 +84,21 @@ export default function McpConfig() {
             checked={mcpConfig.skip_approval}
             onCheckedChange={(checked) =>
               setMcpConfig({ ...mcpConfig, skip_approval: checked })
+            }
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="mcp_auth_token" className="text-sm w-24">
+            Auth token
+          </label>
+          <Input
+            id="mcp_auth_token"
+            type="password"
+            placeholder="Bearer token"
+            className="bg-white border text-sm flex-1 text-zinc-900 placeholder:text-zinc-400"
+            value={mcpConfig.mcpAuthToken || ""}
+            onChange={(e) =>
+              setMcpConfig({ ...mcpConfig, mcpAuthToken: e.target.value.trim() })
             }
           />
         </div>

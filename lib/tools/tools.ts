@@ -6,85 +6,77 @@ interface WebSearchTool extends WebSearchConfig {
   type: "web_search";
 }
 export const getTools = () => {
-  const {
-    webSearchEnabled,
-    fileSearchEnabled,
-    functionsEnabled,
-    codeInterpreterEnabled,
-    vectorStore,
-    webSearchConfig,
-    mcpEnabled,
-    mcpConfig,
-  } = useToolsStore.getState();
+  const state = useToolsStore.getState();
+  const tools: any[] = [];
 
-  const tools = [];
-
-  if (webSearchEnabled) {
-    const webSearchTool: WebSearchTool = {
-      type: "web_search",
-    };
-    if (
-      webSearchConfig.user_location &&
-      (webSearchConfig.user_location.country !== "" ||
-        webSearchConfig.user_location.region !== "" ||
-        webSearchConfig.user_location.city !== "")
-    ) {
-      webSearchTool.user_location = webSearchConfig.user_location;
-    }
-
-    tools.push(webSearchTool);
-  }
-
-  if (fileSearchEnabled) {
-    const fileSearchTool = {
-      type: "file_search",
-      vector_store_ids: [vectorStore?.id],
-    };
-    tools.push(fileSearchTool);
-  }
-
-  if (codeInterpreterEnabled) {
-    tools.push({ type: "code_interpreter", container: { type: "auto" } });
-  }
-
-  if (functionsEnabled) {
-    tools.push(
-      ...toolsList.map((tool) => {
-        return {
-          type: "function",
-          name: tool.name,
-          description: tool.description,
-          parameters: {
-            type: "object",
-            properties: { ...tool.parameters },
-            required: Object.keys(tool.parameters),
-            additionalProperties: false,
-          },
-          strict: true,
-        };
-      })
+  const addWebSearch = () => {
+    if (!state.webSearchEnabled) return;
+    const loc = state.webSearchConfig.user_location;
+    const hasLocation = !!(
+      loc && (loc.country || loc.region || loc.city)
     );
-  }
+    const tool: WebSearchTool = { type: "web_search" };
+    if (hasLocation && loc) tool.user_location = loc;
+    tools.push(tool);
+  };
 
-  if (mcpEnabled && mcpConfig.server_url && mcpConfig.server_label) {
+  const addFileSearch = () => {
+    if (!state.fileSearchEnabled) return;
+    tools.push({ type: "file_search", vector_store_ids: [state.vectorStore?.id] });
+  };
+
+  const addCodeInterpreter = () => {
+    if (state.codeInterpreterEnabled) {
+      tools.push({ type: "code_interpreter", container: { type: "auto" } });
+    }
+  };
+
+  const addFunctions = () => {
+    if (!state.functionsEnabled) return;
+    tools.push(
+      ...toolsList.map((tool) => ({
+        type: "function",
+        name: tool.name,
+        description: tool.description,
+        parameters: {
+          type: "object",
+          properties: { ...tool.parameters },
+          required: Object.keys(tool.parameters),
+          additionalProperties: false,
+        },
+        strict: true,
+      }))
+    );
+  };
+
+  const addMcp = () => {
+    const cfg = state.mcpConfig;
+    if (!(state.mcpEnabled && cfg.server_url && cfg.server_label)) return;
     const mcpTool: any = {
       type: "mcp",
-      server_label: mcpConfig.server_label,
-      server_url: mcpConfig.server_url,
+      server_label: cfg.server_label,
+      server_url: cfg.server_url,
     };
-    if (mcpConfig.skip_approval) {
-      mcpTool.require_approval = "never";
-    }
-    if (mcpConfig.allowed_tools.trim()) {
-      mcpTool.allowed_tools = mcpConfig.allowed_tools
+    if (cfg.skip_approval) mcpTool.require_approval = "never";
+    if (cfg.allowed_tools.trim()) {
+      mcpTool.allowed_tools = cfg.allowed_tools
         .split(",")
         .map((t) => t.trim())
         .filter((t) => t);
     }
+    const token = cfg.mcpAuthToken?.trim();
+    if (token) {
+      mcpTool.headers = { Authorization: `Bearer ${token}` };
+    }
     tools.push(mcpTool);
-  }
+  };
+
+  addWebSearch();
+  addFileSearch();
+  addCodeInterpreter();
+  addFunctions();
+  addMcp();
 
   console.log("tools", tools);
-
   return tools;
 };

@@ -28,6 +28,8 @@ export type McpConfig = {
   server_url: string;
   allowed_tools: string;
   skip_approval: boolean;
+  // Optional bearer auth token to be sent as Authorization header for MCP server
+  mcpAuthToken?: string;
 };
 
 interface StoreState {
@@ -70,6 +72,7 @@ const useToolsStore = create<StoreState>()(
         server_url: "",
         allowed_tools: "",
         skip_approval: true,
+  mcpAuthToken: "",
       },
       fileSearchEnabled: false,
       previousFileSearchEnabled: false,
