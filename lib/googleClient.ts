@@ -27,8 +27,17 @@ export async function getGoogleClient(): Promise<Configuration> {
 }
 
 export function getRedirectUri(): string {
-  const { GOOGLE_REDIRECT_URI } = process.env as Record<string, string | undefined>;
-  return GOOGLE_REDIRECT_URI || "http://localhost:3000/api/google/callback";
+  const { GOOGLE_REDIRECT_URI, REPLIT_DEV_DOMAIN } = process.env as Record<string, string | undefined>;
+  
+  if (GOOGLE_REDIRECT_URI) {
+    return GOOGLE_REDIRECT_URI;
+  }
+  
+  if (REPLIT_DEV_DOMAIN) {
+    return `https://${REPLIT_DEV_DOMAIN}/api/google/callback`;
+  }
+  
+  return "http://localhost:3000/api/google/callback";
 }
 
 export const GOOGLE_SCOPES = [
