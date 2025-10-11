@@ -4,11 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- **Start development server**: `npm run dev` (runs on http://localhost:3000)
+- **Start development server**: `npm run dev` (runs on http://0.0.0.0:5000 for Replit)
 - **Build for production**: `npm run build`
-- **Start production server**: `npm start`
+- **Start production server**: `npm start` (runs on http://0.0.0.0:5000 for Replit)
 - **Lint code**: `npm run lint`
 - **Install dependencies**: `npm install`
+
+## Replit Migration (October 2025)
+
+This project was migrated from Vercel to Replit with the following changes:
+
+### Configuration Updates
+- Updated npm scripts to bind to `0.0.0.0:5000` (Replit's required port)
+- Modified OAuth redirect URI to automatically use `REPLIT_DEV_DOMAIN` when available
+- Configured deployment with autoscale deployment target
+- All environment variables properly set in Replit Secrets
+
+### OAuth Redirect URI
+The app now automatically detects the Replit environment and constructs the correct OAuth callback URL. Priority order:
+1. `GOOGLE_REDIRECT_URI` (if explicitly set)
+2. `https://${REPLIT_DEV_DOMAIN}/api/google/callback` (Replit environment)
+3. `http://localhost:3000/api/google/callback` (local fallback)
+
+### Production Considerations
+- Session/token storage currently uses in-memory Map (suitable for development)
+- For production, consider migrating to a persistent store (Redis, database, etc.)
+- Deployment requires REPLIT_DEV_DOMAIN or GOOGLE_REDIRECT_URI to be set for OAuth
 
 ## Architecture Overview
 
@@ -74,7 +95,9 @@ This is a Next.js 15 (App Router) TypeScript application that demonstrates the O
 
 Requires OAuth setup with Google Cloud Console:
 - Enable Google Calendar API and Gmail API
-- Configure OAuth client with redirect URI: `http://localhost:3000/api/google/callback`
+- Configure OAuth client with redirect URI based on environment:
+  - **Replit**: `https://<your-replit-domain>/api/google/callback`
+  - **Local**: `http://localhost:3000/api/google/callback`
 - Set environment variables: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
 ## Environment Variables
@@ -85,7 +108,8 @@ Required:
 Optional:
 - `GOOGLE_CLIENT_ID`: Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
-- `GOOGLE_REDIRECT_URI`: OAuth redirect URI (defaults to localhost:3000)
+- `GOOGLE_REDIRECT_URI`: OAuth redirect URI (auto-detected from REPLIT_DEV_DOMAIN or defaults to localhost:3000)
+- `REPLIT_DEV_DOMAIN`: Auto-provided by Replit, used for OAuth callback URL
 
 ## Dependencies
 
