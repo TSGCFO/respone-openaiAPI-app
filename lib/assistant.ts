@@ -502,6 +502,26 @@ export const processMessages = async () => {
         console.log("response completed", data);
         const { response } = data;
 
+        // Save assistant message if it exists
+        const { saveMessage, createSemanticMemory } = useConversationStore.getState();
+        const assistantMessages = response.output.filter(
+          (m: Item) => m.type === "message" && m.role === "assistant"
+        ) as MessageItem[];
+        
+        // Save all assistant messages
+        for (const msg of assistantMessages) {
+          const content = msg.content[0];
+          if (content && content.type === "output_text" && content.text) {
+            await saveMessage("assistant", content.text);
+            
+            // Create semantic memory for longer or important responses
+            if (content.text.length > 200) {
+              const summary = content.text.substring(0, 150) + "...";
+              await createSemanticMemory(content.text, summary);
+            }
+          }
+        }
+
         // Handle MCP tools list (append all lists, not just the first)
         const mcpListToolsMessages = response.output.filter(
           (m: Item) => m.type === "mcp_list_tools"
