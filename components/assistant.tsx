@@ -2,6 +2,7 @@
 import React, { useCallback } from "react";
 import Chat from "./chat";
 import { ConversationSidebar } from "./conversation-sidebar";
+import { SemanticSearch } from "./semantic-search";
 import useConversationStore from "@/stores/useConversationStore";
 import { Item, processMessages } from "@/lib/assistant";
 
@@ -92,6 +93,23 @@ export default function Assistant() {
     }
   };
 
+  const handleSearchResultSelect = useCallback(async (result: any) => {
+    // If it's a message from a different conversation, load that conversation
+    if (result.conversationId && result.conversationId !== currentConversationId) {
+      try {
+        setAssistantLoading(true);
+        await loadConversation(result.conversationId);
+      } catch (error) {
+        console.error("Error loading conversation from search:", error);
+      } finally {
+        setAssistantLoading(false);
+      }
+    }
+    
+    // You could also scroll to the specific message or highlight it
+    // This would require additional UI logic
+  }, [currentConversationId, loadConversation, setAssistantLoading]);
+
 
   return (
     <div className="flex h-full relative">
@@ -105,16 +123,22 @@ export default function Assistant() {
         />
       </div>
       {/* Main Chat Area with Mobile Sidebar */}
-      <div className="flex-1 relative">
-        <div className="md:hidden absolute top-4 left-4 z-10">
-          <ConversationSidebar
+      <div className="flex-1 relative flex flex-col">
+        <div className="border-b p-2 flex items-center gap-2">
+          <div className="md:hidden">
+            <ConversationSidebar
+              currentConversationId={currentConversationId}
+              onSelectConversation={handleSelectConversation}
+              onNewConversation={handleNewConversation}
+              onDeleteConversation={handleDeleteConversation}
+            />
+          </div>
+          <SemanticSearch
             currentConversationId={currentConversationId}
-            onSelectConversation={handleSelectConversation}
-            onNewConversation={handleNewConversation}
-            onDeleteConversation={handleDeleteConversation}
+            onSelectResult={handleSearchResultSelect}
           />
         </div>
-        <div className="p-4 bg-white h-full">
+        <div className="p-4 bg-white flex-1 overflow-auto">
           <Chat
             items={chatMessages}
             onSendMessage={handleSendMessage}

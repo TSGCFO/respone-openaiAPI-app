@@ -2,21 +2,26 @@ import { db } from '../../server/db';
 import { conversations, messages, semanticMemories, toolCalls, userSessions } from '../../shared/schema';
 import { eq, desc, and, sql, ilike } from 'drizzle-orm';
 import type { Conversation, NewConversation, Message, NewMessage, SemanticMemory, NewSemanticMemory, ToolCall, NewToolCall } from '../../shared/schema';
+import OpenAI from 'openai';
 
-// Generate embeddings using OpenAI
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Generate embeddings using OpenAI directly
 async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await fetch('/api/embeddings', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
-  
-  if (!response.ok) {
+  try {
+    const response = await openai.embeddings.create({
+      model: 'text-embedding-ada-002',
+      input: text,
+    });
+    
+    return response.data[0].embedding;
+  } catch (error) {
+    console.error('Failed to generate embedding:', error);
     throw new Error('Failed to generate embedding');
   }
-  
-  const data = await response.json();
-  return data.embedding;
 }
 
 // Conversation management
