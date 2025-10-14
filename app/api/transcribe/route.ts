@@ -30,9 +30,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Implement actual transcription using OpenAI Whisper or other service
-    // Example implementation would be:
-    /*
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'Transcription service not configured. Please set OPENAI_API_KEY.' },
+        { status: 500 }
+      );
+    }
+
+    // Implement OpenAI Whisper transcription
     const formDataForAPI = new FormData();
     formDataForAPI.append('file', audioFile);
     formDataForAPI.append('model', 'whisper-1');
@@ -46,23 +53,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error('Transcription failed');
+      const errorData = await response.text();
+      console.error('OpenAI Whisper API error:', errorData);
+      throw new Error(`Transcription failed: ${response.statusText}`);
     }
 
     const data = await response.json();
     return NextResponse.json({ text: data.text });
-    */
-
-    // For now, return a placeholder response
-    return NextResponse.json({
-      text: 'This is where the transcribed text would appear after processing the audio file.',
-      message: 'Transcription API not yet implemented. Audio file received successfully.',
-      fileInfo: {
-        name: audioFile.name,
-        type: audioFile.type,
-        size: audioFile.size,
-      }
-    });
 
   } catch (error) {
     console.error('Transcription error:', error);
