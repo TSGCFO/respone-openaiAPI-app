@@ -323,64 +323,92 @@ export default function Assistant() {
 
   return (
     <div className="flex h-full relative overflow-hidden">
-      {/* Desktop Sidebar - Only show on larger screens */}
-      {!shouldUseBottomSheet && (
-        <div className="w-80 flex-shrink-0 hidden lg:block">
-          <ConversationSidebar
-            currentConversationId={currentConversationId ?? undefined}
-            onSelectConversation={handleSelectConversation}
-            onNewConversation={handleNewConversation}
-            onDeleteConversation={handleDeleteConversation}
-          />
-        </div>
-      )}
+      {/* Desktop Sidebar - Mobile First Responsive */}
+      <div className={cn(
+        // Mobile/Tablet (default): Hidden
+        "hidden",
+        // Desktop: Show sidebar
+        "lg:block lg:flex-shrink-0",
+        // Desktop: Base width
+        "lg:w-64",
+        // Large Desktop: Wider
+        "xl:w-72",
+        // Extra Large Desktop: Even wider
+        "2xl:w-80"
+      )}>
+        <ConversationSidebar
+          currentConversationId={currentConversationId ?? undefined}
+          onSelectConversation={handleSelectConversation}
+          onNewConversation={handleNewConversation}
+          onDeleteConversation={handleDeleteConversation}
+        />
+      </div>
 
-      {/* Main Chat Area */}
+      {/* Main Chat Area - Mobile First Responsive */}
       <div className="flex-1 relative flex flex-col">
-        {/* Header with trigger button for mobile/tablet */}
-        <div className="border-b p-2 flex items-center gap-2">
+        {/* Header - Mobile First Responsive */}
+        <div className={cn(
+          "border-b flex items-center gap-2",
+          // Mobile (default): Small padding
+          "p-2",
+          // Tablet: Medium padding
+          "md:p-3",
+          // Desktop: Larger padding
+          "lg:p-4"
+        )}>
           {/* Mobile/Tablet: Bottom Sheet Trigger */}
-          {shouldUseBottomSheet && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleOpenBottomSheet}
-              className="min-w-[44px] min-h-[44px]"
-              aria-label="Open conversations"
-            >
-              <MessageSquare className="h-5 w-5" />
-            </Button>
-          )}
-          
-          {/* Tablet in landscape: Traditional sidebar trigger */}
-          {isTablet && !shouldUseBottomSheet && (
-            <div className="lg:hidden">
-              <ConversationSidebar
-                currentConversationId={currentConversationId ?? undefined}
-                onSelectConversation={handleSelectConversation}
-                onNewConversation={handleNewConversation}
-                onDeleteConversation={handleDeleteConversation}
-              />
-            </div>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleOpenBottomSheet}
+            className={cn(
+              // Mobile/Tablet: Show
+              "block",
+              // Desktop: Hide
+              "lg:hidden",
+              // Touch target size
+              "min-w-[44px] min-h-[44px]"
+            )}
+            aria-label="Open conversations"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </Button>
           
           <SemanticSearch
             currentConversationId={currentConversationId ?? undefined}
             onSelectResult={handleSearchResultSelect}
           />
           
-          {/* Current conversation indicator on mobile */}
-          {isMobile && currentConversationId && (
-            <div className="flex-1 text-sm text-muted-foreground truncate text-center">
+          {/* Current conversation indicator - Responsive */}
+          {currentConversationId && (
+            <div className={cn(
+              "flex-1 truncate text-center",
+              // Mobile (default): Small text
+              "text-xs text-muted-foreground",
+              // Tablet: Medium text
+              "md:text-sm",
+              // Desktop: Hide (sidebar shows it)
+              "lg:hidden"
+            )}>
               Conversation #{currentConversationId}
             </div>
           )}
         </div>
         
-        {/* Chat content with swipe gesture support */}
+        {/* Chat content - Mobile First Responsive */}
         <div 
           ref={chatContainerRef}
-          className="p-4 bg-white flex-1 overflow-auto relative"
+          className={cn(
+            "bg-white flex-1 overflow-auto relative",
+            // Mobile (default): Small padding
+            "p-2",
+            // Tablet: Medium padding
+            "md:p-3",
+            // Desktop: Larger padding
+            "lg:p-4",
+            // Large Desktop: Even more padding
+            "xl:p-6"
+          )}
         >
           {/* Swipe hint for mobile */}
           {showSwipeHint && isMobile && (

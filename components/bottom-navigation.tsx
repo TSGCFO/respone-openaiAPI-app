@@ -43,8 +43,15 @@ export default function BottomNavigation() {
 
   return (
     <>
-      {/* Mobile and Tablet Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40">
+      {/* Mobile and Tablet Bottom Navigation - Mobile First */}
+      <div className={cn(
+        // Mobile (default): Show bottom navigation
+        "fixed bottom-0 left-0 right-0 z-40",
+        // Tablet: Still show bottom navigation but with adjustments
+        "md:bottom-0",
+        // Desktop: Hide bottom navigation
+        "lg:hidden"
+      )}>
         {/* Safe area padding for devices with home indicator */}
         <div 
           className={cn(
@@ -56,7 +63,12 @@ export default function BottomNavigation() {
             paddingBottom: "env(safe-area-inset-bottom, 0px)"
           }}
         >
-          <nav className="flex justify-around items-center h-16 md:h-20">
+          <nav className={cn(
+            // Mobile (default): Smaller height
+            "flex justify-around items-center h-16",
+            // Tablet: Larger height and spacing
+            "md:h-20 md:px-8"
+          )}>
             {tabs.map((tab) => (
               <TabButton
                 key={tab.id}
@@ -73,10 +85,35 @@ export default function BottomNavigation() {
         </div>
       </div>
 
-      {/* Desktop Sidebar Navigation */}
-      <div className="hidden lg:block fixed left-0 top-0 bottom-0 w-20 xl:w-64 bg-white border-r z-40">
-        <nav className="flex flex-col h-full py-8">
-          <div className="flex-1 flex flex-col gap-2 px-3">
+      {/* Desktop Sidebar Navigation - Progressive Enhancement */}
+      <div className={cn(
+        // Mobile/Tablet (default): Hidden
+        "hidden",
+        // Desktop: Show as sidebar
+        "lg:block lg:fixed lg:left-0 lg:top-0 lg:bottom-0",
+        // Desktop: Narrow sidebar
+        "lg:w-20",
+        // Large Desktop: Wider sidebar
+        "xl:w-64",
+        // Extra Large Desktop: Even wider
+        "2xl:w-72",
+        // Styling
+        "bg-white border-r z-40"
+      )}>
+        <nav className="flex flex-col h-full">
+          {/* Logo/Brand area */}
+          <div className={cn(
+            "px-3 py-6 border-b",
+            "hidden xl:block"
+          )}>
+            <h1 className="text-xl font-bold text-gray-800">AI Assistant</h1>
+          </div>
+          
+          {/* Navigation Items */}
+          <div className={cn(
+            "flex-1 flex flex-col gap-2 px-3",
+            "py-4 lg:py-6 xl:py-8"
+          )}>
             {tabs.map((tab) => (
               <TabButton
                 key={tab.id}
@@ -89,6 +126,20 @@ export default function BottomNavigation() {
                 size="desktop"
               />
             ))}
+          </div>
+          
+          {/* User Profile Section - Only on larger screens */}
+          <div className={cn(
+            "border-t px-3 py-4",
+            "hidden 2xl:block"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+              <div className="hidden 2xl:block">
+                <p className="text-sm font-medium">User</p>
+                <p className="text-xs text-gray-500">user@example.com</p>
+              </div>
+            </div>
           </div>
         </nav>
       </div>

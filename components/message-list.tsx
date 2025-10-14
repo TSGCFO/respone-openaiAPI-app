@@ -288,8 +288,21 @@ export const MessageList: React.FC<MessageListProps> = ({
           <div style={{ height: spacerTop }} />
         )}
 
-        {/* Messages */}
-        <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        {/* Messages - Mobile First Responsive */}
+        <div className={cn(
+          // Mobile (default): Small padding
+          "px-2",
+          // Small mobile: Slightly more padding
+          "sm:px-4",
+          // Tablet: Medium padding
+          "md:px-6",
+          // Desktop: Larger padding with max-width
+          "lg:px-8 lg:max-w-4xl lg:mx-auto",
+          // Large Desktop: Even larger max-width
+          "xl:max-w-5xl",
+          // Extra Large Desktop: Maximum width
+          "2xl:max-w-6xl"
+        )}>
           {/* Loading more indicator */}
           {isLoadingMore && (
             <div className="flex justify-center py-4">

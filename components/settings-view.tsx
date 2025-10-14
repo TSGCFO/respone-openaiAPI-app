@@ -132,43 +132,50 @@ export default function SettingsView() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-4 py-3 sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <Settings className="text-gray-600" size={24} />
-          <h2 className="text-lg font-semibold">Settings</h2>
+      {/* Header - Mobile First Responsive */}
+      <div className="bg-white border-b sticky top-0 z-30">
+        <div className="px-4 py-3 md:px-6 md:py-4 lg:px-8">
+          <div className="flex items-center gap-3">
+            <Settings className="text-gray-600 w-5 h-5 md:w-6 md:h-6" />
+            <h2 className="text-lg md:text-xl lg:text-2xl font-semibold">Settings</h2>
+          </div>
         </div>
       </div>
 
-      {/* Settings List */}
+      {/* Settings List - Mobile First Responsive */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6 pb-20 lg:pb-4">
-          {settingsGroups.map((group) => (
-            <div key={group.title}>
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 px-1">
-                {group.title}
-              </h3>
-              <div className="space-y-2">
-                {group.items.map((item) => (
-                  <SettingRow key={item.id} item={item} />
-                ))}
+        <div className="p-4 md:p-6 lg:p-8 xl:p-10 pb-20 lg:pb-4">
+          {/* Responsive Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 lg:gap-8">
+            {settingsGroups.map((group) => (
+              <div key={group.title} className="lg:col-span-1">
+                <h3 className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 px-1">
+                  {group.title}
+                </h3>
+                <div className="space-y-2 md:space-y-3">
+                  {group.items.map((item) => (
+                    <SettingRow key={item.id} item={item} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
-          {/* Sign Out Button */}
-          <div className="mt-8 pt-4 border-t">
-            <Button
-              variant="outline"
-              className="w-full justify-center gap-2 text-red-600 hover:bg-red-50 border-red-200"
-              onClick={() => {
-                if (hapticEnabled) haptic.trigger("warning");
-                console.log("Sign out clicked");
-              }}
-            >
-              <LogOut size={18} />
-              Sign Out
-            </Button>
+          {/* Sign Out Button - Responsive Position */}
+          <div className="mt-8 md:mt-10 lg:mt-12 pt-4 md:pt-6 border-t">
+            <div className="max-w-md mx-auto lg:max-w-lg">
+              <Button
+                variant="outline"
+                className="w-full justify-center gap-2 text-red-600 hover:bg-red-50 border-red-200 min-h-touch md:min-h-[52px]"
+                onClick={() => {
+                  if (hapticEnabled) haptic.trigger("warning");
+                  console.log("Sign out clicked");
+                }}
+              >
+                <LogOut className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="text-sm md:text-base">Sign Out</span>
+              </Button>
+            </div>
           </div>
         </div>
       </ScrollArea>
@@ -185,43 +192,52 @@ function SettingRow({ item }: SettingRowProps) {
 
   return (
     <div 
-      className="bg-white rounded-lg border p-4 flex items-center justify-between gap-3 hover:shadow-sm transition-shadow"
+      className="bg-white rounded-lg border hover:shadow-sm transition-shadow cursor-pointer
+                 p-3 md:p-4 lg:p-5"
       onClick={item.type === "link" || item.type === "button" ? item.action : undefined}
       style={{ cursor: item.type !== "switch" ? "pointer" : "default" }}
     >
-      <div className="flex items-center gap-3 flex-1">
-        <Icon size={20} className="text-gray-500" />
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900">{item.label}</p>
-          {item.description && (
-            <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
-          )}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+          <Icon className="text-gray-500 w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm md:text-base font-medium text-gray-900 truncate">
+              {item.label}
+            </p>
+            {item.description && (
+              <p className="text-xs md:text-sm text-gray-500 mt-0.5 line-clamp-2">
+                {item.description}
+              </p>
+            )}
+          </div>
         </div>
+
+        {item.type === "switch" && (
+          <Switch
+            checked={item.value}
+            onCheckedChange={() => item.action?.()}
+            className="min-w-[44px] min-h-touch"
+          />
+        )}
+
+        {item.type === "button" && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="min-h-touch"
+            onClick={(e) => {
+              e.stopPropagation();
+              item.action?.();
+            }}
+          >
+            Clear
+          </Button>
+        )}
+
+        {item.type === "link" && (
+          <span className="text-gray-400 text-lg md:text-xl">›</span>
+        )}
       </div>
-
-      {item.type === "switch" && (
-        <Switch
-          checked={item.value}
-          onCheckedChange={() => item.action?.()}
-        />
-      )}
-
-      {item.type === "button" && (
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            item.action?.();
-          }}
-        >
-          Clear
-        </Button>
-      )}
-
-      {item.type === "link" && (
-        <span className="text-gray-400">›</span>
-      )}
     </div>
   );
 }

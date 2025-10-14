@@ -86,11 +86,15 @@ const Chat: React.FC<ChatProps> = ({
         paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
-      {/* Message List */}
+      {/* Message List - Mobile First Responsive */}
       <div className={cn(
         "flex-1 overflow-hidden",
-        // Account for bottom navigation on mobile/tablet
-        isMobile || isTablet ? "pb-16 md:pb-20" : "pb-0"
+        // Mobile (default): Account for bottom navigation
+        "pb-16",
+        // Tablet: Larger bottom padding
+        "md:pb-20",
+        // Desktop: No bottom padding (side nav instead)
+        "lg:pb-0"
       )}>
         <MessageList
           items={items}
@@ -102,15 +106,25 @@ const Chat: React.FC<ChatProps> = ({
         />
       </div>
 
-      {/* Message Input - Fixed at bottom */}
+      {/* Message Input - Mobile First Responsive */}
       <MessageInput
         onSendMessage={onSendMessage}
         disabled={isAssistantLoading}
         className={cn(
-          // Position above bottom navigation on mobile/tablet
-          isMobile || isTablet ? "pb-16 md:pb-20" : "pb-0"
+          // Mobile (default): Position above bottom navigation
+          "pb-16",
+          // Tablet: Larger padding
+          "md:pb-20",
+          // Desktop: No bottom padding
+          "lg:pb-0",
+          // Desktop: Add max-width
+          "lg:max-w-4xl lg:mx-auto",
+          // Large Desktop: Wider max-width
+          "xl:max-w-5xl",
+          // Extra Large Desktop: Even wider
+          "2xl:max-w-6xl"
         )}
-        placeholder="Type a message..."
+        placeholder={isMobile ? "Message..." : "Type a message..."}
         maxLength={5000}
       />
 
