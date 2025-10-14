@@ -9,6 +9,7 @@ import McpApproval from "./mcp-approval";
 import { Item, McpApprovalRequestItem } from "@/lib/assistant";
 import LoadingMessage from "./loading-message";
 import useConversationStore from "@/stores/useConversationStore";
+import { AudioRecorder } from "./audio-recorder";
 
 interface ChatProps {
   items: Item[];
@@ -25,6 +26,7 @@ const Chat: React.FC<ChatProps> = ({
   const [inputMessageText, setinputMessageText] = useState<string>("");
   // This state is used to provide better user experience for non-English IMEs such as Japanese
   const [isComposing, setIsComposing] = useState(false);
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const { isAssistantLoading } = useConversationStore();
 
   const scrollToBottom = () => {
@@ -40,6 +42,70 @@ const Chat: React.FC<ChatProps> = ({
       }
     },
     [onSendMessage, inputMessageText, isComposing]
+  );
+
+  const handleAudioReady = useCallback(
+    async (audioBlob: Blob, audioUrl: string) => {
+      // Store the audio blob temporarily
+      console.log('Audio recorded:', {
+        size: audioBlob.size,
+        type: audioBlob.type,
+        url: audioUrl
+      });
+      
+      // Here you can store the audio blob in state or local storage
+      // For now, we'll just log it
+      // In a real implementation, you'd send this to your transcription API
+    },
+    []
+  );
+
+  const handleTranscriptionRequest = useCallback(
+    async (audioBlob: Blob) => {
+      setIsProcessingAudio(true);
+      
+      try {
+        console.log('Processing audio for transcription...');
+        
+        // Create FormData to send audio file
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        
+        // Call the transcription API
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error('Transcription failed');
+        }
+        
+        const data = await response.json();
+        
+        if (data.text) {
+          // Set the transcribed text in the input field
+          setinputMessageText(data.text);
+          console.log('Transcription successful:', data.text);
+          
+          // Optional: Auto-send the message after transcription
+          // Uncomment the following lines to enable auto-send
+          // if (data.text.trim()) {
+          //   onSendMessage(data.text);
+          //   setinputMessageText("");
+          // }
+        }
+        
+        setIsProcessingAudio(false);
+      } catch (error) {
+        console.error('Transcription error:', error);
+        setIsProcessingAudio(false);
+        
+        // Optionally show an error message to the user
+        // You could set an error state here to display in the UI
+      }
+    },
+    [setinputMessageText]
   );
 
   useEffect(() => {
@@ -91,17 +157,24 @@ const Chat: React.FC<ChatProps> = ({
                       tabIndex={0}
                       dir="auto"
                       rows={2}
-                      placeholder="Message..."
+                      placeholder={isProcessingAudio ? "Processing audio..." : "Message..."}
                       className="mb-2 resize-none border-0 focus:outline-none text-sm bg-transparent px-0 pb-6 pt-2"
                       value={inputMessageText}
                       onChange={(e) => setinputMessageText(e.target.value)}
                       onKeyDown={handleKeyDown}
                       onCompositionStart={() => setIsComposing(true)}
                       onCompositionEnd={() => setIsComposing(false)}
+                      disabled={isProcessingAudio}
                     />
                   </div>
+                  <AudioRecorder
+                    onAudioReady={handleAudioReady}
+                    onTranscriptionRequest={handleTranscriptionRequest}
+                    disabled={isAssistantLoading || isProcessingAudio}
+                    className="mr-2"
+                  />
                   <button
-                    disabled={!inputMessageText}
+                    disabled={!inputMessageText || isProcessingAudio}
                     data-testid="send-button"
                     className="flex size-8 items-end justify-center rounded-full bg-black text-white transition-colors hover:opacity-70 focus-visible:outline-none focus-visible:outline-black disabled:bg-[#D7D7D7] disabled:text-[#f4f4f4] disabled:hover:opacity-100"
                   onClick={() => {
