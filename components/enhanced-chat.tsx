@@ -146,13 +146,11 @@ const EnhancedChat: React.FC<EnhancedChatProps> = ({
     <div 
       ref={chatContainerRef}
       className={cn(
-        "relative w-full bg-gray-50",
+        "relative w-full h-full bg-gray-50",
         "flex flex-col",
         swipeState.isSwping && "touch-none"
       )}
       style={{
-        height: viewportHeight,
-        paddingTop: "env(safe-area-inset-top, 0px)",
         ...swipeState.transformStyle,
       }}
     >
@@ -207,11 +205,7 @@ const EnhancedChat: React.FC<EnhancedChatProps> = ({
       {/* Message List */}
       <div 
         ref={messageListRef}
-        className={cn(
-          "flex-1 overflow-hidden",
-          // Account for bottom navigation on mobile/tablet
-          isMobile || isTablet ? "pb-16 md:pb-20" : "pb-0"
-        )}
+        className="flex-1 overflow-hidden"
       >
         <MessageList
           items={items}
@@ -225,30 +219,24 @@ const EnhancedChat: React.FC<EnhancedChatProps> = ({
         />
       </div>
 
-      {/* Message Input - Fixed at bottom */}
-      <MessageInput
-        onSendMessage={onSendMessage}
-        disabled={isLoading || isAssistantLoading || swipeState.isTransitioning}
-        className={cn(
-          // Position above bottom navigation on mobile/tablet
-          isMobile || isTablet ? "pb-16 md:pb-20" : "pb-0",
-          // Hide during transition
-          swipeState.isTransitioning && "opacity-50 pointer-events-none"
-        )}
-        placeholder="Type a message..."
-        maxLength={5000}
-      />
+      {/* Message Input Container - Always at bottom above navigation */}
+      <div className={cn(
+        "flex-shrink-0 bg-white border-t",
+        // Account for bottom navigation on mobile/tablet
+        isMobile || isTablet ? "pb-16 md:pb-20" : "pb-0",
+        // Hide during transition
+        swipeState.isTransitioning && "opacity-50 pointer-events-none"
+      )}>
+        <MessageInput
+          onSendMessage={onSendMessage}
+          disabled={isLoading || isAssistantLoading || swipeState.isTransitioning}
+          placeholder="Type a message..."
+          maxLength={5000}
+        />
+      </div>
 
       {/* Global styles for better mobile experience */}
       <style jsx global>{`
-        /* Prevent iOS bounce scrolling on the body */
-        body {
-          position: fixed;
-          width: 100%;
-          height: 100%;
-          overflow: hidden;
-        }
-        
         /* Ensure smooth scrolling */
         * {
           scroll-behavior: smooth;

@@ -39,10 +39,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [platform, setPlatform] = useState<"ios" | "android" | "other">("other");
   
-  // Virtual scrolling settings
-  const itemHeight = 100; // Estimated average height
-  const overscan = 5; // Number of items to render outside viewport
-  const scrollThreshold = 200; // Distance from bottom to trigger auto-scroll
+  // Scroll settings (no virtual scrolling for better mobile performance)
+  const scrollThreshold = 100; // Distance from bottom to trigger auto-scroll
 
   // Detect platform
   useEffect(() => {
@@ -87,16 +85,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     const atBottom = scrollHeight - scrollTop - clientHeight < scrollThreshold;
     setIsAtBottom(atBottom);
     setShowScrollButton(!atBottom && scrollTop > 500);
-
-    // Virtual scrolling calculation
-    const firstVisibleIndex = Math.floor(scrollTop / itemHeight);
-    const lastVisibleIndex = Math.ceil((scrollTop + clientHeight) / itemHeight);
-    
-    setVisibleRange({
-      start: Math.max(0, firstVisibleIndex - overscan),
-      end: Math.min(items.length, lastVisibleIndex + overscan)
-    });
-  }, [items.length]);
+  }, []);
 
   // Scroll to bottom
   const scrollToBottom = useCallback((smooth = true) => {
@@ -229,10 +218,6 @@ export const MessageList: React.FC<MessageListProps> = ({
     );
   }, [onApprovalResponse, onRegenerateMessage, platform]);
 
-  // Calculate virtual items with processed messages
-  const virtualItems = processedMessages.slice(visibleRange.start, visibleRange.end);
-  const spacerTop = visibleRange.start * itemHeight;
-  const spacerBottom = (processedMessages.length - visibleRange.end) * itemHeight;
 
   return (
     <div className={cn("relative h-full", className)}>
@@ -270,24 +255,14 @@ export const MessageList: React.FC<MessageListProps> = ({
         className={cn(
           "h-full overflow-y-auto overflow-x-hidden",
           "overscroll-behavior-y-contain",
-          "scroll-smooth",
-          // Mobile optimizations
-          platform !== "other" && [
-            "touch-pan-y",
-            "-webkit-overflow-scrolling-touch"
-          ]
+          // Mobile optimizations for smooth scrolling
+          "-webkit-overflow-scrolling-touch",
+          "scroll-smooth"
         )}
         style={{
-          WebkitOverflowScrolling: "touch",
-          // Add padding for bottom navigation and input
-          paddingBottom: "180px"
+          WebkitOverflowScrolling: "touch"
         }}
       >
-        {/* Top spacer for virtual scrolling */}
-        {spacerTop > 0 && (
-          <div style={{ height: spacerTop }} />
-        )}
-
         {/* Messages - Mobile First Responsive */}
         <div className={cn(
           // Mobile (default): Small padding
@@ -301,7 +276,9 @@ export const MessageList: React.FC<MessageListProps> = ({
           // Large Desktop: Even larger max-width
           "xl:max-w-5xl",
           // Extra Large Desktop: Maximum width
-          "2xl:max-w-6xl"
+          "2xl:max-w-6xl",
+          // Add padding at bottom for input
+          "pb-4"
         )}>
           {/* Loading more indicator */}
           {isLoadingMore && (
@@ -313,10 +290,10 @@ export const MessageList: React.FC<MessageListProps> = ({
             </div>
           )}
 
-          {/* Virtual items */}
+          {/* All messages - no virtual scrolling */}
           <div className="space-y-4 py-4">
-            {virtualItems.map((item, index) => 
-              renderItem(item, visibleRange.start + index)
+            {processedMessages.map((item, index) => 
+              renderItem(item, index)
             )}
           </div>
 
@@ -324,13 +301,8 @@ export const MessageList: React.FC<MessageListProps> = ({
           {isLoading && <TypingIndicator platform={platform} />}
 
           {/* Scroll anchor */}
-          <div ref={messagesEndRef} className="h-1" />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
-
-        {/* Bottom spacer for virtual scrolling */}
-        {spacerBottom > 0 && (
-          <div style={{ height: spacerBottom }} />
-        )}
       </div>
 
       {/* Scroll to Bottom FAB */}

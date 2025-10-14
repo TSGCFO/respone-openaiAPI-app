@@ -268,9 +268,18 @@
     animation: bounce-in 0.3s ease-out;
   }
   
-  /* Prevent overscroll on mobile */
-  html, body {
+  /* Prevent overscroll on mobile and optimize scrolling */
+  html {
     overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: pan-y;
   }
   
   /* iOS specific fixes */

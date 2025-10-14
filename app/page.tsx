@@ -54,40 +54,18 @@ export default function Main() {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden bg-gray-50">
-      {/* Navigation Component */}
-      <BottomNavigation />
-      
-      {/* Main Content Area - Mobile First Responsive Design */}
+    <div className="fixed inset-0 flex flex-col bg-gray-50">
+      {/* Main Content Area - Takes up available space */}
       <div className={cn(
-        "h-full transition-all duration-300",
-        // Mobile (default): Full width with bottom padding for nav
-        "w-full pb-16",
-        // Tablet: Slightly more padding for bottom nav
-        "md:pb-20",
+        "flex-1 min-h-0 overflow-hidden transition-all duration-300",
         // Desktop: Side navigation layout
-        "lg:pb-0 lg:pl-20",
-        // Large desktop: Wider sidebar
-        "xl:pl-64",
-        // Extra large desktop: Even more spacing
-        "2xl:pl-72"
+        "lg:ml-20 xl:ml-64 2xl:ml-72"
       )}>
-        {/* Content Container with responsive max-width */}
-        <div className={cn(
-          "h-full bg-white",
-          // Mobile: Full width
-          "w-full",
-          // Desktop: Add max-width for better readability
-          activeTab === "chat" && "lg:max-w-none",
-          activeTab === "settings" && "lg:max-w-none",
-          activeTab === "tools" && "lg:max-w-none",
-          activeTab === "memories" && "lg:max-w-none"
-        )}>
+        {/* Content Container */}
+        <div className="h-full bg-white">
           {/* Content Wrapper for proper spacing */}
           <div className={cn(
             "h-full",
-            // Mobile: No extra padding (handled by components)
-            "",
             // Desktop: Different layouts per tab
             isDesktop && activeTab === "chat" && "flex",
             isDesktop && activeTab !== "chat" && "container mx-auto"
@@ -96,6 +74,9 @@ export default function Main() {
           </div>
         </div>
       </div>
+      
+      {/* Navigation Component - At the bottom on mobile/tablet */}
+      <BottomNavigation />
     </div>
   );
 }

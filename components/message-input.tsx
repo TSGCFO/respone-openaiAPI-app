@@ -259,14 +259,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     <div 
       ref={containerRef}
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-30",
-        "transition-transform duration-300 ease-out",
+        "relative w-full",
         className
       )}
-      style={{
-        transform: `translateY(-${keyboardHeight}px)`,
-        paddingBottom: "env(safe-area-inset-bottom, 0px)"
-      }}
     >
       {/* Quick Actions Bar - shows above keyboard */}
       {showQuickActions && isFocused && (

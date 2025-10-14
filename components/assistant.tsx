@@ -335,7 +335,7 @@ export default function Assistant() {
   const shouldUseBottomSheet = isMobile || (isTablet && window.matchMedia("(orientation: portrait)").matches);
 
   return (
-    <div className="flex h-full relative overflow-hidden">
+    <div className="flex h-full relative">
       {/* Desktop Sidebar - Mobile First Responsive */}
       <div className={cn(
         // Mobile/Tablet (default): Hidden
@@ -358,10 +358,10 @@ export default function Assistant() {
       </div>
 
       {/* Main Chat Area - Mobile First Responsive */}
-      <div className="flex-1 relative flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Header - Mobile First Responsive */}
         <div className={cn(
-          "border-b flex items-center gap-2",
+          "border-b flex items-center gap-2 flex-shrink-0",
           // Mobile (default): Small padding
           "p-2",
           // Tablet: Medium padding
@@ -411,28 +411,8 @@ export default function Assistant() {
         {/* Chat content - Mobile First Responsive */}
         <div 
           ref={chatContainerRef}
-          className={cn(
-            "bg-white flex-1 overflow-auto relative",
-            // Mobile (default): Small padding
-            "p-2",
-            // Tablet: Medium padding
-            "md:p-3",
-            // Desktop: Larger padding
-            "lg:p-4",
-            // Large Desktop: Even more padding
-            "xl:p-6"
-          )}
+          className="flex-1 min-h-0 overflow-hidden bg-white"
         >
-          {/* Swipe hint for mobile */}
-          {showSwipeHint && isMobile && (
-            <div className="absolute left-0 top-4 z-10 animate-pulse">
-              <div className="bg-blue-500 text-white px-3 py-2 rounded-r-lg text-sm flex items-center gap-2">
-                <span>👉</span>
-                <span>Swipe from left edge to open conversations</span>
-              </div>
-            </div>
-          )}
-          
           <EnhancedChat
             items={chatMessages}
             onSendMessage={handleSendMessage}
