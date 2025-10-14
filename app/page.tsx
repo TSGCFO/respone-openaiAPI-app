@@ -1,15 +1,19 @@
 "use client";
 import Assistant from "@/components/assistant";
 import ToolsPanel from "@/components/tools-panel";
-import { Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import MemoriesView from "@/components/memories-view";
+import SettingsView from "@/components/settings-view";
+import BottomNavigation from "@/components/bottom-navigation";
+import useNavigationStore from "@/stores/useNavigationStore";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useConversationStore from "@/stores/useConversationStore";
+import { cn } from "@/lib/utils";
 
 export default function Main() {
-  const [isToolsPanelOpen, setIsToolsPanelOpen] = useState(false);
   const router = useRouter();
   const { resetConversation } = useConversationStore();
+  const { activeTab } = useNavigationStore();
 
   // After OAuth redirect, reinitialize the conversation so the next turn
   // uses the connector-enabled server configuration immediately
@@ -22,31 +26,40 @@ export default function Main() {
     }
   }, [router, resetConversation]);
 
+  // Render the active view based on selected tab
+  const renderActiveView = () => {
+    switch(activeTab) {
+      case "chat":
+        return <Assistant />;
+      case "memories":
+        return <MemoriesView />;
+      case "tools":
+        return <ToolsPanel />;
+      case "settings":
+        return <SettingsView />;
+      default:
+        return <Assistant />;
+    }
+  };
+
   return (
-    <div className="flex h-screen">
-      <div className="flex-1">
-        <Assistant />
-      </div>
-      <div className="hidden md:block w-[30%]">
-        <ToolsPanel />
-      </div>
-      {/* Hamburger menu for small screens */}
-      <div className="absolute top-4 right-4 md:hidden z-50">
-        <button onClick={() => setIsToolsPanelOpen(true)}>
-          <Menu size={24} />
-        </button>
-      </div>
-      {/* Overlay panel for ToolsPanel on small screens */}
-      {isToolsPanelOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-30">
-          <div className="w-full bg-white h-full p-4">
-            <button className="mb-4" onClick={() => setIsToolsPanelOpen(false)}>
-              <X size={24} />
-            </button>
-            <ToolsPanel />
-          </div>
+    <div className="relative h-screen overflow-hidden bg-gray-50">
+      {/* Bottom Navigation */}
+      <BottomNavigation />
+      
+      {/* Main Content Area */}
+      <div className={cn(
+        "h-full transition-all duration-300",
+        // Add padding for desktop sidebar
+        "lg:pl-20 xl:pl-64",
+        // Add padding for mobile bottom nav
+        "pb-16 md:pb-20 lg:pb-0"
+      )}>
+        {/* Content Container */}
+        <div className="h-full bg-white">
+          {renderActiveView()}
         </div>
-      )}
+      </div>
     </div>
   );
 }
