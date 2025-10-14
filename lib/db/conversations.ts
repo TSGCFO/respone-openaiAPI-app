@@ -2,6 +2,9 @@ import { db } from '../../server/db';
 import { conversations, messages, semanticMemories, toolCalls, userSessions } from '../../shared/schema';
 import { eq, desc, and, sql, ilike } from 'drizzle-orm';
 import type { Conversation, NewConversation, Message, NewMessage, SemanticMemory, NewSemanticMemory, ToolCall, NewToolCall } from '../../shared/schema';
+
+// Re-export db for use in other modules
+export { db };
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -206,7 +209,7 @@ export async function searchSemanticMemories(
           accessCount: sql`${semanticMemories.accessCount} + 1`,
           lastAccessed: new Date(),
         })
-        .where(sql`${semanticMemories.id} = ANY(${memoryIds})`);
+        .where(sql`${semanticMemories.id} = ANY(ARRAY[${memoryIds.map(id => `${id}`).join(',')}])`);
     }
     
     return result;
