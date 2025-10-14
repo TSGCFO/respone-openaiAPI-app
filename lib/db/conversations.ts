@@ -236,6 +236,21 @@ export async function searchSemanticMemoriesByText(
   return result;
 }
 
+// Get all semantic memories for a user
+export async function getAllSemanticMemories(
+  userId: string = 'default_user',
+  limit: number = 100
+): Promise<SemanticMemory[]> {
+  const result = await db
+    .select()
+    .from(semanticMemories)
+    .where(eq(semanticMemories.userId, userId))
+    .orderBy(desc(semanticMemories.importance), desc(semanticMemories.createdAt))
+    .limit(limit);
+  
+  return result;
+}
+
 // Search messages with semantic similarity
 export async function searchMessages(
   query: string,
