@@ -1,15 +1,10 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import ToolCall from "./tool-call";
-import Message from "./message";
-import Annotations from "./annotations";
-import McpToolsList from "./mcp-tools-list";
-import McpApproval from "./mcp-approval";
+import React, { useCallback, useState, useEffect } from "react";
 import { Item, McpApprovalRequestItem } from "@/lib/assistant";
-import LoadingMessage from "./loading-message";
+import { MessageInput } from "./message-input";
+import { MessageList } from "./message-list";
 import useConversationStore from "@/stores/useConversationStore";
-import { AudioRecorder } from "./audio-recorder";
 import { cn } from "@/lib/utils";
 
 interface ChatProps {
@@ -25,244 +20,222 @@ const Chat: React.FC<ChatProps> = ({
   onApprovalResponse,
   onRegenerateMessage,
 }) => {
-  const itemsEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [inputMessageText, setinputMessageText] = useState<string>("");
-  // This state is used to provide better user experience for non-English IMEs such as Japanese
-  const [isComposing, setIsComposing] = useState(false);
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState("100vh");
   const { isAssistantLoading } = useConversationStore();
-
+  
+  // Detect device type
   useEffect(() => {
-    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const checkDevice = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
+    };
+
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+    return () => window.removeEventListener("resize", checkDevice);
   }, []);
 
-  const scrollToBottom = () => {
-    itemsEndRef.current?.scrollIntoView({ 
-      behavior: "smooth",
-      block: "end" 
-    });
-  };
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === "Enter" && !event.shiftKey && !isComposing) {
-        event.preventDefault();
-        if (inputMessageText.trim()) {
-          onSendMessage(inputMessageText);
-          setinputMessageText("");
-        }
-      }
-    },
-    [onSendMessage, inputMessageText, isComposing]
-  );
-
-  const handleAudioReady = useCallback(
-    async (audioBlob: Blob, audioUrl: string) => {
-      // Store the audio blob temporarily
-      console.log('Audio recorded:', {
-        size: audioBlob.size,
-        type: audioBlob.type,
-        url: audioUrl
-      });
-      
-      // Here you can store the audio blob in state or local storage
-      // For now, we'll just log it
-      // In a real implementation, you'd send this to your transcription API
-    },
-    []
-  );
-
-  const handleTranscriptionRequest = useCallback(
-    async (audioBlob: Blob) => {
-      setIsProcessingAudio(true);
-      
-      try {
-        console.log('Processing audio for transcription...');
-        
-        // Create FormData to send audio file
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
-        
-        // Call the transcription API
-        const response = await fetch('/api/transcribe', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          throw new Error('Transcription failed');
-        }
-        
-        const data = await response.json();
-        
-        if (data.text) {
-          // Set the transcribed text in the input field
-          setinputMessageText(data.text);
-          console.log('Transcription successful:', data.text);
-          
-          // Optional: Auto-send the message after transcription
-          // Uncomment the following lines to enable auto-send
-          // if (data.text.trim()) {
-          //   onSendMessage(data.text);
-          //   setinputMessageText("");
-          // }
-        }
-        
-        setIsProcessingAudio(false);
-      } catch (error) {
-        console.error('Transcription error:', error);
-        setIsProcessingAudio(false);
-        
-        // Optionally show an error message to the user
-        // You could set an error state here to display in the UI
-      }
-    },
-    [setinputMessageText]
-  );
-
+  // Handle viewport height for mobile browsers
   useEffect(() => {
-    scrollToBottom();
-  }, [items]);
+    const updateViewportHeight = () => {
+      // Use visualViewport if available (more accurate on mobile)
+      const vh = window.visualViewport?.height || window.innerHeight;
+      setViewportHeight(`${vh}px`);
+    };
+
+    updateViewportHeight();
+    
+    // Listen to viewport changes
+    window.visualViewport?.addEventListener("resize", updateViewportHeight);
+    window.addEventListener("resize", updateViewportHeight);
+    window.addEventListener("orientationchange", updateViewportHeight);
+    
+    return () => {
+      window.visualViewport?.removeEventListener("resize", updateViewportHeight);
+      window.removeEventListener("resize", updateViewportHeight);
+      window.removeEventListener("orientationchange", updateViewportHeight);
+    };
+  }, []);
+
+  // Load more messages handler (for pull-to-refresh)
+  const handleLoadMore = useCallback(async () => {
+    // TODO: Implement loading older messages
+    console.log("Loading more messages...");
+    
+    // Simulate async loading
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // In a real implementation, you would:
+    // 1. Fetch older messages from the API
+    // 2. Prepend them to the items array
+    // 3. Maintain scroll position
+  }, []);
 
   return (
-    <div className="flex justify-center items-center size-full">
-      <div className="flex grow flex-col h-full max-w-[750px] gap-2">
-        <div 
-          ref={scrollContainerRef}
-          className={cn(
-            "h-[90vh] overflow-y-auto overflow-x-hidden px-10 flex flex-col",
-            "overscroll-contain touch-pan-y",
-            isTouchDevice && "scroll-smooth"
-          )}
-          style={{
-            WebkitOverflowScrolling: 'touch',
-            scrollBehavior: 'smooth',
-          }}
-        >
-          <div className="mt-auto space-y-5 pt-4">
-            {items.map((item, index) => (
-              <React.Fragment key={index}>
-                {item.type === "tool_call" ? (
-                  <ToolCall toolCall={item} />
-                ) : item.type === "message" ? (
-                  <div className="flex flex-col gap-1 group">
-                    <Message 
-                      message={item} 
-                      onRegenerate={item.role === 'assistant' ? onRegenerateMessage : undefined}
-                    />
-                    {item.content &&
-                      item.content[0].annotations &&
-                      item.content[0].annotations.length > 0 && (
-                        <Annotations
-                          annotations={item.content[0].annotations}
-                        />
-                      )}
-                  </div>
-                ) : item.type === "mcp_list_tools" ? (
-                  <McpToolsList item={item} />
-                ) : item.type === "mcp_approval_request" ? (
-                  <McpApproval
-                    item={item as McpApprovalRequestItem}
-                    onRespond={onApprovalResponse}
-                  />
-                ) : null}
-              </React.Fragment>
-            ))}
-            {isAssistantLoading && <LoadingMessage />}
-            <div ref={itemsEndRef} />
-          </div>
-        </div>
-        <div className="flex-1 p-4 px-10">
-          <div className="flex items-center">
-            <div className="flex w-full items-center pb-4 md:pb-1">
-              <div className="flex w-full flex-col gap-1.5 rounded-[20px] p-2.5 pl-1.5 transition-colors bg-white border border-stone-200 shadow-sm">
-                <div className="flex items-end gap-1.5 md:gap-2 pl-4">
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <textarea
-                      id="prompt-textarea"
-                      tabIndex={0}
-                      dir="auto"
-                      rows={2}
-                      placeholder={isProcessingAudio ? "Processing audio..." : "Message..."}
-                      className={cn(
-                        "mb-2 resize-none border-0 focus:outline-none text-sm bg-transparent px-0 pb-6 pt-2",
-                        "touch-manipulation"
-                      )}
-                      value={inputMessageText}
-                      onChange={(e) => setinputMessageText(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      onCompositionStart={() => setIsComposing(true)}
-                      onCompositionEnd={() => setIsComposing(false)}
-                      disabled={isProcessingAudio}
-                    />
-                  </div>
-                  <AudioRecorder
-                    onAudioReady={handleAudioReady}
-                    onTranscriptionRequest={handleTranscriptionRequest}
-                    disabled={isAssistantLoading || isProcessingAudio}
-                    className="mr-2 min-w-[44px] min-h-[44px]"
-                  />
-                  <button
-                    disabled={!inputMessageText.trim() || isProcessingAudio}
-                    data-testid="send-button"
-                    className={cn(
-                      "flex items-center justify-center rounded-full bg-black text-white transition-all",
-                      "hover:opacity-70 focus-visible:outline-none focus-visible:outline-black",
-                      "disabled:bg-[#D7D7D7] disabled:text-[#f4f4f4] disabled:hover:opacity-100",
-                      "min-w-[44px] min-h-[44px] touch-manipulation",
-                      "active:scale-[0.95]"
-                    )}
-                    onClick={() => {
-                      if (inputMessageText.trim()) {
-                        onSendMessage(inputMessageText);
-                        setinputMessageText("");
-                      }
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="32"
-                      height="32"
-                      fill="none"
-                      viewBox="0 0 32 32"
-                      className="icon-2xl"
-                    >
-                      <path
-                        fill="currentColor"
-                        fillRule="evenodd"
-                        d="M15.192 8.906a1.143 1.143 0 0 1 1.616 0l5.143 5.143a1.143 1.143 0 0 1-1.616 1.616l-3.192-3.192v9.813a1.143 1.143 0 0 1-2.286 0v-9.813l-3.192 3.192a1.143 1.143 0 1 1-1.616-1.616z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div 
+      className={cn(
+        "relative w-full bg-gray-50",
+        "flex flex-col"
+      )}
+      style={{
+        height: viewportHeight,
+        // Account for safe areas on mobile devices
+        paddingTop: "env(safe-area-inset-top, 0px)",
+      }}
+    >
+      {/* Message List */}
+      <div className={cn(
+        "flex-1 overflow-hidden",
+        // Account for bottom navigation on mobile/tablet
+        isMobile || isTablet ? "pb-16 md:pb-20" : "pb-0"
+      )}>
+        <MessageList
+          items={items}
+          isLoading={isAssistantLoading}
+          onApprovalResponse={onApprovalResponse}
+          onRegenerateMessage={onRegenerateMessage}
+          onLoadMore={handleLoadMore}
+          className="h-full"
+        />
       </div>
 
+      {/* Message Input - Fixed at bottom */}
+      <MessageInput
+        onSendMessage={onSendMessage}
+        disabled={isAssistantLoading}
+        className={cn(
+          // Position above bottom navigation on mobile/tablet
+          isMobile || isTablet ? "pb-16 md:pb-20" : "pb-0"
+        )}
+        placeholder="Type a message..."
+        maxLength={5000}
+      />
+
+      {/* Global styles for better mobile experience */}
       <style jsx global>{`
+        /* Prevent iOS bounce scrolling on the body */
+        body {
+          position: fixed;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+        
+        /* Ensure smooth scrolling */
+        * {
+          scroll-behavior: smooth;
+        }
+        
+        /* Prevent text selection on touch devices for better UX */
+        @media (hover: none) and (pointer: coarse) {
+          .touch-none {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+          }
+        }
+        
+        /* iOS-specific fixes */
         @supports (-webkit-touch-callout: none) {
-          .overscroll-contain {
+          /* Fix for iOS Safari viewport height */
+          .h-viewport {
+            height: -webkit-fill-available;
+          }
+          
+          /* Smooth momentum scrolling */
+          .scroll-touch {
             -webkit-overflow-scrolling: touch;
           }
         }
         
-        .touch-manipulation {
-          touch-action: manipulation;
+        /* Hide scrollbars on mobile for cleaner look */
+        @media (max-width: 768px) {
+          ::-webkit-scrollbar {
+            display: none;
+          }
+          
+          * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
         }
         
-        .touch-pan-y {
-          touch-action: pan-y;
-        }
-        
-        @media (hover: none) and (pointer: coarse) {
-          .hover\\:opacity-70:hover {
+        /* Animations */
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
             opacity: 1;
           }
+        }
+        
+        @keyframes slide-up {
+          from {
+            transform: translateY(10px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes scale-in {
+          from {
+            transform: scale(0.95);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+        
+        .animate-scale-in {
+          animation: scale-in 0.2s ease-out;
+        }
+        
+        /* Prevent layout shift when keyboard appears */
+        @supports (height: 100dvh) {
+          .h-screen-safe {
+            height: 100dvh;
+          }
+        }
+        
+        /* Material Design ripple effect */
+        .ripple {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .ripple::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.1);
+          transform: translate(-50%, -50%);
+          transition: width 0.6s, height 0.6s;
+        }
+        
+        .ripple:active::after {
+          width: 300px;
+          height: 300px;
         }
       `}</style>
     </div>

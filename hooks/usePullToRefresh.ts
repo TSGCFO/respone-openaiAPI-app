@@ -16,13 +16,19 @@ interface PullToRefreshState {
 
 export function usePullToRefresh(
   containerRef: React.RefObject<HTMLElement>,
-  options: PullToRefreshOptions = {}
+  onRefresh?: () => Promise<void> | void,
+  options: Partial<{
+    threshold: number;
+    maxPull: number;
+    refreshTimeout: number;
+    resistance: number;
+  }> = {}
 ) {
   const {
     threshold = 80,
     maxPull = 150,
     refreshTimeout = 2000,
-    onRefresh
+    resistance = 2.5
   } = options;
 
   const [state, setState] = useState<PullToRefreshState>({
@@ -58,7 +64,7 @@ export function usePullToRefresh(
       e.preventDefault();
       
       const pullDistance = Math.min(
-        distance * 0.5,
+        distance / resistance,
         maxPull
       );
       
@@ -72,7 +78,7 @@ export function usePullToRefresh(
         canRefresh: easedDistance >= threshold,
       }));
     }
-  }, [maxPull, threshold, containerRef]);
+  }, [maxPull, threshold, containerRef, resistance]);
 
   const handleTouchEnd = useCallback(async () => {
     if (!touchingRef.current) return;
@@ -128,5 +134,10 @@ export function usePullToRefresh(
     };
   }, [containerRef, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
-  return state;
+  return {
+    ...state,
+    isRefreshing: state.isRefreshing,
+    pullIndicatorOffset: state.pullDistance,
+    pullIndicatorOpacity: state.pullDistance > 0 ? Math.min(state.pullDistance / threshold, 1) : 0
+  };
 }
