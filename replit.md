@@ -10,6 +10,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Lint code**: `npm run lint`
 - **Install dependencies**: `npm install`
 
+## Recent Updates (October 2025)
+
+### Voice Features Added
+- **Speech-to-Text**: Integrated OpenAI Whisper API for audio transcription
+- **Text-to-Speech**: Added OpenAI TTS API with 6 voice options and playback controls
+- **Audio Recording**: Web Audio API implementation with visual feedback
+- **Caching System**: Audio responses cached to minimize API calls
+
+### Mobile PWA Enhancements
+- **Progressive Web App**: Full PWA configuration with manifest and service worker
+- **Touch Gestures**: Swipe navigation, pull-to-refresh, pinch-to-zoom
+- **Haptic Feedback**: Vibration API for tactile responses
+- **Native Transitions**: Smooth animations and iOS-style interactions
+- **Offline Support**: Service worker caching for offline functionality
+
+### Bug Fixes
+- Fixed Next.js 15 params compatibility issues in dynamic routes
+- Added CORS configuration for Replit preview domains
+- Implemented input validation with Zod schemas
+- Enhanced error handling with client-side feedback
+- Added security warnings for in-memory session storage
+
 ## Replit Migration (October 2025)
 
 This project was migrated from Vercel to Replit with the following changes:
@@ -53,6 +75,19 @@ This is a Next.js 15 (App Router) TypeScript application that demonstrates the O
 - `lib/assistant.ts`: Streaming event state machine and message processing
 - `lib/tools/tools.ts`: Composes tools array from Zustand state
 - `lib/tools/connectors.ts`: Google MCP connector helpers
+- `lib/validation.ts`: Zod schemas for input validation
+
+**Voice & Audio**
+- `hooks/useAudioRecorder.ts`: Audio recording management with Web Audio API
+- `hooks/useTTS.ts`: Text-to-speech playback management
+- `app/api/transcribe/route.ts`: OpenAI Whisper integration
+- `app/api/text-to-speech/route.ts`: OpenAI TTS integration
+
+**Mobile & Touch**
+- `hooks/useSwipeGesture.ts`: Swipe detection with velocity tracking
+- `hooks/useLongPress.ts`: Long-press gesture detection
+- `hooks/usePinchZoom.ts`: Pinch-to-zoom functionality
+- `lib/haptic.ts`: Haptic feedback utility
 
 **State Management**
 - `stores/useConversationStore.ts`: Chat messages and conversation items
@@ -68,6 +103,8 @@ This is a Next.js 15 (App Router) TypeScript application that demonstrates the O
 - `components/assistant.tsx`: Main chat interface
 - `components/tool-call.tsx`: Tool execution progress display
 - `components/tools-panel.tsx`: Tool configuration panel
+- `components/AudioRecorder.tsx`: Voice recording UI
+- `components/AudioPlayer.tsx`: TTS playback controls
 
 ## Tool Integration Patterns
 
@@ -103,7 +140,7 @@ Requires OAuth setup with Google Cloud Console:
 ## Environment Variables
 
 Required:
-- `OPENAI_API_KEY`: OpenAI API access
+- `OPENAI_API_KEY`: OpenAI API access (needed for audio APIs)
 
 Optional:
 - `GOOGLE_CLIENT_ID`: Google OAuth client ID
@@ -115,7 +152,8 @@ Optional:
 
 - **Frontend**: Next.js 15, React 18, TypeScript, Tailwind CSS, Radix UI
 - **State**: Zustand for state management
-- **OpenAI**: `openai` SDK for Responses API
+- **OpenAI**: `openai` SDK for Responses API, Whisper, and TTS
 - **Auth**: `openid-client` for Google OAuth
 - **Streaming**: Native ReadableStream with manual SSE formatting
 - **JSON Parsing**: `partial-json` for streaming argument parsing
+- **PWA**: Service worker with offline caching support
