@@ -209,7 +209,7 @@ export async function searchSemanticMemories(
           accessCount: sql`${semanticMemories.accessCount} + 1`,
           lastAccessed: new Date(),
         })
-        .where(sql`${semanticMemories.id} = ANY(ARRAY[${memoryIds.map(id => `${id}`).join(',')}])`);
+        .where(sql`${semanticMemories.id} = ANY(${memoryIds})`);
     }
     
     return result;
@@ -252,6 +252,135 @@ export async function getAllSemanticMemories(
     .limit(limit);
   
   return result;
+}
+
+// Get high-importance profile memories for a user
+export async function getProfileMemories(
+  userId: string = 'default_user',
+  minImportance: number = 7
+): Promise<SemanticMemory[]> {
+  try {
+    const result = await db
+      .select()
+      .from(semanticMemories)
+      .where(and(
+        eq(semanticMemories.userId, userId),
+        sql`${semanticMemories.importance} >= ${minImportance}`
+      ))
+      .orderBy(desc(semanticMemories.importance), desc(semanticMemories.accessCount))
+      .limit(10);
+    
+    return result;
+  } catch (error) {
+    console.error('Failed to get profile memories:', error);
+    return [];
+  }
+}
+
+// Enhanced memory search for comprehensive context retrieval
+export async function getRelevantMemories(
+  query: string,
+  userId: string = 'default_user',
+  options: {
+    includeProfile?: boolean;
+    searchLimit?: number;
+    minProfileImportance?: number;
+  } = {}
+): Promise<{
+  profileMemories: SemanticMemory[];
+  queryMemories: SemanticMemory[];
+  locationMemories: SemanticMemory[];
+}> {
+  const { 
+    includeProfile = true, 
+    searchLimit = 10, 
+    minProfileImportance = 7 
+  } = options;
+
+  // Always get profile memories (high importance facts about the user)
+  const profileMemories = includeProfile 
+    ? await getProfileMemories(userId, minProfileImportance)
+    : [];
+
+  // Get query-specific memories
+  const queryMemories = await searchSemanticMemories(query, userId, searchLimit);
+
+  // For time-related or location-sensitive queries, get location memories
+  let locationMemories: SemanticMemory[] = [];
+  const timeLocationKeywords = [
+    'time', 'date', 'weather', 'timezone', 'clock',
+    'what time', 'current time', 'now', 'today',
+    'temperature', 'forecast', 'local'
+  ];
+  
+  const needsLocation = timeLocationKeywords.some(keyword => 
+    query.toLowerCase().includes(keyword)
+  );
+
+  if (needsLocation) {
+    // Search specifically for location-related memories
+    const locationSearchTerms = ['location', 'live', 'from', 'city', 'country', 'timezone', 'canada', 'toronto', 'vancouver', 'montreal'];
+    
+    try {
+      // Try embedding-based search for location
+      const locationQuery = 'user location city country timezone where from';
+      locationMemories = await searchSemanticMemories(locationQuery, userId, 5);
+      
+      // If no results, try text search
+      if (locationMemories.length === 0) {
+        const textResults = await db
+          .select()
+          .from(semanticMemories)
+          .where(and(
+            eq(semanticMemories.userId, userId),
+            sql`(
+              ${semanticMemories.content} ILIKE ANY(ARRAY[${locationSearchTerms.map(term => `'%${term}%'`).join(',')}])
+              OR ${semanticMemories.summary} ILIKE ANY(ARRAY[${locationSearchTerms.map(term => `'%${term}%'`).join(',')}])
+            )`
+          ))
+          .orderBy(desc(semanticMemories.importance))
+          .limit(5);
+        
+        locationMemories = textResults;
+      }
+    } catch (error) {
+      console.error('Failed to search for location memories:', error);
+    }
+  }
+
+  // Deduplicate memories across all categories
+  const allMemoryIds = new Set<number>();
+  const deduplicatedMemories = {
+    profileMemories: [] as SemanticMemory[],
+    queryMemories: [] as SemanticMemory[],
+    locationMemories: [] as SemanticMemory[]
+  };
+
+  // Add profile memories first (highest priority)
+  for (const memory of profileMemories) {
+    if (!allMemoryIds.has(memory.id)) {
+      allMemoryIds.add(memory.id);
+      deduplicatedMemories.profileMemories.push(memory);
+    }
+  }
+
+  // Add location memories (if applicable)
+  for (const memory of locationMemories) {
+    if (!allMemoryIds.has(memory.id)) {
+      allMemoryIds.add(memory.id);
+      deduplicatedMemories.locationMemories.push(memory);
+    }
+  }
+
+  // Add query-specific memories
+  for (const memory of queryMemories) {
+    if (!allMemoryIds.has(memory.id)) {
+      allMemoryIds.add(memory.id);
+      deduplicatedMemories.queryMemories.push(memory);
+    }
+  }
+
+  return deduplicatedMemories;
 }
 
 // Search messages with semantic similarity

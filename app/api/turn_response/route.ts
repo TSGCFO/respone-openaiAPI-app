@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getFreshAccessToken } from "@/lib/googleTokens";
 import { withGoogleConnector } from "@/lib/tools/connectors";
-import { searchSemanticMemories } from "@/lib/db/conversations";
+import { getRelevantMemories } from "@/lib/db/conversations";
 
 export async function POST(request: Request) {
   try {
@@ -19,8 +19,11 @@ export async function POST(request: Request) {
       { enabled: Boolean(googleIntegrationEnabled), accessToken }
     );
 
-    // Search for relevant memories based on the user's latest message
-    let relevantMemories: any[] = [];
+    // Enhanced memory retrieval for comprehensive context
+    let profileMemories: any[] = [];
+    let queryMemories: any[] = [];
+    let locationMemories: any[] = [];
+    
     if (messages && messages.length > 0) {
       // Find the latest user message
       const userMessages = messages.filter((m: any) => m.role === 'user');
@@ -30,31 +33,86 @@ export async function POST(request: Request) {
           ? latestUserMessage.content 
           : latestUserMessage.content?.[0]?.text || '';
         
-        // Search semantic memories based on the user's message
+        // Get comprehensive memory context
         try {
-          const userId = request.headers.get('x-user-id') || 'default_user';
-          relevantMemories = await searchSemanticMemories(messageContent, userId, 5);
-          console.log(`Found ${relevantMemories.length} relevant memories for query:`, messageContent);
+          // Always use 'default_user' for consistency
+          const userId = 'default_user';
+          
+          const memoryResults = await getRelevantMemories(messageContent, userId, {
+            includeProfile: true,
+            searchLimit: 10,
+            minProfileImportance: 6  // Lower threshold to catch more profile info
+          });
+          
+          profileMemories = memoryResults.profileMemories;
+          queryMemories = memoryResults.queryMemories;
+          locationMemories = memoryResults.locationMemories;
+          
+          console.log(`Memory retrieval results:
+            - Profile memories: ${profileMemories.length}
+            - Query-specific memories: ${queryMemories.length}
+            - Location memories: ${locationMemories.length}`);
         } catch (error) {
-          console.error('Failed to search memories:', error);
+          console.error('Failed to retrieve memories:', error);
           // Continue without memories if search fails
         }
       }
     }
 
-    // Create enhanced instructions with memory context
+    // Create enhanced instructions with comprehensive memory context
     let enhancedInstructions = getDeveloperPrompt();
-    if (relevantMemories.length > 0) {
-      const memoryContext = relevantMemories
+    
+    // Build comprehensive memory context sections
+    const memoryContextSections: string[] = [];
+    
+    // Add profile memories with high priority
+    if (profileMemories.length > 0) {
+      const profileContext = profileMemories
+        .map(mem => `- ${mem.summary || mem.content} [importance: ${mem.importance}/10]`)
+        .join('\n');
+      memoryContextSections.push(`### User Profile Information (Always Remember):
+${profileContext}`);
+    }
+    
+    // Add location context for time/location-sensitive queries
+    if (locationMemories.length > 0) {
+      const locationContext = locationMemories
         .map(mem => `- ${mem.summary || mem.content}`)
         .join('\n');
-      
+      memoryContextSections.push(`### User Location Context:
+${locationContext}`);
+    }
+    
+    // Add query-specific context
+    if (queryMemories.length > 0) {
+      const queryContext = queryMemories
+        .map(mem => `- ${mem.summary || mem.content}`)
+        .join('\n');
+      memoryContextSections.push(`### Related Context:
+${queryContext}`);
+    }
+    
+    // If we have any memories, create enhanced instructions
+    if (memoryContextSections.length > 0) {
       enhancedInstructions = `${getDeveloperPrompt()}
 
-## User Context (from previous conversations):
-${memoryContext}
+## IMPORTANT: User Context and Personal Information
 
-Use this context to provide more personalized and informed responses. Remember facts about the user and reference them when relevant.`;
+${memoryContextSections.join('\n\n')}
+
+### CRITICAL INSTRUCTIONS:
+1. **ALWAYS use the user's stored information** when answering questions, especially:
+   - When asked about time/date, use their location to determine the correct timezone
+   - When discussing weather, use their location
+   - Reference their name and preferences when appropriate
+   
+2. **For time-related queries**: If the user has a stored location (e.g., "Canada", "Toronto"), ALWAYS provide the time in their local timezone. Never give generic UTC time if you know where they are.
+
+3. **Personalize responses** using the stored context. Show that you remember the user by naturally incorporating what you know about them.
+
+4. **If location is known** and relevant to the query (time, weather, local information), use it proactively without asking for it again.
+
+Remember: You have access to the user's stored memories above. Use them to provide accurate, personalized, and contextually appropriate responses.`;
     }
 
     const openai = new OpenAI();
