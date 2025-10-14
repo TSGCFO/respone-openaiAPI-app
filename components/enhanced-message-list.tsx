@@ -2,14 +2,14 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Item, McpApprovalRequestItem, MessageItem } from "@/lib/assistant";
-import EnhancedMessageBubble from "./enhanced-message-bubble";
+import MobileOptimizedMessage from "./mobile-optimized-message";
 import ToolCall from "./tool-call";
 import Annotations from "./annotations";
 import McpToolsList from "./mcp-tools-list";
 import McpApproval from "./mcp-approval";
 import LoadingMessage from "./loading-message";
-import TypingIndicator from "./typing-indicator";
-import { ChevronDown, RefreshCw, Loader2 } from "lucide-react";
+import MobileTypingIndicator from "./mobile-typing-indicator";
+import { ChevronDown, RefreshCw, Loader2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import haptic from "@/lib/haptic";
 import { useEnhancedPullToRefresh } from "@/hooks/useEnhancedPullToRefresh";
@@ -25,7 +25,7 @@ interface MessageListProps {
   disabled?: boolean;
 }
 
-const MessageList: React.FC<MessageListProps> = ({
+const MessageList: React.FC<MessageListProps> = React.memo(({
   items,
   isLoading = false,
   onApprovalResponse,
@@ -123,7 +123,7 @@ const MessageList: React.FC<MessageListProps> = ({
     };
   }, [handleScroll]);
 
-  // Process messages for grouping
+  // Process messages for grouping with memoization
   const processedMessages = useMemo(() => {
     const processed: Array<{
       item: Item;
@@ -228,13 +228,13 @@ const MessageList: React.FC<MessageListProps> = ({
         )}
       </div>
 
-      {/* Messages container */}
+      {/* Messages container with optimized scrolling */}
       <div
         ref={scrollContainerRef}
         className={cn(
-          "h-full overflow-y-auto scroll-smooth",
-          "px-4 pt-4",
-          platform === 'ios' && "scroll-touch",
+          "h-full overflow-y-auto scroll-smooth message-list-scroll",
+          "pt-4 safe-padding-bottom",
+          platform === 'ios' && "ios-scroll",
           disabled && "pointer-events-none opacity-75"
         )}
         style={{
@@ -242,14 +242,16 @@ const MessageList: React.FC<MessageListProps> = ({
             ? `translateY(${Math.min(pullDistance * 0.7, 50)}px)` 
             : undefined,
           transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          WebkitOverflowScrolling: 'touch',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)',
         }}
       >
-        {/* Empty state */}
+        {/* Empty state with mobile-optimized design */}
         {items.length === 0 && !isLoading && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 pb-20">
-            <div className="text-4xl mb-4">💬</div>
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 pb-20 px-6">
+            <MessageCircle className="h-16 w-16 mb-4 text-gray-300" strokeWidth={1.5} />
             <p className="text-lg font-medium">No messages yet</p>
-            <p className="text-sm mt-1">Start a conversation!</p>
+            <p className="text-sm mt-1 text-center text-gray-400">Start a conversation to see messages here</p>
           </div>
         )}
 
@@ -261,7 +263,7 @@ const MessageList: React.FC<MessageListProps> = ({
               const messageId = (messageItem as any).id || `${messageItem.role}-${index}`;
               
               return (
-                <EnhancedMessageBubble
+                <MobileOptimizedMessage
                   key={index}
                   message={messageItem}
                   onRegenerate={
@@ -274,6 +276,7 @@ const MessageList: React.FC<MessageListProps> = ({
                   showTimestamp={showTimestamp}
                   platform={platform}
                   className="animate-fade-in"
+                  index={index}
                 />
               );
             } else if (item.type === "tool_call") {
@@ -315,10 +318,10 @@ const MessageList: React.FC<MessageListProps> = ({
             return null;
           })}
           
-          {/* Loading indicator */}
+          {/* Loading indicator with mobile optimization */}
           {isLoading && (
             <div className="animate-fade-in">
-              <TypingIndicator />
+              <MobileTypingIndicator platform={platform} />
             </div>
           )}
         </div>
@@ -370,6 +373,8 @@ const MessageList: React.FC<MessageListProps> = ({
       )}
     </div>
   );
-};
+});
+
+MessageList.displayName = "MessageList";
 
 export default MessageList;
