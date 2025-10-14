@@ -18,7 +18,24 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    
+    // Validate the ID parameter
+    if (!id || id === 'undefined' || id === 'null') {
+      return NextResponse.json(
+        { error: 'Invalid conversation ID' },
+        { status: 400 }
+      );
+    }
+    
     const conversationId = parseInt(id);
+    
+    // Check if parseInt returned NaN
+    if (isNaN(conversationId)) {
+      return NextResponse.json(
+        { error: 'Invalid conversation ID format' },
+        { status: 400 }
+      );
+    }
     
     const conversation = await getConversation(conversationId);
     if (!conversation) {
