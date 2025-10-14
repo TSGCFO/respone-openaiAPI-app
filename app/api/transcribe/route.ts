@@ -6,17 +6,38 @@ export async function POST(request: NextRequest) {
     const audioFile = formData.get('audio') as File;
     
     if (!audioFile) {
+      console.error('No audio file provided in formData');
       return NextResponse.json(
         { error: 'No audio file provided' },
         { status: 400 }
       );
     }
 
-    // Validate file type
-    const validTypes = ['audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav'];
-    if (!validTypes.includes(audioFile.type)) {
+    console.log('Received audio file:', {
+      name: audioFile.name,
+      type: audioFile.type,
+      size: audioFile.size
+    });
+
+    // Validate file type - accept webm with codecs
+    const validTypes = [
+      'audio/webm', 
+      'audio/webm;codecs=opus',
+      'audio/ogg', 
+      'audio/mpeg', 
+      'audio/mp4', 
+      'audio/wav'
+    ];
+    
+    // Check if the file type starts with any valid type (to handle codec variations)
+    const isValidType = validTypes.some(type => 
+      audioFile.type.startsWith(type.split(';')[0])
+    );
+    
+    if (!isValidType) {
+      console.error('Invalid audio file type:', audioFile.type);
       return NextResponse.json(
-        { error: 'Invalid audio file type' },
+        { error: `Invalid audio file type: ${audioFile.type}` },
         { status: 400 }
       );
     }
