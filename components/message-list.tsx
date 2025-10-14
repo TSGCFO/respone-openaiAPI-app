@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Item, McpApprovalRequestItem } from "@/lib/assistant";
-import Message from "./message";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { Item, McpApprovalRequestItem, MessageItem } from "@/lib/assistant";
+import MessageBubble from "./message-bubble";
 import ToolCall from "./tool-call";
 import Annotations from "./annotations";
 import McpToolsList from "./mcp-tools-list";
 import McpApproval from "./mcp-approval";
 import LoadingMessage from "./loading-message";
+import TypingIndicator from "./typing-indicator";
 import { ChevronDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import haptic from "@/lib/haptic";
@@ -56,7 +57,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   // Pull to refresh
   const handleRefresh = useCallback(async () => {
     if (onLoadMore) {
-      haptic.trigger("impact");
+      haptic.trigger("light");
       setIsLoadingMore(true);
       await onLoadMore();
       setIsLoadingMore(false);
@@ -125,8 +126,59 @@ export const MessageList: React.FC<MessageListProps> = ({
     };
   }, [handleScroll]);
 
+  // Process messages for grouping
+  const processedMessages = useMemo(() => {
+    const messages = items.filter(item => item.type === "message") as MessageItem[];
+    const processed: Array<{
+      item: Item;
+      isGroupStart: boolean;
+      isGroupEnd: boolean;
+      showTimestamp: boolean;
+      showAvatar: boolean;
+    }> = [];
+    
+    items.forEach((item, index) => {
+      if (item.type === "message") {
+        const prevItem = index > 0 ? items[index - 1] : null;
+        const nextItem = index < items.length - 1 ? items[index + 1] : null;
+        
+        const isPrevSameRole = prevItem?.type === "message" && prevItem.role === item.role;
+        const isNextSameRole = nextItem?.type === "message" && nextItem.role === item.role;
+        
+        const isGroupStart = !isPrevSameRole;
+        const isGroupEnd = !isNextSameRole;
+        
+        // Show timestamp only at the start of message groups
+        const showTimestamp = isGroupStart;
+        
+        // Show avatar only for the last message in a group (for assistant messages)
+        const showAvatar = isGroupEnd && item.role === "assistant";
+        
+        processed.push({
+          item,
+          isGroupStart,
+          isGroupEnd,
+          showTimestamp,
+          showAvatar,
+        });
+      } else {
+        // Non-message items
+        processed.push({
+          item,
+          isGroupStart: false,
+          isGroupEnd: false,
+          showTimestamp: false,
+          showAvatar: false,
+        });
+      }
+    });
+    
+    return processed;
+  }, [items]);
+  
   // Render message item
-  const renderItem = useCallback((item: Item, index: number) => {
+  const renderItem = useCallback((processedItem: typeof processedMessages[0], index: number) => {
+    const { item, isGroupStart, isGroupEnd, showTimestamp, showAvatar } = processedItem;
     const key = `message-${index}`;
     
     return (
@@ -144,14 +196,24 @@ export const MessageList: React.FC<MessageListProps> = ({
         {item.type === "tool_call" ? (
           <ToolCall toolCall={item} />
         ) : item.type === "message" ? (
-          <div className="flex flex-col gap-1 group">
-            <Message 
-              message={item} 
+          <div className="flex flex-col">
+            <MessageBubble
+              message={item}
               onRegenerate={item.role === "assistant" ? onRegenerateMessage : undefined}
+              isGroupStart={isGroupStart}
+              isGroupEnd={isGroupEnd}
+              showTimestamp={showTimestamp}
+              showAvatar={showAvatar}
+              platform={platform}
+              messageStatus="sent"
             />
             {item.content &&
               item.content[0].annotations &&
-              item.content[0].annotations.length > 0 && (
+              item.content[0].annotations.length > 0 && 
+              item.content[0].annotations.some(
+                (a) => a.type !== "container_file_citation" ||
+                !a.filename || !/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(a.filename)
+              ) && (
                 <Annotations annotations={item.content[0].annotations} />
               )}
           </div>
@@ -165,12 +227,12 @@ export const MessageList: React.FC<MessageListProps> = ({
         ) : null}
       </div>
     );
-  }, [onApprovalResponse, onRegenerateMessage]);
+  }, [onApprovalResponse, onRegenerateMessage, platform]);
 
-  // Calculate virtual items
-  const virtualItems = items.slice(visibleRange.start, visibleRange.end);
+  // Calculate virtual items with processed messages
+  const virtualItems = processedMessages.slice(visibleRange.start, visibleRange.end);
   const spacerTop = visibleRange.start * itemHeight;
-  const spacerBottom = (items.length - visibleRange.end) * itemHeight;
+  const spacerBottom = (processedMessages.length - visibleRange.end) * itemHeight;
 
   return (
     <div className={cn("relative h-full", className)}>
@@ -246,7 +308,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           </div>
 
           {/* Loading state */}
-          {isLoading && <LoadingMessage />}
+          {isLoading && <TypingIndicator platform={platform} />}
 
           {/* Scroll anchor */}
           <div ref={messagesEndRef} className="h-1" />
