@@ -4,9 +4,11 @@ import Chat from "./chat";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ConversationBottomSheet } from "./conversation-bottom-sheet";
 import { SemanticSearch } from "./semantic-search";
+import { FloatingActionButton } from "./floating-action-button";
 import { Menu, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useConversationStore from "@/stores/useConversationStore";
+import useNavigationStore from "@/stores/useNavigationStore";
 import { Item, processMessages } from "@/lib/assistant";
 import haptic from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -28,6 +30,11 @@ export default function Assistant() {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showFAB, setShowFAB] = useState(true);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [lastScrollTop, setLastScrollTop] = useState(0);
+  
+  const { activeTab } = useNavigationStore();
 
   // Detect device type
   useEffect(() => {
@@ -142,6 +149,69 @@ export default function Assistant() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   
+  // Scroll detection to show/hide FAB
+  useEffect(() => {
+    if (!chatContainerRef.current) return;
+    
+    const handleScroll = () => {
+      const scrollTop = chatContainerRef.current?.scrollTop || 0;
+      
+      // Show FAB when scrolling up, hide when scrolling down
+      if (scrollTop > lastScrollTop && scrollTop > 100) {
+        setShowFAB(false); // Scrolling down
+      } else {
+        setShowFAB(true); // Scrolling up or at top
+      }
+      
+      setLastScrollTop(scrollTop);
+    };
+    
+    const scrollElement = chatContainerRef.current;
+    scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      scrollElement.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollTop]);
+  
+  // Keyboard detection
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined' && window.visualViewport) {
+        const hasKeyboard = window.visualViewport.height < window.innerHeight - 100;
+        setIsKeyboardVisible(hasKeyboard);
+      }
+    };
+    
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        setIsKeyboardVisible(true);
+      }
+    };
+    
+    const handleFocusOut = () => {
+      // Delay to prevent flicker when switching between inputs
+      setTimeout(() => {
+        const activeElement = document.activeElement;
+        if (!activeElement || (activeElement.tagName !== 'INPUT' && activeElement.tagName !== 'TEXTAREA')) {
+          setIsKeyboardVisible(false);
+        }
+      }, 100);
+    };
+    
+    // Multiple detection methods for better compatibility
+    window.visualViewport?.addEventListener('resize', handleResize);
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
+  
   // Add swipe right gesture to open bottom sheet on mobile
   useEffect(() => {
     if (!isMobile || !chatContainerRef.current) return;
@@ -190,7 +260,7 @@ export default function Assistant() {
   const shouldUseBottomSheet = isMobile || (isTablet && window.matchMedia("(orientation: portrait)").matches);
 
   return (
-    <div className="flex h-full relative">
+    <div className="flex h-full relative overflow-hidden">
       {/* Desktop Sidebar - Only show on larger screens */}
       {!shouldUseBottomSheet && (
         <div className="w-80 flex-shrink-0 hidden lg:block">
@@ -278,6 +348,28 @@ export default function Assistant() {
           isOpen={isBottomSheetOpen}
           onOpenChange={setIsBottomSheetOpen}
         />
+      )}
+      
+      {/* Floating Action Button - render outside main layout */}
+      {activeTab === 'chat' && (
+        <div className="fixed bottom-20 right-4 md:bottom-24 lg:bottom-8 lg:right-8 z-50">
+          <FloatingActionButton
+            onNewConversation={() => {
+              handleNewConversation();
+              // Close bottom sheet if open
+              setIsBottomSheetOpen(false);
+            }}
+            onVoiceChat={() => {
+              // Voice chat placeholder
+              console.log('Voice chat initiated');
+            }}
+            onImportDocument={() => {
+              // Import document placeholder
+              console.log('Import document initiated');
+            }}
+            hide={!showFAB || isKeyboardVisible || isBottomSheetOpen}
+          />
+        </div>
       )}
     </div>
   );
