@@ -237,11 +237,28 @@ export default function EnhancedMemoriesView() {
                   memory={memory}
                   isSelected={selectedMemory?.id === memory.id}
                   onClick={() => setSelectedMemory(memory)}
-                  onDelete={() => {
+                  onDelete={async () => {
                     haptic.trigger('medium');
-                    setMemories(prev => prev.filter(m => m.id !== memory.id));
-                    if (selectedMemory?.id === memory.id) {
-                      setSelectedMemory(null);
+                    try {
+                      // Call API to delete the memory from the database
+                      const response = await fetch(`/api/semantic-memories?id=${memory.id}`, {
+                        method: 'DELETE',
+                      });
+                      
+                      if (response.ok) {
+                        // Only remove from UI if deletion was successful
+                        setMemories(prev => prev.filter(m => m.id !== memory.id));
+                        if (selectedMemory?.id === memory.id) {
+                          setSelectedMemory(null);
+                        }
+                        haptic.trigger('success');
+                      } else {
+                        console.error('Failed to delete memory');
+                        haptic.trigger('error');
+                      }
+                    } catch (error) {
+                      console.error('Error deleting memory:', error);
+                      haptic.trigger('error');
                     }
                   }}
                   formatDate={formatDate}
