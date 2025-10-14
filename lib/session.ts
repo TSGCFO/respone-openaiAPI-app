@@ -3,8 +3,22 @@ import { randomBytes } from "crypto";
 
 const SESSION_COOKIE = "gc_session_id";
 
-// Simple in-memory storage for demo purposes only.
-// In production, replace with a persistent/session store.
+/**
+ * ⚠️ SECURITY WARNING: IN-MEMORY SESSION STORAGE ⚠️
+ * 
+ * This implementation uses an in-memory Map for session storage which is:
+ * - NOT suitable for production use
+ * - Sessions are LOST on server restart
+ * - Sessions are NOT shared across server instances
+ * - This creates security vulnerabilities and poor user experience
+ * 
+ * For production, you MUST replace this with:
+ * - Redis for session storage
+ * - Database-backed sessions  
+ * - Or use secure, encrypted cookies for session data
+ * 
+ * This is for development purposes only!
+ */
 export interface OAuthTokens {
   access_token?: string;
   refresh_token?: string;
