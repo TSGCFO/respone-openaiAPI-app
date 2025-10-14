@@ -1,7 +1,7 @@
 "use client";
 import Assistant from "@/components/assistant";
 import ToolsPanel from "@/components/tools-panel";
-import MemoriesView from "@/components/memories-view";
+import EnhancedMemoriesView from "@/components/enhanced-memories-view";
 import SettingsView from "@/components/settings-view";
 import BottomNavigation from "@/components/bottom-navigation";
 import useNavigationStore from "@/stores/useNavigationStore";
@@ -32,7 +32,7 @@ export default function Main() {
       case "chat":
         return <Assistant />;
       case "memories":
-        return <MemoriesView />;
+        return <EnhancedMemoriesView />;
       case "tools":
         return <ToolsPanel />;
       case "settings":

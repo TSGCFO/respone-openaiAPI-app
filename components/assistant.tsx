@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useState, useEffect, useRef } from "react";
-import Chat from "./chat";
+import EnhancedChat from "./enhanced-chat";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ConversationBottomSheet } from "./conversation-bottom-sheet";
 import { SemanticSearch } from "./semantic-search";
@@ -19,6 +19,7 @@ export default function Assistant() {
     addConversationItem, 
     addChatMessage, 
     setAssistantLoading,
+    isAssistantLoading,
     saveMessage,
     createSemanticMemory,
     resetConversation,
@@ -33,6 +34,7 @@ export default function Assistant() {
   const [showFAB, setShowFAB] = useState(true);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [lastScrollTop, setLastScrollTop] = useState(0);
+  const [conversationList, setConversationList] = useState<Array<{ id: number; title: string; createdAt: string }>>([]);
   
   const { activeTab } = useNavigationStore();
 
@@ -48,6 +50,23 @@ export default function Assistant() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  // Fetch conversations list
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await fetch('/api/conversations');
+        if (response.ok) {
+          const data = await response.json();
+          setConversationList(data.conversations || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch conversations:', error);
+      }
+    };
+
+    fetchConversations();
+  }, [currentConversationId]);
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
@@ -121,6 +140,49 @@ export default function Assistant() {
       resetConversation();
     }
   };
+  
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    // Filter out the deleted message from chat messages
+    const filteredMessages = chatMessages.filter((item, index) => {
+      if (item.type === 'message') {
+        const id = (item as any).id || `${(item as any).role}-${index}`;
+        return id !== messageId;
+      }
+      return true;
+    });
+    
+    // Update the store
+    useConversationStore.getState().setChatMessages(filteredMessages);
+    
+    haptic.trigger('success');
+  }, [chatMessages]);
+  
+  const onRegenerateMessage = useCallback(async () => {
+    // Find the last assistant message and regenerate it
+    const lastAssistantIndex = chatMessages.findLastIndex(
+      item => item.type === 'message' && (item as any).role === 'assistant'
+    );
+    
+    if (lastAssistantIndex !== -1) {
+      // Remove the last assistant message
+      const newMessages = chatMessages.slice(0, lastAssistantIndex);
+      useConversationStore.getState().setChatMessages(newMessages);
+      
+      // Regenerate response
+      haptic.trigger('medium');
+      setAssistantLoading(true);
+      
+      try {
+        await processMessages();
+        haptic.trigger('success');
+      } catch (error) {
+        console.error('Failed to regenerate message:', error);
+        haptic.trigger('error');
+      } finally {
+        setAssistantLoading(false);
+      }
+    }
+  }, [chatMessages, setAssistantLoading]);
 
   const handleSearchResultSelect = useCallback(async (result: any) => {
     // If it's a message from a different conversation, load that conversation
@@ -330,10 +392,15 @@ export default function Assistant() {
             </div>
           )}
           
-          <Chat
+          <EnhancedChat
             items={chatMessages}
             onSendMessage={handleSendMessage}
             onApprovalResponse={handleApprovalResponse}
+            onRegenerateMessage={onRegenerateMessage}
+            onDeleteMessage={handleDeleteMessage}
+            conversationList={conversationList}
+            onConversationChange={handleSelectConversation}
+            isLoading={isAssistantLoading}
           />
         </div>
       </div>
