@@ -10,35 +10,49 @@ import { Item, McpApprovalRequestItem } from "@/lib/assistant";
 import LoadingMessage from "./loading-message";
 import useConversationStore from "@/stores/useConversationStore";
 import { AudioRecorder } from "./audio-recorder";
+import { cn } from "@/lib/utils";
 
 interface ChatProps {
   items: Item[];
   onSendMessage: (message: string) => void;
   onApprovalResponse: (approve: boolean, id: string) => void;
+  onRegenerateMessage?: () => void;
 }
 
 const Chat: React.FC<ChatProps> = ({
   items,
   onSendMessage,
   onApprovalResponse,
+  onRegenerateMessage,
 }) => {
   const itemsEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [inputMessageText, setinputMessageText] = useState<string>("");
   // This state is used to provide better user experience for non-English IMEs such as Japanese
   const [isComposing, setIsComposing] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const { isAssistantLoading } = useConversationStore();
 
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
   const scrollToBottom = () => {
-    itemsEndRef.current?.scrollIntoView({ behavior: "instant" });
+    itemsEndRef.current?.scrollIntoView({ 
+      behavior: "smooth",
+      block: "end" 
+    });
   };
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey && !isComposing) {
         event.preventDefault();
-        onSendMessage(inputMessageText);
-        setinputMessageText("");
+        if (inputMessageText.trim()) {
+          onSendMessage(inputMessageText);
+          setinputMessageText("");
+        }
       }
     },
     [onSendMessage, inputMessageText, isComposing]
@@ -115,15 +129,29 @@ const Chat: React.FC<ChatProps> = ({
   return (
     <div className="flex justify-center items-center size-full">
       <div className="flex grow flex-col h-full max-w-[750px] gap-2">
-        <div className="h-[90vh] overflow-y-scroll px-10 flex flex-col">
+        <div 
+          ref={scrollContainerRef}
+          className={cn(
+            "h-[90vh] overflow-y-auto overflow-x-hidden px-10 flex flex-col",
+            "overscroll-contain touch-pan-y",
+            isTouchDevice && "scroll-smooth"
+          )}
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollBehavior: 'smooth',
+          }}
+        >
           <div className="mt-auto space-y-5 pt-4">
             {items.map((item, index) => (
               <React.Fragment key={index}>
                 {item.type === "tool_call" ? (
                   <ToolCall toolCall={item} />
                 ) : item.type === "message" ? (
-                  <div className="flex flex-col gap-1">
-                    <Message message={item} />
+                  <div className="flex flex-col gap-1 group">
+                    <Message 
+                      message={item} 
+                      onRegenerate={item.role === 'assistant' ? onRegenerateMessage : undefined}
+                    />
                     {item.content &&
                       item.content[0].annotations &&
                       item.content[0].annotations.length > 0 && (
@@ -158,7 +186,10 @@ const Chat: React.FC<ChatProps> = ({
                       dir="auto"
                       rows={2}
                       placeholder={isProcessingAudio ? "Processing audio..." : "Message..."}
-                      className="mb-2 resize-none border-0 focus:outline-none text-sm bg-transparent px-0 pb-6 pt-2"
+                      className={cn(
+                        "mb-2 resize-none border-0 focus:outline-none text-sm bg-transparent px-0 pb-6 pt-2",
+                        "touch-manipulation"
+                      )}
                       value={inputMessageText}
                       onChange={(e) => setinputMessageText(e.target.value)}
                       onKeyDown={handleKeyDown}
@@ -171,15 +202,23 @@ const Chat: React.FC<ChatProps> = ({
                     onAudioReady={handleAudioReady}
                     onTranscriptionRequest={handleTranscriptionRequest}
                     disabled={isAssistantLoading || isProcessingAudio}
-                    className="mr-2"
+                    className="mr-2 min-w-[44px] min-h-[44px]"
                   />
                   <button
-                    disabled={!inputMessageText || isProcessingAudio}
+                    disabled={!inputMessageText.trim() || isProcessingAudio}
                     data-testid="send-button"
-                    className="flex size-8 items-end justify-center rounded-full bg-black text-white transition-colors hover:opacity-70 focus-visible:outline-none focus-visible:outline-black disabled:bg-[#D7D7D7] disabled:text-[#f4f4f4] disabled:hover:opacity-100"
-                  onClick={() => {
-                      onSendMessage(inputMessageText);
-                      setinputMessageText("");
+                    className={cn(
+                      "flex items-center justify-center rounded-full bg-black text-white transition-all",
+                      "hover:opacity-70 focus-visible:outline-none focus-visible:outline-black",
+                      "disabled:bg-[#D7D7D7] disabled:text-[#f4f4f4] disabled:hover:opacity-100",
+                      "min-w-[44px] min-h-[44px] touch-manipulation",
+                      "active:scale-[0.95]"
+                    )}
+                    onClick={() => {
+                      if (inputMessageText.trim()) {
+                        onSendMessage(inputMessageText);
+                        setinputMessageText("");
+                      }
                     }}
                   >
                     <svg
@@ -204,6 +243,28 @@ const Chat: React.FC<ChatProps> = ({
           </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        @supports (-webkit-touch-callout: none) {
+          .overscroll-contain {
+            -webkit-overflow-scrolling: touch;
+          }
+        }
+        
+        .touch-manipulation {
+          touch-action: manipulation;
+        }
+        
+        .touch-pan-y {
+          touch-action: pan-y;
+        }
+        
+        @media (hover: none) and (pointer: coarse) {
+          .hover\\:opacity-70:hover {
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };
