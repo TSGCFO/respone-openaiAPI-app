@@ -24,6 +24,10 @@ export interface MessageItem {
   role: "user" | "assistant" | "system";
   id?: string;
   content: ContentItem[];
+  metadata?: {
+    timestamp?: string;
+    [key: string]: any;
+  };
 }
 
 // Custom items to display in chat

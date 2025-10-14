@@ -96,8 +96,15 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
   
   // Set current time only on the client side to avoid hydration mismatch
   useEffect(() => {
-    setCurrentTime(format(new Date(), 'h:mm a'));
-  }, []);
+    // Use the message's actual timestamp if available, otherwise use current time as fallback
+    const timestamp = message.metadata?.timestamp;
+    if (timestamp) {
+      const date = new Date(timestamp);
+      setCurrentTime(format(date, 'h:mm a'));
+    } else {
+      setCurrentTime(format(new Date(), 'h:mm a'));
+    }
+  }, [message.metadata?.timestamp]);
   
   // Handle copy to clipboard
   const handleCopy = useCallback(() => {

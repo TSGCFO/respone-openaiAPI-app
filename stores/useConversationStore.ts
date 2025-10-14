@@ -131,6 +131,10 @@ const useConversationStore = create<ConversationState>((set, get) => ({
             type: msg.role === 'user' ? 'input_text' : 'output_text', 
             text: msg.content 
           }],
+          metadata: {
+            timestamp: msg.timestamp,
+            ...(msg.metadata || {})
+          }
         };
       }).flat();
       

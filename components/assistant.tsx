@@ -75,7 +75,10 @@ export default function Assistant() {
       type: "message",
       role: "user",
       content: [{ type: "input_text", text: message.trim() }],
-    };
+      metadata: {
+        timestamp: new Date().toISOString()
+      }
+    } as MessageItem;
     const userMessage: any = {
       role: "user",
       content: message.trim(),

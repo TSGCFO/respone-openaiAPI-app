@@ -93,8 +93,15 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
   
   // Set message time (client-side only to avoid hydration mismatch)
   useEffect(() => {
-    setMessageTime(format(new Date(), 'HH:mm'));
-  }, []);
+    // Use the message's actual timestamp if available, otherwise use current time as fallback
+    const timestamp = message.metadata?.timestamp;
+    if (timestamp) {
+      const date = new Date(timestamp);
+      setMessageTime(format(date, 'HH:mm'));
+    } else {
+      setMessageTime(format(new Date(), 'HH:mm'));
+    }
+  }, [message.metadata?.timestamp]);
   
   // Handle copy with haptic feedback
   const handleCopy = useCallback(() => {
