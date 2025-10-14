@@ -91,7 +91,16 @@ export const handleTurn = async (
     });
 
     if (!response.ok) {
-      console.error(`Error: ${response.status} - ${response.statusText}`);
+      const errorMessage = `Error: ${response.status} - ${response.statusText}`;
+      console.error(errorMessage);
+      // Send error message to the client
+      onMessage({
+        event: "error",
+        data: {
+          message: errorMessage,
+          status: response.status
+        }
+      });
       return;
     }
 
@@ -133,6 +142,14 @@ export const handleTurn = async (
     }
   } catch (error) {
     console.error("Error handling turn:", error);
+    // Send error message to the client
+    onMessage({
+      event: "error",
+      data: {
+        message: error instanceof Error ? error.message : "An unexpected error occurred",
+        error: error
+      }
+    });
   }
 };
 
