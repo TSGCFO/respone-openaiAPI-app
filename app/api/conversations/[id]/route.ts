@@ -8,10 +8,11 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const conversationId = parseInt(params.id);
+    const { id } = await params;
+    const conversationId = parseInt(id);
     
     const conversation = await getConversation(conversationId);
     if (!conversation) {
@@ -38,10 +39,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const conversationId = parseInt(params.id);
+    const { id } = await params;
+    const conversationId = parseInt(id);
     const body = await request.json();
     
     const conversation = await updateConversation(conversationId, body);
@@ -58,10 +60,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const conversationId = parseInt(params.id);
+    const { id } = await params;
+    const conversationId = parseInt(id);
     
     await deleteConversation(conversationId);
     
