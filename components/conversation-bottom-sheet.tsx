@@ -98,7 +98,7 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
             haptic.trigger('heavy');
             onDelete();
           }}
-          className="text-white font-medium p-2"
+          className="text-white font-medium min-h-[48px] min-w-[48px] px-4 py-2 flex items-center justify-center"
         >
           Delete
         </button>

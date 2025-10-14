@@ -56,7 +56,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
   isGroupEnd = true,
   showAvatar = false,
   showTimestamp = false,
-  platform = "other",
+  platform: platformProp = "other",
   messageStatus = "sent",
   className
 }, ref) => {
@@ -75,17 +75,23 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
   const isUser = message.role === "user";
   const messageText = message.content[0]?.text || "";
   
-  // Detect actual platform if not provided
+  // Detect actual platform if not provided and store in state
+  const [platform, setPlatform] = useState(platformProp);
+  
   useEffect(() => {
-    if (platform === "other") {
+    if (platformProp === "other") {
       const userAgent = navigator.userAgent || navigator.vendor;
       if (/iPad|iPhone|iPod/.test(userAgent)) {
-        platform = "ios";
+        setPlatform("ios");
       } else if (/android/i.test(userAgent)) {
-        platform = "android";
+        setPlatform("android");
+      } else {
+        setPlatform("other");
       }
+    } else {
+      setPlatform(platformProp);
     }
-  }, []);
+  }, [platformProp]);
   
   // Handle copy to clipboard
   const handleCopy = useCallback(() => {
@@ -306,9 +312,9 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
                   navigator.clipboard.writeText(String(children));
                   haptic.trigger("selection");
                 }}
-                className="hover:text-white transition-colors p-1"
+                className="hover:text-white transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center p-3"
               >
-                <Copy className="h-3 w-3" />
+                <Copy className="h-4 w-4" />
               </button>
             </div>
             <SyntaxHighlighter
