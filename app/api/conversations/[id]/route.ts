@@ -5,6 +5,12 @@ import {
   deleteConversation,
   getConversationMessages 
 } from '@/lib/db/conversations';
+import { 
+  idSchema, 
+  conversationUpdateSchema, 
+  validateRequest, 
+  ValidationError 
+} from '@/lib/validation';
 
 export async function GET(
   request: NextRequest,
@@ -43,13 +49,19 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const conversationId = parseInt(id);
-    const body = await request.json();
+    const conversationId = idSchema.parse(id);
+    const validatedBody = await validateRequest(request, conversationUpdateSchema);
     
-    const conversation = await updateConversation(conversationId, body);
+    const conversation = await updateConversation(conversationId, validatedBody);
     
     return NextResponse.json({ conversation });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400 }
+      );
+    }
     console.error('Failed to update conversation:', error);
     return NextResponse.json(
       { error: 'Failed to update conversation' },
