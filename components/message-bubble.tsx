@@ -67,6 +67,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
   const [isSelected, setIsSelected] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isPressed, setIsPressed] = useState(false);
+  const [currentTime, setCurrentTime] = useState<string>('');
   
   const messageRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
@@ -92,6 +93,11 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
       setPlatform(platformProp);
     }
   }, [platformProp]);
+  
+  // Set current time only on the client side to avoid hydration mismatch
+  useEffect(() => {
+    setCurrentTime(format(new Date(), 'h:mm a'));
+  }, []);
   
   // Handle copy to clipboard
   const handleCopy = useCallback(() => {
@@ -178,7 +184,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
       });
     }
     
-    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.share) {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       options.push({
         label: 'Share',
         icon: <Share className="h-4 w-4" />,
@@ -440,12 +446,12 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
           className={bubbleStyles}
         >
           {/* Timestamp */}
-          {showTimestamp && (
+          {showTimestamp && currentTime && (
             <div className={cn(
               "text-xs mb-1",
               isUser ? "text-white/70" : "text-gray-500"
             )}>
-              {format(new Date(), 'h:mm a')}
+              {currentTime}
             </div>
           )}
           

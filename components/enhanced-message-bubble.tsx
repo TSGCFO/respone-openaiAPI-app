@@ -64,6 +64,7 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletedMessages, setDeletedMessages] = useState<Set<string>>(new Set());
   const [undoStack, setUndoStack] = useState<Map<string, UndoState>>(new Map());
+  const [currentTime, setCurrentTime] = useState<string>('');
   
   const messageRef = useRef<HTMLDivElement>(null);
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
@@ -71,7 +72,8 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
   
   const isUser = message.role === "user";
   const messageText = message.content[0]?.text || "";
-  const messageId = (message as any).id || `${message.role}-${Date.now()}`;
+  // Use a stable messageId that doesn't change between server and client
+  const messageId = (message as any).id || `${message.role}-${messageText.slice(0, 20)}`;
   
   // Detect platform
   useEffect(() => {
@@ -86,6 +88,11 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
       }
     }
   }, [propPlatform]);
+  
+  // Set current time only on the client side to avoid hydration mismatch
+  useEffect(() => {
+    setCurrentTime(format(new Date(), 'HH:mm'));
+  }, []);
   
   // Handle delete with undo
   const handleDelete = useCallback(() => {
@@ -389,12 +396,12 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
           </div>
           
           {/* Timestamp & Status */}
-          {showTimestamp && (
+          {showTimestamp && currentTime && (
             <div className={cn(
               "flex items-center gap-1 mt-1 text-xs opacity-70",
               isUser ? "justify-end" : "justify-start"
             )}>
-              <span>{format(new Date(), 'HH:mm')}</span>
+              <span>{currentTime}</span>
               {isUser && (
                 <>
                   {messageStatus === 'sending' && <Clock size={12} />}

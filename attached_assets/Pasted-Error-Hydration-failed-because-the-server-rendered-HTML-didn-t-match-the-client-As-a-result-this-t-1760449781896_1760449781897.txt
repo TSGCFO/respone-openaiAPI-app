@@ -1,0 +1,58 @@
+Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <div className="flex-1 rel...">
+      <div>
+      <div ref={{current:null}} className="bg-white f...">
+        <EnhancedChat items={[...]} onSendMessage={function handleSendMessage} ...>
+          <div ref={{current:null}} style={{height:"100vh", ...}} className="jsx-a8cfdc...">
+            <div ref={{current:null}} className="jsx-a8cfdc...">
+              <MessageList items={[...]} isLoading={false} onApprovalResponse={function handleApprovalResponse} ...>
+                <div className="relative h...">
+                  <div>
+                  <div ref={{current:null}} className="h-full ove..." style={{...}}>
+                    <div className="space-y-4 ...">
+                      <EnhancedMessageBubble message={{type:"message", ...}} ...>
+                        <div className="relative o...">
+                          <div ref={{current:null}} className="relative a..." style={{...}}>
+                            <div className="relative p...">
+                              <div>
+                              <div>
+                              <div className="flex items...">
+                                <span>
++                                 09:46
+-                                 13:46
+                    ...
+            ...
+
+    at throwOnHydrationMismatch (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:13311:11)
+    at prepareToHydrateHostInstance (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:13407:21)
+    at completeWork (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:13745:15)
+    at runWithFiberInDEV (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:1511:30)
+    at completeUnitOfWork (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15256:19)
+    at performUnitOfWork (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15137:11)
+    at workLoopConcurrentByScheduler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15114:9)
+    at renderRootConcurrent (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15089:15)
+    at performWorkOnRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14410:13)
+    at performWorkOnRootViaSchedulerTask (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16275:7)
+    at MessagePort.performWorkUntilDeadline (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:45:48)
+    at span (<anonymous>)
+    at EnhancedMessageBubble (webpack-internal:///(app-pages-browser)/./components/enhanced-message-bubble.tsx:413:108)
+    at eval (webpack-internal:///(app-pages-browser)/./components/enhanced-message-list.tsx:279:119)
+    at Array.map (<anonymous>)
+    at MessageList (webpack-internal:///(app-pages-browser)/./components/enhanced-message-list.tsx:274:47)
+    at EnhancedChat (webpack-internal:///(app-pages-browser)/./components/enhanced-chat.tsx:284:102)
+    at Assistant (webpack-internal:///(app-pages-browser)/./components/assistant.tsx:482:104)
+    at renderActiveView (webpack-internal:///(app-pages-browser)/./app/page.tsx:71:99)
+    at Main (webpack-internal:///(app-pages-browser)/./app/page.tsx:125:35)
+    at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:20:50)
