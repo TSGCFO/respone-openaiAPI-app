@@ -92,10 +92,23 @@ export default function Assistant() {
       // Process the message and get response
       await processMessages();
       
-      // Check if this is an important exchange for semantic memory
-      if (message.length > 50 || message.includes('?')) {
-        const summary = `User asked: ${message.substring(0, 100)}...`;
-        await createSemanticMemory(message, summary);
+      // Extract facts and create semantic memory intelligently
+      const { extractFactsFromMessage, generateSmartSummary, calculateImportance } = await import('@/lib/memory-extraction');
+      const facts = await extractFactsFromMessage(message);
+      
+      // Only create memory if we found important facts or it's a significant message
+      if (facts.length > 0 || message.length > 50 || message.includes('?')) {
+        const summary = generateSmartSummary(message, facts);
+        const importance = calculateImportance(message, facts);
+        
+        // Create a semantic memory with intelligent extraction
+        await createSemanticMemory(message, summary, {
+          importance,
+          metadata: {
+            facts: facts.map(f => ({ fact: f.fact, type: f.type })),
+            timestamp: new Date().toISOString()
+          }
+        });
       }
     } catch (error) {
       console.error("Error processing message:", error);

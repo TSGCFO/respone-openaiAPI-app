@@ -27,7 +27,11 @@ interface ConversationState {
   createNewConversation: () => Promise<number>;
   loadConversation: (conversationId: number) => Promise<void>;
   saveMessage: (role: 'user' | 'assistant', content: string, toolCalls?: any[]) => Promise<void>;
-  createSemanticMemory: (content: string, summary: string) => Promise<void>;
+  createSemanticMemory: (content: string, summary: string, options?: { 
+    importance?: number; 
+    metadata?: Record<string, any>;
+    context?: string;
+  }) => Promise<void>;
 }
 
 const useConversationStore = create<ConversationState>((set, get) => ({
@@ -194,7 +198,11 @@ const useConversationStore = create<ConversationState>((set, get) => ({
     }
   },
   
-  createSemanticMemory: async (content: string, summary: string) => {
+  createSemanticMemory: async (content: string, summary: string, options?: { 
+    importance?: number; 
+    metadata?: Record<string, any>;
+    context?: string;
+  }) => {
     const { currentConversationId, userId } = get();
     
     if (!currentConversationId) return;
@@ -210,6 +218,9 @@ const useConversationStore = create<ConversationState>((set, get) => ({
           conversationId: currentConversationId,
           content,
           summary,
+          importance: options?.importance || 5,
+          metadata: options?.metadata || {},
+          context: options?.context,
           generateEmbedding: true,
         }),
       });
