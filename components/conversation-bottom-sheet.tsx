@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import haptic from '@/lib/haptic';
+import * as VisuallyHidden from '@reach/visually-hidden';
 
 interface Conversation {
   id: number;
@@ -388,6 +389,13 @@ export function ConversationBottomSheet({
           )}
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
+          {/* Accessibility Title - Hidden visually but available to screen readers */}
+          <Drawer.Title asChild>
+            <VisuallyHidden.VisuallyHidden>
+              <h2>Conversations Menu</h2>
+            </VisuallyHidden.VisuallyHidden>
+          </Drawer.Title>
+
           {/* Handle / Pill indicator with better styling */}
           <div className="w-full pt-3 pb-2 flex justify-center relative">
             <div className="absolute inset-x-0 top-0 h-12 flex items-center justify-center pointer-events-none">
