@@ -29,6 +29,7 @@
     "date-fns": "^4.1.0",
     "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.6",
+    "form-data": "^4.0.4",
     "framer-motion": "^12.23.24",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.22",

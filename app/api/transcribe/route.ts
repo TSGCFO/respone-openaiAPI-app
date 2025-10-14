@@ -19,32 +19,10 @@ export async function POST(request: NextRequest) {
       size: audioFile.size
     });
 
-    // Validate file type - accept webm with codecs
-    const validTypes = [
-      'audio/webm', 
-      'audio/webm;codecs=opus',
-      'audio/ogg', 
-      'audio/mpeg', 
-      'audio/mp4', 
-      'audio/wav'
-    ];
-    
-    // Check if the file type starts with any valid type (to handle codec variations)
-    const isValidType = validTypes.some(type => 
-      audioFile.type.startsWith(type.split(';')[0])
-    );
-    
-    if (!isValidType) {
-      console.error('Invalid audio file type:', audioFile.type);
-      return NextResponse.json(
-        { error: `Invalid audio file type: ${audioFile.type}` },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size (max 25MB)
+    // Validate file size (max 25MB for Whisper API)
     const maxSize = 25 * 1024 * 1024; // 25MB
     if (audioFile.size > maxSize) {
+      console.error('File size exceeds limit:', audioFile.size);
       return NextResponse.json(
         { error: 'File size exceeds 25MB limit' },
         { status: 400 }
@@ -60,26 +38,72 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Implement OpenAI Whisper transcription
-    const formDataForAPI = new FormData();
-    formDataForAPI.append('file', audioFile);
-    formDataForAPI.append('model', 'whisper-1');
+    // Convert the File to a Buffer first
+    const arrayBuffer = await audioFile.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    console.log('Audio buffer size:', buffer.length);
+
+    // Create a new FormData for OpenAI API
+    // Important: Create a proper File object with the correct MIME type
+    const openAIFormData = new FormData();
+    
+    // Create a Blob with the correct MIME type for webm
+    const blob = new Blob([buffer], { type: 'audio/webm' });
+    
+    // Create a File from the Blob with a proper filename
+    // OpenAI expects the file to have a proper extension
+    const fileName = audioFile.name || 'recording.webm';
+    const processedFile = new File([blob], fileName, { type: 'audio/webm' });
+    
+    openAIFormData.append('file', processedFile);
+    openAIFormData.append('model', 'whisper-1');
+    
+    console.log('Sending to OpenAI Whisper API...');
     
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
-      body: formDataForAPI,
+      body: openAIFormData,
     });
 
+    const responseText = await response.text();
+    console.log('OpenAI Response status:', response.status);
+    
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI Whisper API error:', errorData);
-      throw new Error(`Transcription failed: ${response.statusText}`);
+      console.error('OpenAI Whisper API error:', responseText);
+      
+      // Try to parse error details
+      let errorDetails;
+      try {
+        errorDetails = JSON.parse(responseText);
+      } catch {
+        errorDetails = responseText;
+      }
+      
+      return NextResponse.json(
+        { 
+          error: 'Transcription failed',
+          details: errorDetails,
+          status: response.status
+        },
+        { status: response.status }
+      );
     }
 
-    const data = await response.json();
+    // Parse the successful response
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      // If it's not JSON, assume it's the text directly
+      data = { text: responseText };
+    }
+    
+    console.log('Transcription successful:', data.text?.substring(0, 100));
+    
     return NextResponse.json({ text: data.text });
 
   } catch (error) {

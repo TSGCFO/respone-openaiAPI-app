@@ -182,17 +182,35 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setIsProcessingAudio(true);
     
     try {
+      console.log("Starting transcription for blob:", {
+        size: audioBlob.size,
+        type: audioBlob.type
+      });
+      
+      // Check if blob is empty
+      if (audioBlob.size === 0) {
+        console.error("Audio blob is empty");
+        throw new Error("Recording is empty");
+      }
+      
       const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.webm");
+      // Create a File object with proper MIME type
+      const audioFile = new File([audioBlob], "recording.webm", {
+        type: audioBlob.type || "audio/webm"
+      });
+      formData.append("audio", audioFile);
       
       const response = await fetch("/api/transcribe", {
         method: "POST",
         body: formData,
       });
       
-      if (!response.ok) throw new Error("Transcription failed");
-      
       const data = await response.json();
+      
+      if (!response.ok) {
+        console.error("Transcription API error:", data);
+        throw new Error(data.error || "Transcription failed");
+      }
       
       if (data.text) {
         setMessage(data.text);
