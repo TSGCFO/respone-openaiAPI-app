@@ -58,7 +58,9 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
   
   const swipeState = useSwipeGesture(itemRef, {
     threshold: 30,
+    trackMouse: false, // Disable mouse tracking to prevent click interference
     onSwipeMove: (deltaX) => {
+      // Only handle horizontal swipes for delete action
       if (deltaX < 0) {
         const offset = Math.max(deltaX, -100);
         setSwipeOffset(offset);
@@ -88,8 +90,11 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
         )}
       >
         <button
-          onClick={onDelete}
-          className="text-white font-medium"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="text-white font-medium p-2"
         >
           Delete
         </button>
@@ -107,10 +112,24 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
           isActive && "bg-accent",
           "touch-manipulation"
         )}
-        onClick={() => {
-          if (!isEditing && swipeOffset === 0) {
-            onSelect();
+        onClick={(e) => {
+          // Don't trigger select if we're editing or swiping
+          if (isEditing || Math.abs(swipeOffset) > 5) {
+            return;
           }
+          
+          // Check if click is on a button or interactive element
+          const target = e.target as HTMLElement;
+          if (
+            target.tagName === 'BUTTON' || 
+            target.tagName === 'INPUT' ||
+            target.closest('button') ||
+            target.closest('input')
+          ) {
+            return;
+          }
+          
+          onSelect();
         }}
       >
         <div className="flex items-start justify-between">
@@ -122,18 +141,24 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
                   onChange={(e) => onEditingTitleChange(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
+                      e.preventDefault();
                       onRename();
                     } else if (e.key === 'Escape') {
+                      e.preventDefault();
                       onCancelEdit();
                     }
                   }}
+                  onClick={(e) => e.stopPropagation()}
                   className="h-7 text-sm"
                   autoFocus
                 />
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={onRename}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRename();
+                  }}
                   className="min-w-[44px] min-h-[44px] p-0"
                 >
                   <Check className="h-3 w-3" />
@@ -141,7 +166,10 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={onCancelEdit}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCancelEdit();
+                  }}
                   className="min-w-[44px] min-h-[44px] p-0"
                 >
                   <X className="h-3 w-3" />
@@ -211,21 +239,7 @@ export function ConversationSidebar({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const mobileSwipeRef = useRef<HTMLDivElement>(null);
-
-  // Swipe to open/close sidebar on mobile
-  const swipeState = useSwipeGesture(mobileSwipeRef, {
-    threshold: 50,
-    onSwipeEnd: (direction) => {
-      if (direction === 'right' && !isOpen) {
-        setIsOpen(true);
-      } else if (direction === 'left' && isOpen) {
-        setIsOpen(false);
-      }
-    },
-  });
 
   // Pull to refresh
   const pullToRefreshState = usePullToRefresh(scrollRef, {
@@ -358,7 +372,7 @@ export function ConversationSidebar({
         </Button>
         
         <div className="relative">
-          <Search className="absolute left-2 top-[50%] -translate-y-[50%] h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-[50%] -translate-y-[50%] h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Search conversations..."
             value={searchQuery}
@@ -412,12 +426,6 @@ export function ConversationSidebar({
 
   return (
     <>
-      {/* Mobile swipe area */}
-      <div 
-        ref={mobileSwipeRef}
-        className="md:hidden fixed left-0 top-0 w-8 h-full z-40"
-      />
-      
       {/* Mobile Sheet */}
       <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -433,9 +441,6 @@ export function ConversationSidebar({
           <SheetContent 
             side="left" 
             className="w-80 p-0"
-            style={{
-              animation: isOpen ? 'slide-in-left 0.3s ease-out' : 'slide-out-left 0.3s ease-out',
-            }}
           >
             <SheetHeader className="p-4 border-b">
               <SheetTitle>Conversations</SheetTitle>
@@ -447,7 +452,6 @@ export function ConversationSidebar({
 
       {/* Desktop Sidebar */}
       <div 
-        ref={sidebarRef}
         className={cn(
           "hidden md:block h-full border-r bg-muted/10",
           !isTouchDevice && "[&_.group]:hover:opacity-100"
@@ -456,37 +460,6 @@ export function ConversationSidebar({
         <ConversationList />
       </div>
 
-      <style jsx global>{`
-        @keyframes slide-in-left {
-          from {
-            transform: translateX(-100%);
-          }
-          to {
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes slide-out-left {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-100%);
-          }
-        }
-        
-        @supports (-webkit-touch-callout: none) {
-          .overscroll-contain {
-            -webkit-overflow-scrolling: touch;
-          }
-        }
-        
-        @media (hover: none) and (pointer: coarse) {
-          .group:hover .group-hover\\:opacity-100 {
-            opacity: 0 !important;
-          }
-        }
-      `}</style>
     </>
   );
 }

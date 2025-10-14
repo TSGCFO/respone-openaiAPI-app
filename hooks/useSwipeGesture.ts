@@ -26,7 +26,7 @@ export function useSwipeGesture(
   const {
     threshold = 50,
     preventScroll = false,
-    trackMouse = true,
+    trackMouse = false, // Changed default to false to prevent interference with clicks
     onSwipeStart,
     onSwipeMove,
     onSwipeEnd,
@@ -44,12 +44,29 @@ export function useSwipeGesture(
   const startY = useRef(0);
   const startTime = useRef(0);
   const isTouch = useRef(false);
+  const isDragging = useRef(false);
 
-  const handleStart = useCallback((clientX: number, clientY: number, touch: boolean) => {
+  const handleStart = useCallback((clientX: number, clientY: number, touch: boolean, event?: Event) => {
+    // Don't start swipe if the event is from a button, input, or other interactive element
+    const target = event?.target as HTMLElement;
+    if (target && (
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'A' ||
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea')
+    )) {
+      return;
+    }
+
     startX.current = clientX;
     startY.current = clientY;
     startTime.current = Date.now();
     isTouch.current = touch;
+    isDragging.current = true;
     
     setState({
       isSwping: true,
@@ -63,7 +80,7 @@ export function useSwipeGesture(
   }, [onSwipeStart]);
 
   const handleMove = useCallback((clientX: number, clientY: number) => {
-    if (!startTime.current) return;
+    if (!startTime.current || !isDragging.current) return;
     
     const deltaX = clientX - startX.current;
     const deltaY = clientY - startY.current;
@@ -74,7 +91,8 @@ export function useSwipeGesture(
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
     
-    if (absX > threshold || absY > threshold) {
+    // Only detect swipe if movement is significant
+    if (absX > 10 || absY > 10) {
       if (absX > absY) {
         direction = deltaX > 0 ? 'right' : 'left';
       } else {
@@ -92,16 +110,28 @@ export function useSwipeGesture(
     
     onSwipeMove?.(deltaX, deltaY, velocity);
     
-    if (preventScroll && isTouch.current) {
+    if (preventScroll && isTouch.current && (absX > 5 || absY > 5)) {
       return false;
     }
-  }, [threshold, preventScroll, onSwipeMove]);
+  }, [preventScroll, onSwipeMove]);
 
   const handleEnd = useCallback(() => {
+    if (!isDragging.current) return;
+    
     const deltaTime = Date.now() - startTime.current;
     const velocity = state.velocity;
     
-    if (state.direction && deltaTime < 1000) {
+    // Apply threshold check based on the dominant axis
+    let thresholdMet = false;
+    if (state.direction === 'left' || state.direction === 'right') {
+      // For horizontal swipes, check deltaX threshold
+      thresholdMet = Math.abs(state.deltaX) > threshold;
+    } else if (state.direction === 'up' || state.direction === 'down') {
+      // For vertical swipes, check deltaY threshold
+      thresholdMet = Math.abs(state.deltaY) > threshold;
+    }
+    
+    if (state.direction && thresholdMet && deltaTime < 1000) {
       onSwipeEnd?.(state.direction, velocity);
     }
     
@@ -116,7 +146,8 @@ export function useSwipeGesture(
     startX.current = 0;
     startY.current = 0;
     startTime.current = 0;
-  }, [state.direction, state.velocity, onSwipeEnd]);
+    isDragging.current = false;
+  }, [state.direction, state.deltaX, state.deltaY, state.velocity, threshold, onSwipeEnd]);
 
   useEffect(() => {
     const element = ref.current;
@@ -124,10 +155,11 @@ export function useSwipeGesture(
 
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      handleStart(touch.clientX, touch.clientY, true);
+      handleStart(touch.clientX, touch.clientY, true, e);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging.current) return;
       const touch = e.touches[0];
       const shouldPrevent = handleMove(touch.clientX, touch.clientY);
       if (shouldPrevent === false && preventScroll) {
@@ -139,13 +171,19 @@ export function useSwipeGesture(
       handleEnd();
     };
 
+    const handleTouchCancel = () => {
+      handleEnd();
+    };
+
     const handleMouseDown = (e: MouseEvent) => {
       if (!trackMouse) return;
-      handleStart(e.clientX, e.clientY, false);
+      // Prevent drag selection
+      e.preventDefault();
+      handleStart(e.clientX, e.clientY, false, e);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!trackMouse || !startTime.current) return;
+      if (!trackMouse || !isDragging.current) return;
       handleMove(e.clientX, e.clientY);
     };
 
@@ -154,28 +192,39 @@ export function useSwipeGesture(
       handleEnd();
     };
 
+    const handleMouseLeave = () => {
+      if (!trackMouse || !isDragging.current) return;
+      handleEnd();
+    };
+
+    // Touch events
     element.addEventListener('touchstart', handleTouchStart, { passive: !preventScroll });
     element.addEventListener('touchmove', handleTouchMove, { passive: !preventScroll });
     element.addEventListener('touchend', handleTouchEnd);
+    element.addEventListener('touchcancel', handleTouchCancel);
     
+    // Mouse events - only on the element itself, not document
     if (trackMouse) {
       element.addEventListener('mousedown', handleMouseDown);
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      element.addEventListener('mousemove', handleMouseMove);
+      element.addEventListener('mouseup', handleMouseUp);
+      element.addEventListener('mouseleave', handleMouseLeave);
     }
 
     return () => {
       element.removeEventListener('touchstart', handleTouchStart);
       element.removeEventListener('touchmove', handleTouchMove);
       element.removeEventListener('touchend', handleTouchEnd);
+      element.removeEventListener('touchcancel', handleTouchCancel);
       
       if (trackMouse) {
         element.removeEventListener('mousedown', handleMouseDown);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        element.removeEventListener('mousemove', handleMouseMove);
+        element.removeEventListener('mouseup', handleMouseUp);
+        element.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
-  }, [ref, preventScroll, trackMouse, handleStart, handleMove, handleEnd]);
+  }, [ref, preventScroll, trackMouse, threshold, handleStart, handleMove, handleEnd]);
 
   return state;
 }
