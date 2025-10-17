@@ -4,6 +4,8 @@ import EnhancedChat from "./enhanced-chat";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ConversationBottomSheet } from "./conversation-bottom-sheet";
 import { SemanticSearch } from "./semantic-search";
+import SettingsView from "./settings-view";
+import ContextPanel from "./tools-panel";
 import { FloatingActionButton } from "./floating-action-button";
 import { 
   Box, 
@@ -422,7 +424,7 @@ export default function Assistant() {
           </Toolbar>
         </AppBar>
         
-        {/* Chat content - Mobile First Responsive */}
+        {/* Content Area - Conditionally render based on activeTab */}
         <Box
           ref={chatContainerRef}
           sx={{
@@ -432,16 +434,39 @@ export default function Assistant() {
             backgroundColor: theme.palette.background.default
           }}
         >
-          <EnhancedChat
-            items={chatMessages}
-            onSendMessage={handleSendMessage}
-            onApprovalResponse={handleApprovalResponse}
-            onRegenerateMessage={onRegenerateMessage}
-            onDeleteMessage={handleDeleteMessage}
-            conversationList={conversationList}
-            onConversationChange={handleSelectConversation}
-            isLoading={isAssistantLoading}
-          />
+          {activeTab === 'chat' && (
+            <EnhancedChat
+              items={chatMessages}
+              onSendMessage={handleSendMessage}
+              onApprovalResponse={handleApprovalResponse}
+              onRegenerateMessage={onRegenerateMessage}
+              onDeleteMessage={handleDeleteMessage}
+              conversationList={conversationList}
+              onConversationChange={handleSelectConversation}
+              isLoading={isAssistantLoading}
+            />
+          )}
+          
+          {activeTab === 'memories' && (
+            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <SemanticSearch
+                currentConversationId={currentConversationId ?? undefined}
+                onSelectResult={handleSearchResultSelect}
+              />
+            </Box>
+          )}
+          
+          {activeTab === 'tools' && (
+            <Box sx={{ height: '100%', overflow: 'auto' }}>
+              <ContextPanel />
+            </Box>
+          )}
+          
+          {activeTab === 'settings' && (
+            <Box sx={{ height: '100%', overflow: 'auto' }}>
+              <SettingsView />
+            </Box>
+          )}
         </Box>
       </Box>
 
