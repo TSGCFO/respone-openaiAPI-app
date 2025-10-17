@@ -584,16 +584,14 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
           <ListItemText>{isLiked ? 'Unlike' : 'Like'}</ListItemText>
         </MenuItem>
         
+        {onDelete && <Divider />}
         {onDelete && (
-          <>
-            <Divider />
-            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-              <ListItemIcon>
-                <DeleteIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <ListItemText>Delete</ListItemText>
-            </MenuItem>
-          </>
+          <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Delete</ListItemText>
+          </MenuItem>
         )}
       </Menu>
     </>

@@ -464,9 +464,9 @@ export default function Assistant() {
         />
       )}
       
-      {/* Floating Action Button - render outside main layout */}
+      {/* Floating Action Button - positioned to not overlap send button */}
       {activeTab === 'chat' && (
-        <div className="fixed bottom-20 right-4 md:bottom-24 lg:bottom-8 lg:right-8 z-50">
+        <div className="fixed bottom-32 right-4 md:bottom-36 lg:bottom-8 lg:right-8 z-40">
           <FloatingActionButton
             onNewConversation={() => {
               handleNewConversation();
