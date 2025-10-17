@@ -13,13 +13,14 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Drawer,
+  SwipeableDrawer,
   AppBar,
   Toolbar,
   CircularProgress,
   InputAdornment,
   useTheme,
-  alpha
+  alpha,
+  useMediaQuery
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -145,7 +146,7 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
         elevation={0}
         sx={{
           transform: `translateX(${swipeOffset}px)`,
-          transition: swipeState.isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          transition: (swipeState as any).isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
           p: 1.5,
           borderRadius: 2,
           bgcolor: isActive ? 'action.selected' : 'background.paper',
@@ -290,6 +291,8 @@ export function ConversationSidebar({
   const [editingTitle, setEditingTitle] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // Pull to refresh
   const pullToRefreshState = usePullToRefresh(scrollRef, async () => {
@@ -387,67 +390,95 @@ export function ConversationSidebar({
   );
 
   const ConversationList = () => (
-    <div className="flex flex-col h-full relative">
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       {/* Pull to refresh indicator */}
       {pullToRefreshState.isPulling && (
-        <div 
-          className="absolute top-0 left-0 right-0 flex items-center justify-center bg-accent/50 transition-all duration-300 z-10"
-          style={{
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: alpha(theme.palette.primary.main, 0.1),
+            transition: 'all 0.3s',
+            zIndex: 10,
             height: `${pullToRefreshState.pullDistance}px`,
             opacity: pullToRefreshState.canRefresh ? 1 : 0.5,
           }}
         >
-          <RefreshCw 
-            className={cn(
-              "h-5 w-5 text-foreground",
-              pullToRefreshState.isRefreshing && "animate-spin"
-            )}
+          <RefreshIcon 
+            sx={{
+              fontSize: 20,
+              color: 'text.primary',
+              animation: pullToRefreshState.isRefreshing ? 'spin 1s linear infinite' : 'none',
+              '@keyframes spin': {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' }
+              }
+            }}
           />
-        </div>
+        </Box>
       )}
       
-      <div className="p-4 space-y-3">
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         <Button
           onClick={() => {
             onNewConversation();
             setIsOpen(false);
           }}
-          className="w-full justify-start min-h-[44px]"
-          variant="outline"
+          variant="outlined"
+          fullWidth
+          startIcon={<AddIcon />}
+          sx={{ 
+            justifyContent: 'flex-start', 
+            minHeight: 44,
+            textTransform: 'none'
+          }}
         >
-          <Plus className="mr-2 h-4 w-4" />
           New Conversation
         </Button>
         
-        <div className="relative">
-          <Search className="absolute left-2 top-[50%] -translate-y-[50%] h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Search conversations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 min-h-[44px]"
-          />
-        </div>
-      </div>
+        <TextField
+          placeholder="Search conversations..."
+          value={searchQuery}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+          size="small"
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ minHeight: 44 }}
+        />
+      </Box>
       
-      <div 
+      <Box
         ref={scrollRef}
-        className="flex-1 px-4 overflow-y-auto overflow-x-hidden overscroll-contain"
-        style={{
+        sx={{
+          flex: 1,
+          px: 2,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
-          scrollBehavior: 'smooth',
         }}
       >
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
             Loading conversations...
-          </div>
+          </Box>
         ) : filteredConversations.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
             {searchQuery ? 'No conversations found' : 'No conversations yet'}
-          </div>
+          </Box>
         ) : (
-          <div className="space-y-2 pb-4">
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 2 }}>
             {filteredConversations.map((conversation) => (
               <SwipeableConversationItem
                 key={conversation.id}
@@ -466,48 +497,76 @@ export function ConversationSidebar({
                 onCancelEdit={() => setEditingId(null)}
               />
             ))}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 
   return (
     <>
-      {/* Mobile Sheet */}
-      <div className="md:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="min-w-[44px] min-h-[44px]"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent 
-            side="left" 
-            className="w-80 p-0"
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <>
+          <IconButton
+            onClick={() => setIsOpen(true)}
+            sx={{ 
+              minWidth: 44, 
+              minHeight: 44,
+              display: { xs: 'inline-flex', md: 'none' }
+            }}
           >
-            <SheetHeader className="p-4 border-b">
-              <SheetTitle>Conversations</SheetTitle>
-            </SheetHeader>
+            <MenuIcon />
+          </IconButton>
+          
+          <SwipeableDrawer
+            anchor="left"
+            open={isOpen}
+            onClose={() => setIsOpen(false)}
+            onOpen={() => setIsOpen(true)}
+            sx={{
+              '& .MuiDrawer-paper': {
+                width: 320,
+                bgcolor: 'background.default'
+              }
+            }}
+          >
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              p: 2, 
+              borderBottom: 1, 
+              borderColor: 'divider' 
+            }}>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                Conversations
+              </Typography>
+              <IconButton onClick={() => setIsOpen(false)}>
+                <ClearIcon />
+              </IconButton>
+            </Box>
             <ConversationList />
-          </SheetContent>
-        </Sheet>
-      </div>
+          </SwipeableDrawer>
+        </>
+      )}
 
       {/* Desktop Sidebar */}
-      <div 
-        className={cn(
-          "hidden md:block h-full border-r bg-muted/10",
-          !isTouchDevice && "[&_.group]:hover:opacity-100"
-        )}
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          height: '100%',
+          borderRight: 1,
+          borderColor: 'divider',
+          bgcolor: alpha(theme.palette.background.default, 0.5),
+          ...(!isTouchDevice && {
+            '& .group:hover': {
+              opacity: 1
+            }
+          })
+        }}
       >
         <ConversationList />
-      </div>
-
+      </Box>
     </>
   );
 }
