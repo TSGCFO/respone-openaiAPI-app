@@ -396,16 +396,20 @@ export function ConversationBottomSheet({
         onOpenChange(false);
       }}
       onOpen={() => onOpenChange(true)}
-      swipeAreaWidth={56}
-      disableSwipeToOpen={false}
+      swipeAreaWidth={0}
+      disableSwipeToOpen={true}
       ModalProps={{
         keepMounted: true,
+        sx: {
+          zIndex: 35  // Below the bottom navigation (z-index: 40)
+        }
       }}
       PaperProps={{
         sx: {
           borderRadius: '24px 24px 0 0',
           maxHeight: '96%',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          pb: { xs: '64px', md: '72px' }  // Add padding to avoid overlapping with bottom nav
         }
       }}
     >
