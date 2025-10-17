@@ -156,7 +156,7 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
   const handleLike = useCallback(() => {
     setIsLiked(!isLiked);
     setLikeAnimation(true);
-    haptic.trigger("impact");
+    haptic.trigger("heavy");
     setTimeout(() => setLikeAnimation(false), 600);
   }, [isLiked]);
   
@@ -339,9 +339,12 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
         {/* Message bubble */}
         <Card
           ref={messageRef}
-          {...longPressHandlers}
           onClick={handleDoubleTap}
           elevation={isUser ? 0 : 1}
+          onMouseDown={longPressHandlers.onMouseDown as any}
+          onMouseUp={longPressHandlers.onMouseUp as any}
+          onTouchStart={longPressHandlers.onTouchStart as any}
+          onTouchEnd={longPressHandlers.onTouchEnd as any}
           sx={{
             maxWidth: '85%',
             borderRadius: 2.5,
@@ -562,7 +565,7 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
           </MenuItem>
         )}
         
-        {typeof window !== 'undefined' && navigator.share && (
+        {typeof window !== 'undefined' && navigator.share !== undefined && (
           <MenuItem onClick={handleShare}>
             <ListItemIcon>
               <ShareIcon fontSize="small" />

@@ -485,6 +485,6 @@ export default function Assistant() {
           />
         </div>
       )}
-    </div>
+    </Box>
   );
 }

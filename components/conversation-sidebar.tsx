@@ -1,15 +1,41 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Plus, Search, MessageSquare, Trash2, Edit2, Check, X, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  Box,
+  Button,
+  TextField,
+  Paper,
+  Typography,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Drawer,
+  AppBar,
+  Toolbar,
+  CircularProgress,
+  InputAdornment,
+  useTheme,
+  alpha
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  Add as AddIcon,
+  Search as SearchIcon,
+  Forum as ForumIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Check as CheckIcon,
+  Close as ClearIcon,
+  Refresh as RefreshIcon
+} from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import haptic from '@/lib/haptic';
 
 interface Conversation {
   id: number;
@@ -52,15 +78,15 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
   onRename,
   onCancelEdit,
 }) => {
+  const theme = useTheme();
   const itemRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const swipeState = useSwipeGesture(itemRef, {
     threshold: 30,
-    trackMouse: false, // Disable mouse tracking to prevent click interference
+    trackMouse: false,
     onSwipeMove: (deltaX) => {
-      // Only handle horizontal swipes for delete action
       if (deltaX < 0) {
         const offset = Math.max(deltaX, -100);
         setSwipeOffset(offset);
@@ -70,6 +96,7 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
       if (direction === 'left' && (Math.abs(swipeOffset) > 50 || velocity > 0.5)) {
         setSwipeOffset(-100);
         setShowDeleteConfirm(true);
+        haptic.trigger('heavy');
         setTimeout(() => {
           setShowDeleteConfirm(false);
           setSwipeOffset(0);
@@ -81,44 +108,58 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
   });
 
   return (
-    <div className="relative overflow-hidden">
-      <div
-        className={cn(
-          "absolute inset-y-0 right-0 w-24 bg-red-500 flex items-center justify-center",
-          "transition-opacity duration-200",
-          Math.abs(swipeOffset) > 30 ? "opacity-100" : "opacity-0"
-        )}
+    <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          insetY: 0,
+          right: 0,
+          width: 100,
+          bgcolor: 'error.main',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: Math.abs(swipeOffset) > 30 ? 1 : 0,
+          transition: 'opacity 0.2s'
+        }}
       >
-        <button
+        <Button
           onClick={(e) => {
             e.stopPropagation();
+            haptic.trigger('heavy');
             onDelete();
           }}
-          className="text-white font-medium p-2"
+          sx={{
+            color: 'white',
+            fontWeight: 'medium',
+            minHeight: 48,
+            minWidth: 48
+          }}
         >
           Delete
-        </button>
-      </div>
+        </Button>
+      </Box>
       
-      <div
+      <Paper
         ref={itemRef}
-        style={{
+        elevation={0}
+        sx={{
           transform: `translateX(${swipeOffset}px)`,
-          transition: swipeState.isSwping ? 'none' : 'transform 0.3s ease-out',
+          transition: swipeState.isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          p: 1.5,
+          borderRadius: 2,
+          bgcolor: isActive ? 'action.selected' : 'background.paper',
+          cursor: 'pointer',
+          '&:active': {
+            transform: `translateX(${swipeOffset}px) scale(0.98)`,
+          },
+          touchAction: 'manipulation'
         }}
-        className={cn(
-          "group relative p-3 rounded-lg bg-background cursor-pointer",
-          "active:scale-[0.98] transition-all duration-150",
-          isActive && "bg-accent",
-          "touch-manipulation"
-        )}
         onClick={(e) => {
-          // Don't trigger select if we're editing or swiping
           if (isEditing || Math.abs(swipeOffset) > 5) {
             return;
           }
           
-          // Check if click is on a button or interactive element
           const target = e.target as HTMLElement;
           if (
             target.tagName === 'BUTTON' || 
@@ -129,14 +170,15 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
             return;
           }
           
+          haptic.trigger('selection');
           onSelect();
         }}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             {isEditing ? (
-              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                <Input
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }} onClick={(e) => e.stopPropagation()}>
+                <TextField
                   value={editingTitle}
                   onChange={(e) => onEditingTitleChange(e.target.value)}
                   onKeyDown={(e) => {
@@ -149,81 +191,89 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="h-7 text-sm"
+                  size="small"
+                  variant="outlined"
+                  fullWidth
                   autoFocus
+                  sx={{ '& .MuiInputBase-input': { fontSize: '0.875rem' } }}
                 />
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <IconButton
+                  size="small"
                   onClick={(e) => {
                     e.stopPropagation();
+                    haptic.trigger('selection');
                     onRename();
                   }}
-                  className="min-w-[44px] min-h-[44px] p-0"
+                  sx={{ minWidth: 44, minHeight: 44 }}
                 >
-                  <Check className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
+                  <CheckIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCancelEdit();
                   }}
-                  className="min-w-[44px] min-h-[44px] p-0"
+                  sx={{ minWidth: 44, minHeight: 44 }}
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </Box>
             ) : (
               <>
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <h3 className="text-sm font-medium truncate">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ForumIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 'medium', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {conversation.title}
-                  </h3>
-                </div>
+                  </Typography>
+                </Box>
                 {conversation.summary && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block', lineClamp: 2, overflow: 'hidden' }}>
                     {conversation.summary}
-                  </p>
+                  </Typography>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">
+                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
                   {format(new Date(conversation.updatedAt), 'MMM d, h:mm a')}
-                </p>
+                </Typography>
               </>
             )}
-          </div>
+          </Box>
           
           {!isEditing && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity md:flex hidden">
-              <Button
-                size="sm"
-                variant="ghost"
+            <Box sx={{ 
+              display: { xs: 'none', md: 'flex' }, 
+              gap: 0.5,
+              opacity: 0,
+              transition: 'opacity 0.15s',
+              '&:hover': { opacity: 1 }
+            }}>
+              <IconButton
+                size="small"
                 onClick={(e) => {
                   e.stopPropagation();
+                  haptic.trigger('selection');
                   onEdit();
                 }}
-                className="min-w-[44px] min-h-[44px] p-0"
+                sx={{ minWidth: 44, minHeight: 44 }}
               >
-                <Edit2 className="h-3 w-3" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
+                <EditIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
                 onClick={(e) => {
                   e.stopPropagation();
+                  haptic.trigger('heavy');
                   onDelete();
                 }}
-                className="min-w-[44px] min-h-[44px] p-0"
+                sx={{ minWidth: 44, minHeight: 44 }}
               >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 
@@ -242,10 +292,8 @@ export function ConversationSidebar({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Pull to refresh
-  const pullToRefreshState = usePullToRefresh(scrollRef, {
-    onRefresh: async () => {
-      await fetchConversations();
-    },
+  const pullToRefreshState = usePullToRefresh(scrollRef, async () => {
+    await fetchConversations();
   });
 
   // Detect if device has touch support

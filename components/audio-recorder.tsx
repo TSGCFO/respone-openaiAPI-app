@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { MicrophoneButton } from './microphone-button';
 import { RecordingTimer } from './recording-timer';
-import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
+import { Box, IconButton } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 interface AudioRecorderProps {
   onAudioReady: (audioBlob: Blob, audioUrl: string) => void;
@@ -92,28 +92,40 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   }
 
   return (
-    <div className={cn("relative inline-flex items-center gap-2", className)}>
+    <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 2 }} className={className}>
       {showRecordingUI && isRecording && (
-        <div className="flex items-center gap-2">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <RecordingTimer 
             seconds={recordingTime} 
             isPaused={isPaused}
           />
           {recordingTime > 0 && (
-            <button
+            <IconButton
               onClick={handleCancelRecording}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              size="small"
+              sx={{
+                p: 1,
+                '&:hover': {
+                  backgroundColor: 'grey.100',
+                }
+              }}
               aria-label="Cancel recording"
             >
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
+              <CloseIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+            </IconButton>
           )}
           {maxRecordingTime - recordingTime <= 10 && (
-            <span className="text-xs text-red-500">
+            <Box
+              component="span"
+              sx={{
+                fontSize: '0.75rem',
+                color: 'error.main'
+              }}
+            >
               {maxRecordingTime - recordingTime}s remaining
-            </span>
+            </Box>
           )}
-        </div>
+        </Box>
       )}
       
       <MicrophoneButton
@@ -127,6 +139,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         onResumeRecording={resumeRecording}
         disabled={disabled}
       />
-    </div>
+    </Box>
   );
 };

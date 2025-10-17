@@ -88,7 +88,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleSend = useCallback(() => {
     if (!message.trim() || disabled) return;
     
-    haptic.trigger("impact");
+    haptic.trigger("heavy");
     onSendMessage(message.trim());
     setMessage("");
   }, [message, disabled, onSendMessage]);
@@ -124,7 +124,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleAudioStart = () => {
     setIsRecording(true);
-    haptic.trigger("impact");
+    haptic.trigger("heavy");
   };
 
   const handleAudioEnd = async (blob: Blob) => {
@@ -297,37 +297,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               onTranscriptionRequest={handleTranscriptionRequest}
               disabled={disabled}
               className="min-w-[48px] min-h-[48px]"
-            >
-              <Tooltip title={isRecording ? "Recording..." : "Hold to record"}>
-                <IconButton
-                  disabled={disabled || isProcessingAudio}
-                  sx={{
-                    backgroundColor: isRecording 
-                      ? theme.palette.error.main 
-                      : theme.palette.action.selected,
-                    color: isRecording 
-                      ? theme.palette.error.contrastText 
-                      : theme.palette.action.active,
-                    '&:hover': {
-                      backgroundColor: isRecording
-                        ? theme.palette.error.dark
-                        : alpha(theme.palette.primary.main, 0.12),
-                    },
-                    '&:disabled': {
-                      backgroundColor: theme.palette.action.disabledBackground,
-                    },
-                    animation: isRecording ? 'pulse 1.5s infinite' : 'none',
-                    '@keyframes pulse': {
-                      '0%': { transform: 'scale(1)' },
-                      '50%': { transform: 'scale(1.1)' },
-                      '100%': { transform: 'scale(1)' },
-                    }
-                  }}
-                >
-                  <MicIcon />
-                </IconButton>
-              </Tooltip>
-            </AudioRecorder>
+            />
             {isProcessingAudio && (
               <Box
                 sx={{

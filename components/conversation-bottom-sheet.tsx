@@ -300,10 +300,8 @@ export function ConversationBottomSheet({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Pull to refresh
-  const pullToRefreshState = usePullToRefresh(scrollRef, {
-    onRefresh: async () => {
-      await fetchConversations();
-    },
+  const pullToRefreshState = usePullToRefresh(scrollRef, async () => {
+    await fetchConversations();
   });
 
   // Fetch conversations on mount and when sheet opens
