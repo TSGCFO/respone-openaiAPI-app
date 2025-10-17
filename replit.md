@@ -12,6 +12,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Recent Updates (October 2025)
 
+### Material Design 3 (Material You) Android UI
+- **Complete Material UI Migration**: Entire app now uses Material UI v5 components
+- **Material You Theme**: Dynamic color system with purple/violet branding
+- **Android-Native Components**: Material Cards, TextFields, Buttons with ripple effects
+- **Material Icons**: Replaced all icons with official Material Design icons
+- **Elevation System**: Proper Material shadows and depth (0dp-12dp)
+- **Responsive Design**: Mobile-first with 48dp touch targets
+- **Material Motion**: Smooth animations following Material Design specs
+
 ### Voice Features Added
 - **Speech-to-Text**: Integrated OpenAI Whisper API for audio transcription
 - **Text-to-Speech**: Added OpenAI TTS API with 6 voice options and playback controls
@@ -25,12 +34,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Native Transitions**: Smooth animations and iOS-style interactions
 - **Offline Support**: Service worker caching for offline functionality
 
-### Bug Fixes
-- Fixed Next.js 15 params compatibility issues in dynamic routes
-- Added CORS configuration for Replit preview domains
-- Implemented input validation with Zod schemas
-- Enhanced error handling with client-side feedback
-- Added security warnings for in-memory session storage
+### Bug Fixes & Improvements
+- Fixed message timestamps to show actual send times (not current time)
+- Fixed conversation loading with proper ID validation
+- Fixed SQL array syntax in memory search queries
+- Fixed DialogContent accessibility with proper DialogTitle
+- Removed virtual scrolling for better mobile performance
+- Fixed input positioning and scroll container issues
+- Enhanced memory recall with profile and query-specific retrieval
 
 ## Replit Migration (October 2025)
 
