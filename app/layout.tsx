@@ -1,17 +1,6 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
+import type { Metadata, Viewport } from "next";
+import { MaterialThemeProvider } from "@/components/theme/MaterialThemeProvider";
 import "./globals.css";
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
 
 export const metadata: Metadata = {
   title: "Responses starter app",
@@ -19,6 +8,23 @@ export const metadata: Metadata = {
   icons: {
     icon: "/openai_logo.svg",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Responses App',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F5EEFA' },
+    { media: '(prefers-color-scheme: dark)', color: '#1C1B1F' },
+  ],
 };
 
 export default function RootLayout({
@@ -28,12 +34,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className="flex h-screen bg-gray-200 w-full flex-col  text-stone-900">
-          <main>{children}</main>
-        </div>
+      <head>
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-touch-fullscreen" content="yes" />
+        <meta name="format-detection" content="telephone=no" />
+      </head>
+      <body className="antialiased">
+        <MaterialThemeProvider>
+          <div className="flex h-screen w-full flex-col">
+            <main>{children}</main>
+          </div>
+        </MaterialThemeProvider>
       </body>
     </html>
   );
