@@ -1,16 +1,43 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Drawer } from 'vaul';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Menu, Plus, Search, MessageSquare, Trash2, Edit2, Check, X, RefreshCw, ChevronLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  SwipeableDrawer,
+  Box,
+  Typography,
+  TextField,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  InputAdornment,
+  Button,
+  Paper,
+  Divider,
+  CircularProgress,
+  useTheme,
+  alpha,
+  Chip,
+  Avatar
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Search as SearchIcon,
+  Forum as ForumIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Check as CheckIcon,
+  Clear as ClearIcon,
+  Refresh as RefreshIcon,
+  ArrowBack as ArrowBackIcon,
+  DragHandle as DragHandleIcon
+} from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import haptic from '@/lib/haptic';
-import * as VisuallyHidden from '@reach/visually-hidden';
 
 interface Conversation {
   id: number;
@@ -56,6 +83,7 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
   onRename,
   onCancelEdit,
 }) => {
+  const theme = useTheme();
   const itemRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -85,38 +113,53 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
   });
 
   return (
-    <div className="relative overflow-hidden">
-      <div
-        className={cn(
-          "absolute inset-y-0 right-0 w-24 bg-red-500 flex items-center justify-center",
-          "transition-opacity duration-200",
-          Math.abs(swipeOffset) > 30 ? "opacity-100" : "opacity-0"
-        )}
+    <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          insetY: 0,
+          right: 0,
+          width: 100,
+          bgcolor: 'error.main',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: Math.abs(swipeOffset) > 30 ? 1 : 0,
+          transition: 'opacity 0.2s'
+        }}
       >
-        <button
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             haptic.trigger('heavy');
             onDelete();
           }}
-          className="text-white font-medium min-h-[48px] min-w-[48px] px-4 py-2 flex items-center justify-center"
+          sx={{
+            color: 'white',
+            fontWeight: 'medium',
+            minHeight: 48,
+            minWidth: 48
+          }}
         >
           Delete
-        </button>
-      </div>
+        </Button>
+      </Box>
       
-      <div
+      <Paper
         ref={itemRef}
-        style={{
+        elevation={0}
+        sx={{
           transform: `translateX(${swipeOffset}px)`,
           transition: swipeState.isSwping ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          p: 1.5,
+          borderRadius: 2,
+          bgcolor: isActive ? 'action.selected' : 'background.paper',
+          cursor: 'pointer',
+          '&:active': {
+            transform: `translateX(${swipeOffset}px) scale(0.98)`,
+          },
+          touchAction: 'manipulation'
         }}
-        className={cn(
-          "group relative p-3 rounded-lg bg-background cursor-pointer",
-          "active:scale-[0.98] transition-all duration-150",
-          isActive && "bg-accent",
-          "touch-manipulation"
-        )}
         onClick={(e) => {
           if (isEditing || Math.abs(swipeOffset) > 5) {
             return;
@@ -136,11 +179,11 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
           onSelect();
         }}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             {isEditing ? (
-              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                <Input
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }} onClick={(e) => e.stopPropagation()}>
+                <TextField
                   value={editingTitle}
                   onChange={(e) => onEditingTitleChange(e.target.value)}
                   onKeyDown={(e) => {
@@ -153,84 +196,89 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="h-7 text-sm"
+                  size="small"
+                  variant="outlined"
+                  fullWidth
                   autoFocus
+                  sx={{ '& .MuiInputBase-input': { fontSize: '0.875rem' } }}
                 />
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <IconButton
+                  size="small"
                   onClick={(e) => {
                     e.stopPropagation();
                     haptic.trigger('selection');
                     onRename();
                   }}
-                  className="min-w-[44px] min-h-[44px] p-0"
+                  sx={{ minWidth: 44, minHeight: 44 }}
                 >
-                  <Check className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
+                  <CheckIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCancelEdit();
                   }}
-                  className="min-w-[44px] min-h-[44px] p-0"
+                  sx={{ minWidth: 44, minHeight: 44 }}
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </Box>
             ) : (
               <>
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <h3 className="text-sm font-medium truncate">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ForumIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 'medium', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {conversation.title}
-                  </h3>
-                </div>
+                  </Typography>
+                </Box>
                 {conversation.summary && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block', lineClamp: 2, overflow: 'hidden' }}>
                     {conversation.summary}
-                  </p>
+                  </Typography>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">
+                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
                   {format(new Date(conversation.updatedAt), 'MMM d, h:mm a')}
-                </p>
+                </Typography>
               </>
             )}
-          </div>
+          </Box>
           
           {!isEditing && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
-              <Button
-                size="sm"
-                variant="ghost"
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 0.5,
+              opacity: 0,
+              transition: 'opacity 0.15s',
+              '&:hover': { opacity: 1 }
+            }}>
+              <IconButton
+                size="small"
                 onClick={(e) => {
                   e.stopPropagation();
                   haptic.trigger('selection');
                   onEdit();
                 }}
-                className="min-w-[44px] min-h-[44px] p-0"
+                sx={{ minWidth: 44, minHeight: 44 }}
               >
-                <Edit2 className="h-3 w-3" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
+                <EditIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
                 onClick={(e) => {
                   e.stopPropagation();
                   haptic.trigger('heavy');
                   onDelete();
                 }}
-                className="min-w-[44px] min-h-[44px] p-0"
+                sx={{ minWidth: 44, minHeight: 44 }}
               >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 
@@ -243,12 +291,12 @@ export function ConversationBottomSheet({
   onOpenChange,
   triggerRef,
 }: ConversationBottomSheetProps) {
+  const theme = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-  const [snapPoint, setSnapPoint] = useState<number | string>('355px');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Pull to refresh
@@ -356,132 +404,158 @@ export function ConversationBottomSheet({
   };
 
   return (
-    <Drawer.Root 
-      open={isOpen} 
-      onOpenChange={(open) => {
-        if (!open) {
-          haptic.trigger('selection');
-        }
-        onOpenChange(open);
+    <SwipeableDrawer
+      anchor="bottom"
+      open={isOpen}
+      onClose={() => {
+        haptic.trigger('selection');
+        onOpenChange(false);
       }}
-      snapPoints={['148px', '355px', 0.85]}
-      activeSnapPoint={snapPoint}
-      setActiveSnapPoint={(value) => setSnapPoint(value ?? '355px')}
-      modal={true}
-      handleOnly={false}
-      preventScrollRestoration={true}
-      disablePreventScroll={false}
-      shouldScaleBackground
-      dismissible={true}
+      onOpen={() => onOpenChange(true)}
+      swipeAreaWidth={56}
+      disableSwipeToOpen={false}
+      ModalProps={{
+        keepMounted: true,
+      }}
+      PaperProps={{
+        sx: {
+          borderRadius: '24px 24px 0 0',
+          maxHeight: '96%',
+          overflow: 'hidden'
+        }
+      }}
     >
-      <Drawer.Portal>
-        <Drawer.Overlay 
-          className="fixed inset-0 bg-black/40 z-50"
-          onClick={() => onOpenChange(false)}
-        />
-        <Drawer.Content 
-          className={cn(
-            "fixed bottom-0 left-0 right-0 z-50",
-            "bg-background rounded-t-[24px]",
-            "flex flex-col max-h-[96%]",
-            "shadow-lg border-t",
-            "focus:outline-none"
-          )}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          {/* Accessibility Title - Hidden visually but available to screen readers */}
-          <Drawer.Title asChild>
-            <VisuallyHidden.VisuallyHidden>
-              <h2>Conversations Menu</h2>
-            </VisuallyHidden.VisuallyHidden>
-          </Drawer.Title>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Drag Handle */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          pt: 1.5,
+          pb: 1
+        }}>
+          <Box sx={{
+            width: 48,
+            height: 6,
+            bgcolor: 'grey.300',
+            borderRadius: 3,
+            cursor: 'grab'
+          }} />
+        </Box>
 
-          {/* Handle / Pill indicator with better styling */}
-          <div className="w-full pt-3 pb-2 flex justify-center relative">
-            <div className="absolute inset-x-0 top-0 h-12 flex items-center justify-center pointer-events-none">
-              <Drawer.Handle className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full shadow-sm transition-all hover:bg-gray-400 pointer-events-auto" />
-            </div>
-          </div>
+        {/* Header */}
+        <Box sx={{ 
+          px: 2, 
+          pb: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Conversations
+          </Typography>
+          <IconButton
+            onClick={() => onOpenChange(false)}
+            sx={{ display: { md: 'none' } }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+        </Box>
 
-          {/* Header */}
-          <div className="px-4 pb-3 border-b flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Conversations</h2>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="md:hidden"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-          </div>
-
-          {/* Pull to refresh indicator */}
-          {pullToRefreshState.isPulling && (
-            <div 
-              className="absolute top-16 left-0 right-0 flex items-center justify-center bg-accent/50 transition-all duration-300 z-10"
-              style={{
-                height: `${pullToRefreshState.pullDistance}px`,
-                opacity: pullToRefreshState.canRefresh ? 1 : 0.5,
-              }}
-            >
-              <RefreshCw 
-                className={cn(
-                  "h-5 w-5 text-foreground",
-                  pullToRefreshState.isRefreshing && "animate-spin"
-                )}
-              />
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="p-4 space-y-3">
-            <Button
-              onClick={handleNewConversation}
-              className="w-full justify-start min-h-[44px]"
-              variant="outline"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Conversation
-            </Button>
-            
-            <div className="relative">
-              <Search className="absolute left-2 top-[50%] -translate-y-[50%] h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 min-h-[44px]"
-              />
-            </div>
-          </div>
-
-          {/* Conversation List */}
-          <div 
-            ref={scrollRef}
-            className={cn(
-              "flex-1 px-4 overflow-y-auto overflow-x-hidden overscroll-contain",
-              "min-h-0" // Important for flex child scrolling
-            )}
-            style={{
-              WebkitOverflowScrolling: 'touch',
-              scrollBehavior: 'smooth',
+        {/* Pull to refresh indicator */}
+        {pullToRefreshState.isPulling && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 64,
+              left: 0,
+              right: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              transition: 'all 0.3s',
+              zIndex: 10,
+              height: `${pullToRefreshState.pullDistance}px`,
+              opacity: pullToRefreshState.canRefresh ? 1 : 0.5
             }}
           >
-            {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">
+            <RefreshIcon 
+              sx={{
+                color: theme.palette.primary.main,
+                animation: pullToRefreshState.isRefreshing ? 'spin 1s linear infinite' : undefined,
+                '@keyframes spin': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '100%': { transform: 'rotate(360deg)' }
+                }
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Actions */}
+        <Box sx={{ p: 2, gap: 2, display: 'flex', flexDirection: 'column' }}>
+          <Button
+            variant="outlined"
+            fullWidth
+            startIcon={<AddIcon />}
+            onClick={handleNewConversation}
+            sx={{ 
+              minHeight: 44,
+              justifyContent: 'flex-start',
+              borderRadius: 2
+            }}
+          >
+            New Conversation
+          </Button>
+          
+          <TextField
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minHeight: 44 }}
+          />
+        </Box>
+
+        {/* Conversation List */}
+        <Box
+          ref={scrollRef}
+          sx={{
+            flex: 1,
+            px: 2,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            minHeight: 0,
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          {isLoading ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <CircularProgress size={32} />
+              <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
                 Loading conversations...
-              </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              </Typography>
+            </Box>
+          ) : filteredConversations.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {searchQuery ? 'No conversations found' : 'No conversations yet'}
-              </div>
-            ) : (
-              <div className="space-y-2 pb-4">
-                {filteredConversations.map((conversation) => (
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ pb: 2 }}>
+              {filteredConversations.map((conversation) => (
+                <Box key={conversation.id} sx={{ mb: 1 }}>
                   <SwipeableConversationItem
-                    key={conversation.id}
                     conversation={conversation}
                     isActive={currentConversationId === conversation.id}
                     onSelect={() => handleSelectConversation(conversation)}
@@ -493,12 +567,12 @@ export function ConversationBottomSheet({
                     onRename={() => handleRename(conversation.id)}
                     onCancelEdit={() => setEditingId(null)}
                   />
-                ))}
-              </div>
-            )}
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </SwipeableDrawer>
   );
 }

@@ -4,27 +4,45 @@ import React, { useState, useRef, useEffect, useCallback, useMemo, forwardRef } 
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { 
-  Copy, 
-  RotateCcw, 
-  Share, 
-  Heart, 
-  Trash2, 
-  Reply, 
-  MoreVertical,
-  Check,
-  CheckCheck,
-  Clock,
-  AlertCircle,
-  User,
-  Bot,
-  Download,
-  Expand
-} from 'lucide-react';
-import { cn } from "@/lib/utils";
-import haptic from "@/lib/haptic";
+import {
+  Card,
+  CardContent,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  Box,
+  Chip,
+  Avatar,
+  useTheme,
+  alpha,
+  Paper,
+  Divider
+} from "@mui/material";
+import {
+  ContentCopy as CopyIcon,
+  Refresh as RefreshIcon,
+  Share as ShareIcon,
+  Favorite as HeartIcon,
+  FavoriteBorder as HeartOutlineIcon,
+  Delete as DeleteIcon,
+  Reply as ReplyIcon,
+  MoreVert as MoreVertIcon,
+  Check as CheckIcon,
+  DoneAll as DoneAllIcon,
+  Schedule as ClockIcon,
+  Warning as AlertIcon,
+  Person as UserIcon,
+  SmartToy as BotIcon,
+  Download as DownloadIcon,
+  ZoomIn as ExpandIcon
+} from "@mui/icons-material";
 import { MessageItem } from "@/lib/assistant";
 import { format } from "date-fns";
+import haptic from "@/lib/haptic";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useLongPress } from "@/hooks/useLongPress";
 
@@ -57,18 +75,16 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
   className,
   index = 0
 }, ref) => {
+  const theme = useTheme();
   const [platform, setPlatform] = useState<"ios" | "android" | "other">(propPlatform || "other");
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likeAnimation, setLikeAnimation] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [messageTime, setMessageTime] = useState<string>('');
   const [imageExpanded, setImageExpanded] = useState<string | null>(null);
   
   const messageRef = useRef<HTMLDivElement>(null);
-  const contextMenuRef = useRef<HTMLDivElement>(null);
   const doubleTapRef = useRef<number>(0);
   
   const isUser = message.role === "user";
@@ -91,9 +107,8 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
     }
   }, [propPlatform]);
   
-  // Set message time (client-side only to avoid hydration mismatch)
+  // Set message time
   useEffect(() => {
-    // Use the message's actual timestamp if available, otherwise use current time as fallback
     const timestamp = message.metadata?.timestamp;
     if (timestamp) {
       const date = new Date(timestamp);
@@ -106,21 +121,18 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
   // Handle copy with haptic feedback
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(messageText);
-    setShowContextMenu(false);
+    setMenuAnchorEl(null);
     haptic.trigger("light");
     
-    // Show toast with better mobile styling
+    // Show toast notification using MUI
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/90 text-white px-5 py-3 rounded-full z-50 text-sm font-medium animate-slide-up backdrop-blur-md shadow-lg';
+    toast.style.cssText = 'position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: white; padding: 12px 20px; border-radius: 24px; z-index: 9999; font-size: 14px; font-weight: 500;';
     toast.textContent = 'Copied to clipboard';
     document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.classList.add('animate-slide-down');
-      setTimeout(() => toast.remove(), 300);
-    }, 1800);
+    setTimeout(() => toast.remove(), 2000);
   }, [messageText]);
   
-  // Handle share with native share API
+  // Handle share
   const handleShare = useCallback(async () => {
     if (typeof window !== 'undefined' && navigator.share) {
       try {
@@ -130,17 +142,17 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
         console.log('Share cancelled');
       }
     }
-    setShowContextMenu(false);
+    setMenuAnchorEl(null);
   }, [messageText]);
   
-  // Handle delete with haptic feedback
+  // Handle delete
   const handleDelete = useCallback(() => {
     haptic.trigger("warning");
     onDelete?.();
-    setShowContextMenu(false);
+    setMenuAnchorEl(null);
   }, [onDelete]);
   
-  // Handle like/reaction with animation
+  // Handle like/reaction
   const handleLike = useCallback(() => {
     setIsLiked(!isLiked);
     setLikeAnimation(true);
@@ -148,8 +160,8 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
     setTimeout(() => setLikeAnimation(false), 600);
   }, [isLiked]);
   
-  // Double tap handler for quick actions
-  const handleDoubleTap = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+  // Double tap handler
+  const handleDoubleTap = useCallback((e: React.MouseEvent) => {
     const now = Date.now();
     if (now - doubleTapRef.current < 300) {
       handleLike();
@@ -159,96 +171,17 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
     }
   }, [handleLike]);
   
-  // Context menu options with mobile-optimized icons
-  const contextMenuOptions = useMemo(() => {
-    const options = [
-      {
-        label: 'Copy',
-        icon: <Copy className="h-5 w-5" />,
-        action: handleCopy,
-      }
-    ];
-    
-    if (onReply) {
-      options.push({
-        label: 'Reply',
-        icon: <Reply className="h-5 w-5" />,
-        action: () => {
-          haptic.trigger("selection");
-          onReply();
-          setShowContextMenu(false);
-        },
-      });
-    }
-    
-    if (!isUser && onRegenerate) {
-      options.push({
-        label: 'Regenerate',
-        icon: <RotateCcw className="h-5 w-5" />,
-        action: () => {
-          haptic.trigger("selection");
-          onRegenerate();
-          setShowContextMenu(false);
-        },
-      });
-    }
-    
-    if (typeof window !== 'undefined' && navigator.share) {
-      options.push({
-        label: 'Share',
-        icon: <Share className="h-5 w-5" />,
-        action: handleShare,
-      });
-    }
-    
-    options.push({
-      label: isLiked ? 'Unlike' : 'Like',
-      icon: <Heart className={cn("h-5 w-5", isLiked && "fill-red-500 text-red-500")} />,
-      action: () => {
-        handleLike();
-        setShowContextMenu(false);
-      },
-    });
-    
-    if (onDelete) {
-      options.push({
-        label: 'Delete',
-        icon: <Trash2 className="h-5 w-5 text-red-500" />,
-        action: handleDelete,
-        destructive: true,
-      });
-    }
-    
-    return options;
-  }, [isUser, isLiked, onRegenerate, onReply, onDelete, handleCopy, handleShare, handleDelete, handleLike]);
-  
-  // Long press handler with haptic feedback
+  // Long press handler
   const handleLongPress = useCallback((event: TouchEvent | MouseEvent) => {
     haptic.trigger("medium");
-    setIsPressed(false);
-    
-    const rect = messageRef.current?.getBoundingClientRect();
-    if (rect) {
-      const clientX = 'touches' in event ? event.touches[0].clientX : (event as MouseEvent).clientX;
-      const clientY = 'touches' in event ? event.touches[0].clientY : (event as MouseEvent).clientY;
-      
-      // Position menu above the touch point with better mobile positioning
-      const menuY = clientY - 120;
-      const menuX = Math.min(Math.max(clientX, 100), window.innerWidth - 100);
-      
-      setContextMenuPosition({
-        x: menuX,
-        y: Math.max(menuY, 50), // Ensure menu doesn't go off top of screen
-      });
-      setShowContextMenu(true);
-    }
+    const target = event.currentTarget as HTMLElement;
+    setMenuAnchorEl(target);
   }, []);
   
   const { handlers: longPressHandlers } = useLongPress(
     handleLongPress,
     {
-      threshold: 400, // Slightly faster activation for mobile
-      onCancel: () => setIsPressed(false),
+      threshold: 400,
     }
   );
   
@@ -257,10 +190,8 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
     threshold: 60,
     onSwipeMove: (deltaX) => {
       if (platform === "ios" && deltaX > 0 && onReply) {
-        // iOS style: swipe right to reply
         setSwipeOffset(Math.min(deltaX * 0.8, 80));
       } else if (deltaX < 0 && onDelete) {
-        // Swipe left to delete (both platforms)
         setSwipeOffset(Math.max(deltaX * 0.8, -80));
       }
     },
@@ -272,30 +203,11 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
         haptic.trigger("warning");
         onDelete();
       }
-      // Spring back animation
       setSwipeOffset(0);
     },
   });
   
-  // Close context menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
-        setShowContextMenu(false);
-      }
-    };
-    
-    if (showContextMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside);
-      };
-    }
-  }, [showContextMenu]);
-  
-  // Custom markdown components with mobile optimization
+  // Custom markdown components
   const markdownComponents = useMemo(() => ({
     code({ node, inline, className, children, ...props }: any) {
       const match = /language-(\w+)/.exec(className || '');
@@ -303,381 +215,388 @@ const MobileOptimizedMessage = forwardRef<HTMLDivElement, MobileOptimizedMessage
       
       if (!inline && language) {
         return (
-          <div className="my-3 rounded-xl overflow-hidden bg-gray-900">
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-800 text-gray-300 text-xs">
-              <span className="font-medium">{language}</span>
-              <button
+          <Paper elevation={0} sx={{ my: 2, borderRadius: 2, overflow: 'hidden', bgcolor: 'grey.900' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              px: 2, 
+              py: 1, 
+              bgcolor: 'grey.800'
+            }}>
+              <Typography variant="caption" sx={{ color: 'grey.300', fontWeight: 'medium' }}>
+                {language}
+              </Typography>
+              <IconButton 
+                size="small" 
                 onClick={() => {
                   navigator.clipboard.writeText(String(children));
                   haptic.trigger("selection");
                 }}
-                className="hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
+                sx={{ color: 'grey.300', '&:hover': { color: 'white' } }}
               >
-                <Copy className="h-4 w-4" />
-              </button>
-            </div>
-            <SyntaxHighlighter
-              style={oneDark}
-              language={language}
-              PreTag="div"
-              className="!my-0 !bg-gray-900 text-sm"
-              {...props}
-            >
-              {String(children).replace(/\n$/, '')}
-            </SyntaxHighlighter>
-          </div>
+                <CopyIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Box sx={{ overflow: 'auto' }}>
+              <SyntaxHighlighter
+                style={oneDark}
+                language={language}
+                PreTag="div"
+                {...props}
+              >
+                {String(children).replace(/\n$/, '')}
+              </SyntaxHighlighter>
+            </Box>
+          </Paper>
         );
       }
       
       return (
-        <code
-          className={cn(
-            "px-1.5 py-0.5 rounded-md text-sm",
-            isUser ? "bg-blue-600/30" : "bg-gray-200"
-          )}
+        <Box
+          component="code"
+          sx={{
+            px: 0.75,
+            py: 0.25,
+            borderRadius: 1,
+            fontSize: '0.875rem',
+            bgcolor: isUser ? alpha(theme.palette.primary.main, 0.2) : 'grey.200'
+          }}
           {...props}
         >
           {children}
-        </code>
+        </Box>
+      );
+    },
+    p({ children }: any) {
+      return (
+        <Typography variant="body1" paragraph sx={{ mb: 1.5, '&:last-child': { mb: 0 } }}>
+          {children}
+        </Typography>
       );
     },
     a({ href, children }: any) {
       return (
-        <a
+        <Box
+          component="a"
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(
-            "underline font-medium min-h-[44px] inline-flex items-center",
-            isUser ? "text-blue-100" : "text-blue-600"
-          )}
+          sx={{
+            color: isUser ? 'primary.light' : 'primary.main',
+            textDecoration: 'underline',
+            fontWeight: 'medium'
+          }}
         >
           {children}
-        </a>
+        </Box>
       );
-    },
-    p({ children }: any) {
-      return <p className="mb-3 last:mb-0 leading-relaxed text-base">{children}</p>;
-    },
-    ul({ children }: any) {
-      return <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>;
-    },
-    ol({ children }: any) {
-      return <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>;
-    },
-    blockquote({ children }: any) {
-      return (
-        <blockquote className={cn(
-          "border-l-4 pl-4 my-3 italic",
-          isUser ? "border-blue-300/50" : "border-gray-400"
-        )}>
-          {children}
-        </blockquote>
-      );
-    },
-  }), [isUser]);
+    }
+  }), [isUser, theme]);
   
   return (
     <>
-      {/* Message container with swipe animation */}
-      <div
+      {/* Message container */}
+      <Box
         ref={ref}
-        className={cn(
-          "relative flex items-end gap-2 px-4",
-          isUser ? "justify-end" : "justify-start",
-          isGroupStart ? "mt-4" : "mt-1.5",
-          className
-        )}
-        style={{
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: 1,
+          px: 2,
+          justifyContent: isUser ? 'flex-end' : 'flex-start',
+          mt: isGroupStart ? 2 : 0.75,
           transform: `translateX(${swipeOffset}px)`,
           transition: swipeState.isSwping ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
           opacity: 1,
           animation: index < 20 ? `messageSlideIn ${300 + index * 50}ms ease-out` : undefined,
+          '@keyframes messageSlideIn': {
+            from: {
+              opacity: 0,
+              transform: 'translateY(20px)',
+            },
+            to: {
+              opacity: 1,
+              transform: 'translateY(0)',
+            },
+          },
         }}
       >
         {/* Avatar for assistant messages */}
         {!isUser && showAvatar && (
-          <div className={cn(
-            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-            "bg-gradient-to-br from-purple-500 to-blue-600 shadow-sm",
-            !isGroupEnd && "invisible"
-          )}>
-            <Bot className="h-4 w-4 text-white" />
-          </div>
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: 'primary.main',
+              visibility: isGroupEnd ? 'visible' : 'hidden'
+            }}
+          >
+            <BotIcon sx={{ fontSize: 18 }} />
+          </Avatar>
         )}
         
-        {/* Message bubble with mobile-optimized styling */}
-        <div
+        {/* Message bubble */}
+        <Card
           ref={messageRef}
           {...longPressHandlers}
           onClick={handleDoubleTap}
-          onTouchStart={() => setIsPressed(true)}
-          onTouchEnd={() => setIsPressed(false)}
-          onMouseDown={() => setIsPressed(true)}
-          onMouseUp={() => setIsPressed(false)}
-          onMouseLeave={() => setIsPressed(false)}
-          className={cn(
-            "relative max-w-[85%] rounded-2xl transition-all duration-200",
-            "min-h-[44px] px-4 py-2.5 flex flex-col justify-center",
-            "touch-manipulation select-text cursor-pointer",
-            isPressed && "scale-[0.98] opacity-90",
-            
-            // Platform-specific message bubble styles
-            isUser ? [
-              platform === "ios" ? "bg-blue-500 text-white" : "bg-blue-600 text-white shadow-sm",
-              isGroupEnd && platform === "ios" && "rounded-br-[6px]",
-              isGroupEnd && platform === "android" && "rounded-br-[8px]",
-            ] : [
-              platform === "ios" ? "bg-gray-100 text-gray-900" : "bg-white text-gray-900 shadow-sm border border-gray-100",
-              isGroupEnd && platform === "ios" && "rounded-bl-[6px]",
-              isGroupEnd && platform === "android" && "rounded-bl-[8px]",
-            ]
-          )}
+          elevation={isUser ? 0 : 1}
+          sx={{
+            maxWidth: '85%',
+            borderRadius: 2.5,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            bgcolor: isUser 
+              ? (platform === "ios" ? 'primary.main' : 'primary.dark')
+              : (platform === "ios" ? 'grey.100' : 'background.paper'),
+            color: isUser ? 'primary.contrastText' : 'text.primary',
+            borderBottomRightRadius: isUser && isGroupEnd ? (platform === "ios" ? 8 : 12) : undefined,
+            borderBottomLeftRadius: !isUser && isGroupEnd ? (platform === "ios" ? 8 : 12) : undefined,
+            '&:active': {
+              transform: 'scale(0.98)',
+              opacity: 0.9
+            },
+            position: 'relative',
+            border: !isUser && platform === "android" ? `1px solid ${theme.palette.divider}` : 'none'
+          }}
         >
-          {/* Message content with proper typography */}
-          <div className={cn(
-            "prose prose-sm max-w-none",
-            isUser ? "prose-invert" : "prose-gray",
-            "text-base leading-relaxed"
-          )}>
-            <ReactMarkdown components={markdownComponents}>
-              {messageText}
-            </ReactMarkdown>
-          </div>
-          
-          {/* Images with mobile-optimized display */}
-          {hasImages && message.content[0]?.annotations?.filter(
-            (a) => a.type === "container_file_citation" && a.filename && /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(a.filename)
-          ).map((a, i) => {
-            const imageUrl = `/api/container_files/content?file_id=${a.fileId}${a.containerId ? `&container_id=${a.containerId}` : ""}${a.filename ? `&filename=${encodeURIComponent(a.filename)}` : ""}`;
-            const isExpanded = imageExpanded === imageUrl;
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+            {/* Message content */}
+            <Box sx={{ 
+              '& > *': { 
+                color: isUser ? 'inherit' : undefined 
+              }
+            }}>
+              <ReactMarkdown components={markdownComponents}>
+                {messageText}
+              </ReactMarkdown>
+            </Box>
             
-            return (
-              <div key={i} className="mt-3">
-                <img
-                  src={imageUrl}
-                  alt={a.filename || ""}
-                  className={cn(
-                    "rounded-lg transition-all duration-300",
-                    isExpanded ? "max-w-none w-full" : "max-w-full cursor-zoom-in"
-                  )}
-                  loading="lazy"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    haptic.trigger("selection");
-                    setImageExpanded(isExpanded ? null : imageUrl);
-                  }}
-                />
-                {!isExpanded && (
-                  <button
-                    className="mt-2 text-xs opacity-70 flex items-center gap-1"
+            {/* Images */}
+            {hasImages && message.content[0]?.annotations?.filter(
+              (a) => a.type === "container_file_citation" && a.filename && /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(a.filename)
+            ).map((a, i) => {
+              const imageUrl = `/api/container_files/content?file_id=${a.fileId}${a.containerId ? `&container_id=${a.containerId}` : ""}${a.filename ? `&filename=${encodeURIComponent(a.filename)}` : ""}`;
+              const isExpanded = imageExpanded === imageUrl;
+              
+              return (
+                <Box key={i} sx={{ mt: 2 }}>
+                  <Box
+                    component="img"
+                    src={imageUrl}
+                    alt={a.filename || ""}
+                    sx={{
+                      borderRadius: 1.5,
+                      maxWidth: isExpanded ? 'none' : '100%',
+                      width: isExpanded ? '100%' : 'auto',
+                      cursor: 'zoom-in',
+                      transition: 'all 0.3s'
+                    }}
+                    loading="lazy"
                     onClick={(e) => {
                       e.stopPropagation();
                       haptic.trigger("selection");
-                      setImageExpanded(imageUrl);
+                      setImageExpanded(isExpanded ? null : imageUrl);
                     }}
-                  >
-                    <Expand className="h-3 w-3" />
-                    Tap to expand
-                  </button>
+                  />
+                  {!isExpanded && (
+                    <Box 
+                      sx={{ 
+                        mt: 1, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 0.5,
+                        opacity: 0.7,
+                        cursor: 'pointer'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        haptic.trigger("selection");
+                        setImageExpanded(imageUrl);
+                      }}
+                    >
+                      <ExpandIcon sx={{ fontSize: 14 }} />
+                      <Typography variant="caption">Tap to expand</Typography>
+                    </Box>
+                  )}
+                </Box>
+              );
+            })}
+            
+            {/* Timestamp and status */}
+            {showTimestamp && messageTime && (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 0.5, 
+                mt: 1,
+                opacity: 0.7
+              }}>
+                <Typography variant="caption">
+                  {messageTime}
+                </Typography>
+                {isUser && (
+                  <>
+                    {messageStatus === 'sending' && <ClockIcon sx={{ fontSize: 14 }} />}
+                    {messageStatus === 'sent' && <CheckIcon sx={{ fontSize: 14 }} />}
+                    {messageStatus === 'delivered' && <DoneAllIcon sx={{ fontSize: 14 }} />}
+                    {messageStatus === 'read' && <DoneAllIcon sx={{ fontSize: 14, color: 'primary.light' }} />}
+                    {messageStatus === 'failed' && <AlertIcon sx={{ fontSize: 14, color: 'error.light' }} />}
+                  </>
                 )}
-              </div>
-            );
-          })}
-          
-          {/* Timestamp and status with mobile-friendly size */}
-          {showTimestamp && messageTime && (
-            <div className={cn(
-              "flex items-center gap-2 mt-2 text-xs",
-              isUser ? "text-blue-100/70 justify-end" : "text-gray-500"
-            )}>
-              <span>{messageTime}</span>
-              {isUser && (
-                <>
-                  {messageStatus === 'sending' && <Clock className="h-3 w-3" />}
-                  {messageStatus === 'sent' && <Check className="h-3 w-3" />}
-                  {messageStatus === 'delivered' && <CheckCheck className="h-3 w-3" />}
-                  {messageStatus === 'read' && <CheckCheck className="h-3 w-3 text-blue-200" />}
-                  {messageStatus === 'failed' && <AlertCircle className="h-3 w-3 text-red-300" />}
-                </>
-              )}
-            </div>
-          )}
-          
-          {/* Message tail for iOS style */}
-          {isGroupEnd && platform === "ios" && (
-            <div
-              className={cn(
-                "absolute bottom-0 w-0 h-0",
-                isUser ? [
-                  "right-[-6px]",
-                  "border-l-[6px] border-l-blue-500",
-                  "border-t-[8px] border-t-transparent",
-                  "border-b-[0px]"
-                ] : [
-                  "left-[-6px]",
-                  "border-r-[6px] border-r-gray-100",
-                  "border-t-[8px] border-t-transparent",
-                  "border-b-[0px]"
-                ]
-              )}
-            />
-          )}
-          
-          {/* Like indicator with animation */}
-          {isLiked && (
-            <div className={cn(
-              "absolute -bottom-2 -right-2",
-              "bg-white rounded-full shadow-md p-1.5",
-              likeAnimation && "animate-bounce"
-            )}>
-              <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-            </div>
-          )}
-        </div>
+              </Box>
+            )}
+            
+            {/* Like indicator */}
+            {isLiked && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: -8,
+                  right: -8,
+                  bgcolor: 'background.paper',
+                  borderRadius: '50%',
+                  p: 0.5,
+                  boxShadow: 2,
+                  animation: likeAnimation ? 'bounce 0.6s' : undefined,
+                  '@keyframes bounce': {
+                    '0%, 100%': { transform: 'scale(1)' },
+                    '50%': { transform: 'scale(1.2)' }
+                  }
+                }}
+              >
+                <HeartIcon sx={{ fontSize: 16, color: 'error.main' }} />
+              </Box>
+            )}
+          </CardContent>
+        </Card>
         
-        {/* Avatar for user messages (optional) */}
+        {/* Avatar for user messages */}
         {isUser && showAvatar && (
-          <div className={cn(
-            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-            "bg-gradient-to-br from-green-500 to-blue-500 shadow-sm",
-            !isGroupEnd && "invisible"
-          )}>
-            <User className="h-4 w-4 text-white" />
-          </div>
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: 'success.main',
+              visibility: isGroupEnd ? 'visible' : 'hidden'
+            }}
+          >
+            <UserIcon sx={{ fontSize: 18 }} />
+          </Avatar>
         )}
-      </div>
+      </Box>
       
       {/* Swipe action indicators */}
       {Math.abs(swipeOffset) > 30 && (
-        <div className={cn(
-          "absolute top-1/2 -translate-y-1/2",
-          swipeOffset > 0 ? "left-6" : "right-6",
-          "animate-pulse"
-        )}>
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          [swipeOffset > 0 ? 'left' : 'right']: 3,
+          animation: 'pulse 1s infinite',
+          '@keyframes pulse': {
+            '0%, 100%': { opacity: 1 },
+            '50%': { opacity: 0.5 }
+          }
+        }}>
           {swipeOffset > 0 ? (
-            <Reply className="h-6 w-6 text-blue-500" />
+            <ReplyIcon sx={{ color: 'primary.main' }} />
           ) : (
-            <Trash2 className="h-6 w-6 text-red-500" />
+            <DeleteIcon sx={{ color: 'error.main' }} />
           )}
-        </div>
+        </Box>
       )}
       
-      {/* Context Menu with mobile-optimized design */}
-      {showContextMenu && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/30 z-40 animate-fade-in backdrop-blur-sm"
-            onClick={() => setShowContextMenu(false)}
-          />
-          
-          {/* Menu */}
-          <div
-            ref={contextMenuRef}
-            className={cn(
-              "fixed z-50 min-w-[200px] py-2",
-              platform === "ios" ? [
-                "bg-white/95 backdrop-blur-xl rounded-2xl",
-                "shadow-[0_10px_40px_rgba(0,0,0,0.2)]"
-              ] : [
-                "bg-white rounded-xl shadow-2xl border border-gray-100"
-              ],
-              "animate-scale-in"
-            )}
-            style={{
-              left: `${contextMenuPosition.x}px`,
-              top: `${contextMenuPosition.y}px`,
-              transform: 'translateX(-50%)',
-            }}
-          >
-            {contextMenuOptions.map((option, idx) => (
-              <button
-                key={idx}
-                onClick={option.action}
-                className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3.5",
-                  "min-h-[48px] transition-colors duration-150",
-                  "active:scale-[0.98] touch-manipulation",
-                  platform === "ios" ? [
-                    "hover:bg-gray-100",
-                    idx < contextMenuOptions.length - 1 && "border-b border-gray-100"
-                  ] : [
-                    "hover:bg-gray-50"
-                  ],
-                  option.destructive && "text-red-600"
-                )}
-              >
-                {option.icon}
-                <span className="text-base font-medium">{option.label}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-      
-      {/* CSS animations */}
-      <style jsx>{`
-        @keyframes messageSlideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
+      {/* Context Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={() => setMenuAnchorEl(null)}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        PaperProps={{
+          sx: {
+            minWidth: 200,
+            borderRadius: 2,
+            boxShadow: platform === "ios" ? '0 10px 40px rgba(0,0,0,0.2)' : undefined
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+        }}
+      >
+        <MenuItem onClick={handleCopy}>
+          <ListItemIcon>
+            <CopyIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Copy</ListItemText>
+        </MenuItem>
         
-        @keyframes scale-in {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) scale(1);
-          }
-        }
+        {onReply && (
+          <MenuItem onClick={() => {
+            haptic.trigger("selection");
+            onReply();
+            setMenuAnchorEl(null);
+          }}>
+            <ListItemIcon>
+              <ReplyIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Reply</ListItemText>
+          </MenuItem>
+        )}
         
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
+        {!isUser && onRegenerate && (
+          <MenuItem onClick={() => {
+            haptic.trigger("selection");
+            onRegenerate();
+            setMenuAnchorEl(null);
+          }}>
+            <ListItemIcon>
+              <RefreshIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Regenerate</ListItemText>
+          </MenuItem>
+        )}
         
-        @keyframes slide-down {
-          from {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateX(-50%) translateY(10px);
-          }
-        }
+        {typeof window !== 'undefined' && navigator.share && (
+          <MenuItem onClick={handleShare}>
+            <ListItemIcon>
+              <ShareIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Share</ListItemText>
+          </MenuItem>
+        )}
         
-        .animate-scale-in {
-          animation: scale-in 0.2s cubic-bezier(0.32, 0.72, 0, 1);
-        }
+        <MenuItem onClick={() => {
+          handleLike();
+          setMenuAnchorEl(null);
+        }}>
+          <ListItemIcon>
+            {isLiked ? <HeartIcon fontSize="small" sx={{ color: 'error.main' }} /> : <HeartOutlineIcon fontSize="small" />}
+          </ListItemIcon>
+          <ListItemText>{isLiked ? 'Unlike' : 'Like'}</ListItemText>
+        </MenuItem>
         
-        .animate-slide-up {
-          animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        
-        .animate-slide-down {
-          animation: slide-down 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-      `}</style>
+        {onDelete && (
+          <>
+            <Divider />
+            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>
+          </>
+        )}
+      </Menu>
     </>
   );
 });
 
-MobileOptimizedMessage.displayName = "MobileOptimizedMessage";
+MobileOptimizedMessage.displayName = 'MobileOptimizedMessage';
 
-export default React.memo(MobileOptimizedMessage);
+export default MobileOptimizedMessage;

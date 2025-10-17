@@ -1,10 +1,31 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { MessageSquare, Brain, Wrench, Settings } from "lucide-react";
+import {
+  BottomNavigation,
+  BottomNavigationAction,
+  Box,
+  Paper,
+  useTheme,
+  Badge,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Divider,
+  Avatar
+} from "@mui/material";
+import {
+  Chat as ChatIcon,
+  Psychology as BrainIcon,
+  Build as ToolsIcon,
+  Settings as SettingsIcon
+} from "@mui/icons-material";
 import useNavigationStore, { NavigationTab } from "@/stores/useNavigationStore";
 import haptic from "@/lib/haptic";
-import { cn } from "@/lib/utils";
 
 interface TabItem {
   id: NavigationTab;
@@ -13,13 +34,14 @@ interface TabItem {
 }
 
 const tabs: TabItem[] = [
-  { id: "chat", label: "Chat", icon: MessageSquare },
-  { id: "memories", label: "Memories", icon: Brain },
-  { id: "tools", label: "Tools", icon: Wrench },
-  { id: "settings", label: "Settings", icon: Settings }
+  { id: "chat", label: "Chat", icon: ChatIcon },
+  { id: "memories", label: "Memories", icon: BrainIcon },
+  { id: "tools", label: "Tools", icon: ToolsIcon },
+  { id: "settings", label: "Settings", icon: SettingsIcon }
 ];
 
-export default function BottomNavigation() {
+export default function BottomNavigationComponent() {
+  const theme = useTheme();
   const { activeTab, setActiveTab } = useNavigationStore();
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
@@ -31,240 +53,234 @@ export default function BottomNavigation() {
     setIsAndroid(/android/i.test(userAgent));
   }, []);
 
-  const handleTabPress = (tabId: NavigationTab) => {
-    if (activeTab === tabId) return;
+  const handleTabChange = (event: React.SyntheticEvent, newValue: NavigationTab) => {
+    if (activeTab === newValue) return;
     
     // Trigger haptic feedback
     haptic.trigger("selection");
     
     // Set active tab
-    setActiveTab(tabId);
+    setActiveTab(newValue);
   };
 
   return (
     <>
       {/* Mobile and Tablet Bottom Navigation - Mobile First */}
-      <div className={cn(
-        // Mobile (default): Show bottom navigation
-        "fixed bottom-0 left-0 right-0 z-40",
-        // Tablet: Still show bottom navigation but with adjustments
-        "md:bottom-0",
-        // Desktop: Hide bottom navigation
-        "lg:hidden"
-      )}>
-        {/* Safe area padding for devices with home indicator */}
-        <div 
-          className={cn(
-            "bg-white/80 backdrop-blur-xl border-t",
-            isIOS && "bg-white/60 backdrop-saturate-150",
-            isAndroid && "bg-white shadow-lg"
-          )}
-          style={{
-            paddingBottom: "env(safe-area-inset-bottom, 0px)"
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 40,
+          display: { xs: 'block', lg: 'none' },
+          borderTop: `1px solid ${theme.palette.divider}`,
+          backgroundColor: isIOS 
+            ? 'rgba(255, 255, 255, 0.6)' 
+            : theme.palette.background.paper,
+          backdropFilter: isIOS ? 'saturate(180%) blur(20px)' : undefined,
+          pb: 'env(safe-area-inset-bottom, 0px)'
+        }}
+        elevation={isAndroid ? 8 : 0}
+      >
+        <BottomNavigation
+          value={activeTab}
+          onChange={handleTabChange}
+          showLabels
+          sx={{
+            backgroundColor: 'transparent',
+            height: { xs: 56, md: 64 },
+            '& .MuiBottomNavigationAction-root': {
+              minWidth: 'auto',
+              padding: '6px 12px 8px',
+              '&.Mui-selected': {
+                '& .MuiSvgIcon-root': {
+                  transform: 'scale(1.1)',
+                  transition: 'transform 0.2s'
+                }
+              }
+            },
+            '& .MuiBottomNavigationAction-label': {
+              fontSize: '0.7rem',
+              '&.Mui-selected': {
+                fontSize: '0.75rem',
+                fontWeight: 600
+              }
+            }
           }}
         >
-          <nav className={cn(
-            // Mobile (default): Smaller height
-            "flex justify-around items-center h-16",
-            // Tablet: Larger height and spacing
-            "md:h-20 md:px-8"
-          )}>
-            {tabs.map((tab) => (
-              <TabButton
-                key={tab.id}
-                tab={tab}
-                isActive={activeTab === tab.id}
-                onClick={() => handleTabPress(tab.id)}
-                showLabel={true}
-                isIOS={isIOS}
-                isAndroid={isAndroid}
-                size="mobile"
-              />
-            ))}
-          </nav>
-        </div>
-      </div>
+          {tabs.map((tab) => (
+            <BottomNavigationAction
+              key={tab.id}
+              label={tab.label}
+              value={tab.id}
+              icon={
+                tab.id === "chat" && activeTab === "chat" ? (
+                  <Badge 
+                    variant="dot" 
+                    color="primary"
+                    sx={{ 
+                      '& .MuiBadge-dot': { 
+                        width: 6, 
+                        height: 6,
+                        minWidth: 6,
+                        animation: 'pulse 2s infinite'
+                      },
+                      '@keyframes pulse': {
+                        '0%': { opacity: 1, transform: 'scale(1)' },
+                        '50%': { opacity: 0.7, transform: 'scale(1.2)' },
+                        '100%': { opacity: 1, transform: 'scale(1)' }
+                      }
+                    }}
+                  >
+                    <tab.icon />
+                  </Badge>
+                ) : (
+                  <tab.icon />
+                )
+              }
+              sx={{
+                color: isIOS ? 'text.secondary' : 'text.primary',
+                '&.Mui-selected': {
+                  color: theme.palette.primary.main
+                }
+              }}
+            />
+          ))}
+        </BottomNavigation>
+      </Paper>
 
       {/* Desktop Sidebar Navigation - Progressive Enhancement */}
-      <div className={cn(
-        // Mobile/Tablet (default): Hidden
-        "hidden",
-        // Desktop: Show as sidebar
-        "lg:block lg:fixed lg:left-0 lg:top-0 lg:bottom-0",
-        // Desktop: Narrow sidebar
-        "lg:w-20",
-        // Large Desktop: Wider sidebar
-        "xl:w-64",
-        // Extra Large Desktop: Even wider
-        "2xl:w-72",
-        // Styling
-        "bg-white border-r z-40"
-      )}>
-        <nav className="flex flex-col h-full">
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', lg: 'block' },
+          '& .MuiDrawer-paper': {
+            width: { lg: 80, xl: 256, '2xl': 288 },
+            boxSizing: 'border-box',
+            borderRight: `1px solid ${theme.palette.divider}`,
+            backgroundColor: theme.palette.background.paper
+          }
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           {/* Logo/Brand area */}
-          <div className={cn(
-            "px-3 py-6 border-b",
-            "hidden xl:block"
-          )}>
-            <h1 className="text-xl font-bold text-gray-800">AI Assistant</h1>
-          </div>
+          <Box 
+            sx={{ 
+              px: 2, 
+              py: 3, 
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              display: { xs: 'none', xl: 'block' }
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+              AI Assistant
+            </Typography>
+          </Box>
           
           {/* Navigation Items */}
-          <div className={cn(
-            "flex-1 flex flex-col gap-2 px-3",
-            "py-4 lg:py-6 xl:py-8"
-          )}>
-            {tabs.map((tab) => (
-              <TabButton
-                key={tab.id}
-                tab={tab}
-                isActive={activeTab === tab.id}
-                onClick={() => handleTabPress(tab.id)}
-                showLabel={true}
-                isIOS={isIOS}
-                isAndroid={isAndroid}
-                size="desktop"
-              />
-            ))}
-          </div>
+          <List sx={{ flex: 1, py: 2 }}>
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              
+              return (
+                <ListItem key={tab.id} disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    selected={isActive}
+                    onClick={() => {
+                      haptic.trigger("selection");
+                      setActiveTab(tab.id);
+                    }}
+                    sx={{
+                      mx: 1,
+                      borderRadius: 2,
+                      transition: 'all 0.2s',
+                      '&.Mui-selected': {
+                        backgroundColor: theme.palette.primary.main + '15',
+                        '& .MuiListItemIcon-root': {
+                          color: theme.palette.primary.main
+                        },
+                        '& .MuiListItemText-primary': {
+                          color: theme.palette.primary.main,
+                          fontWeight: 600
+                        },
+                        '&:hover': {
+                          backgroundColor: theme.palette.primary.main + '20'
+                        }
+                      },
+                      '&:hover': {
+                        backgroundColor: theme.palette.action.hover
+                      }
+                    }}
+                  >
+                    <ListItemIcon 
+                      sx={{ 
+                        minWidth: { lg: 'auto', xl: 56 },
+                        justifyContent: 'center',
+                        color: isActive ? theme.palette.primary.main : 'text.secondary'
+                      }}
+                    >
+                      {tab.id === "chat" && (
+                        <Badge 
+                          variant="dot" 
+                          color="error"
+                          invisible={!isActive}
+                          sx={{ 
+                            '& .MuiBadge-dot': { 
+                              width: 8, 
+                              height: 8
+                            }
+                          }}
+                        >
+                          <Icon />
+                        </Badge>
+                      )}
+                      {tab.id !== "chat" && <Icon />}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={tab.label}
+                      sx={{
+                        display: { lg: 'none', xl: 'block' },
+                        '& .MuiListItemText-primary': {
+                          fontSize: '0.9rem'
+                        }
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </List>
           
           {/* User Profile Section - Only on larger screens */}
-          <div className={cn(
-            "border-t px-3 py-4",
-            "hidden 2xl:block"
-          )}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-200"></div>
-              <div className="hidden 2xl:block">
-                <p className="text-sm font-medium">User</p>
-                <p className="text-xs text-gray-500">user@example.com</p>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </div>
+          <Box
+            sx={{
+              borderTop: `1px solid ${theme.palette.divider}`,
+              p: 2,
+              display: { xs: 'none', '2xl': 'block' }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar 
+                sx={{ 
+                  width: 40, 
+                  height: 40,
+                  bgcolor: theme.palette.grey[200]
+                }}
+              />
+              <Box sx={{ display: { xs: 'none', '2xl': 'block' } }}>
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                  User
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  user@example.com
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Drawer>
     </>
-  );
-}
-
-interface TabButtonProps {
-  tab: TabItem;
-  isActive: boolean;
-  onClick: () => void;
-  showLabel: boolean;
-  isIOS: boolean;
-  isAndroid: boolean;
-  size: "mobile" | "desktop";
-}
-
-function TabButton({ tab, isActive, onClick, showLabel, isIOS, isAndroid, size }: TabButtonProps) {
-  const Icon = tab.icon;
-  const [isPressed, setIsPressed] = useState(false);
-
-  const handlePress = () => {
-    setIsPressed(true);
-    onClick();
-    setTimeout(() => setIsPressed(false), 150);
-  };
-
-  if (size === "desktop") {
-    return (
-      <button
-        onClick={handlePress}
-        className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
-          "hover:bg-gray-100",
-          isActive && "bg-blue-50 text-blue-600",
-          !isActive && "text-gray-600 hover:text-gray-900",
-          isPressed && "scale-95"
-        )}
-      >
-        <Icon 
-          size={24} 
-          className={cn(
-            "transition-colors",
-            isActive && "text-blue-600"
-          )}
-        />
-        <span className={cn(
-          "hidden xl:block font-medium transition-colors",
-          isActive && "text-blue-600"
-        )}>
-          {tab.label}
-        </span>
-      </button>
-    );
-  }
-
-  return (
-    <button
-      onClick={handlePress}
-      className={cn(
-        "flex flex-col items-center justify-center",
-        "min-w-[48px] min-h-[48px] px-3 py-2",
-        "transition-all duration-200 rounded-lg",
-        "relative overflow-hidden",
-        isPressed && "scale-90",
-        // iOS styling
-        isIOS && [
-          isActive && "text-blue-500",
-          !isActive && "text-gray-500"
-        ],
-        // Android Material Design styling
-        isAndroid && [
-          "relative",
-          isActive && "text-blue-600",
-          !isActive && "text-gray-600"
-        ]
-      )}
-    >
-      {/* Android ripple effect */}
-      {isAndroid && isPressed && (
-        <span 
-          className="absolute inset-0 bg-gray-400/20 animate-pulse rounded-lg"
-        />
-      )}
-      
-      {/* Icon container with active indicator */}
-      <div className={cn(
-        "relative flex items-center justify-center",
-        size === "mobile" && "mb-1"
-      )}>
-        {/* Active background pill for mobile */}
-        {isActive && size === "mobile" && (
-          <div className={cn(
-            "absolute inset-0 -inset-x-2 rounded-full",
-            "transition-all duration-300",
-            isIOS && "bg-blue-500/10",
-            isAndroid && "bg-blue-600/15"
-          )} />
-        )}
-        
-        <Icon 
-          size={size === "mobile" ? 24 : 28} 
-          className={cn(
-            "relative z-10 transition-all duration-200",
-            isActive && "transform scale-110"
-          )}
-        />
-      </div>
-      
-      {/* Label */}
-      <span className={cn(
-        "text-xs transition-all duration-200",
-        size === "mobile" && "md:text-sm",
-        isActive ? "font-semibold" : "font-medium",
-        isActive && isIOS && "text-blue-500",
-        isActive && isAndroid && "text-blue-600",
-        !isActive && "text-gray-500"
-      )}>
-        {tab.label}
-      </span>
-      
-      {/* Active dot indicator for iOS style */}
-      {isIOS && isActive && size === "mobile" && (
-        <div className="absolute bottom-0 w-1 h-1 bg-blue-500 rounded-full" />
-      )}
-    </button>
   );
 }

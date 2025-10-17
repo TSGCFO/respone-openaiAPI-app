@@ -5,13 +5,25 @@ import { ConversationSidebar } from "./conversation-sidebar";
 import { ConversationBottomSheet } from "./conversation-bottom-sheet";
 import { SemanticSearch } from "./semantic-search";
 import { FloatingActionButton } from "./floating-action-button";
-import { Menu, MessageSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { 
+  Box, 
+  Container, 
+  IconButton, 
+  Typography,
+  useTheme,
+  Paper,
+  AppBar,
+  Toolbar
+} from "@mui/material";
+import {
+  Menu as MenuIcon,
+  Chat as ChatIcon,
+  Forum as MessageSquareIcon
+} from "@mui/icons-material";
 import useConversationStore from "@/stores/useConversationStore";
 import useNavigationStore from "@/stores/useNavigationStore";
-import { Item, processMessages } from "@/lib/assistant";
+import { Item, MessageItem, processMessages } from "@/lib/assistant";
 import haptic from "@/lib/haptic";
-import { cn } from "@/lib/utils";
 
 export default function Assistant() {
   const { 
@@ -336,85 +348,96 @@ export default function Assistant() {
   }, [isMobile]);
 
   const shouldUseBottomSheet = isMobile || (isTablet && window.matchMedia("(orientation: portrait)").matches);
-
+  const theme = useTheme();
+  
   return (
-    <div className="flex h-full relative">
+    <Box sx={{ display: 'flex', height: '100%', position: 'relative' }}>
       {/* Desktop Sidebar - Mobile First Responsive */}
-      <div className={cn(
-        // Mobile/Tablet (default): Hidden
-        "hidden",
-        // Desktop: Show sidebar
-        "lg:block lg:flex-shrink-0",
-        // Desktop: Base width
-        "lg:w-64",
-        // Large Desktop: Wider
-        "xl:w-72",
-        // Extra Large Desktop: Even wider
-        "2xl:w-80"
-      )}>
+      <Box
+        sx={{
+          display: { xs: 'none', lg: 'block' },
+          flexShrink: 0,
+          width: {
+            lg: 256, // 256px for desktop
+            xl: 288 // 288px for large desktop
+          }
+        }}
+      >
         <ConversationSidebar
           currentConversationId={currentConversationId ?? undefined}
           onSelectConversation={handleSelectConversation}
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
         />
-      </div>
+      </Box>
 
       {/* Main Chat Area - Mobile First Responsive */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Header - Mobile First Responsive */}
-        <div className={cn(
-          "border-b flex items-center gap-2 flex-shrink-0",
-          // Mobile (default): Small padding
-          "p-2",
-          // Tablet: Medium padding
-          "md:p-3",
-          // Desktop: Larger padding
-          "lg:p-4"
-        )}>
-          {/* Mobile/Tablet: Bottom Sheet Trigger */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleOpenBottomSheet}
-            className={cn(
-              // Mobile/Tablet: Show
-              "block",
-              // Desktop: Hide
-              "lg:hidden",
-              // Touch target size
-              "min-w-[44px] min-h-[44px]"
-            )}
-            aria-label="Open conversations"
+        <AppBar 
+          position="static" 
+          color="default" 
+          elevation={0}
+          sx={{ 
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            backgroundColor: theme.palette.background.paper
+          }}
+        >
+          <Toolbar
+            sx={{
+              gap: 1,
+              minHeight: { xs: 48, sm: 56, md: 64 },
+              px: { xs: 1, sm: 2, md: 3 }
+            }}
           >
-            <MessageSquare className="h-5 w-5" />
-          </Button>
+            {/* Mobile/Tablet: Bottom Sheet Trigger */}
+            <IconButton
+              onClick={handleOpenBottomSheet}
+              sx={{
+                display: { xs: 'flex', lg: 'none' },
+                minWidth: 44,
+                minHeight: 44
+              }}
+              aria-label="Open conversations"
+            >
+              <MessageSquareIcon />
+            </IconButton>
           
           <SemanticSearch
             currentConversationId={currentConversationId ?? undefined}
             onSelectResult={handleSearchResultSelect}
           />
           
-          {/* Current conversation indicator - Responsive */}
-          {currentConversationId && (
-            <div className={cn(
-              "flex-1 truncate text-center",
-              // Mobile (default): Small text
-              "text-xs text-muted-foreground",
-              // Tablet: Medium text
-              "md:text-sm",
-              // Desktop: Hide (sidebar shows it)
-              "lg:hidden"
-            )}>
-              Conversation #{currentConversationId}
-            </div>
-          )}
-        </div>
+            {/* Current conversation indicator - Responsive */}
+            {currentConversationId && (
+              <Typography
+                variant="caption"
+                sx={{
+                  flex: 1,
+                  textAlign: 'center',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  color: 'text.secondary',
+                  display: { xs: 'block', lg: 'none' },
+                  fontSize: { xs: '0.75rem', md: '0.875rem' }
+                }}
+              >
+                Conversation #{currentConversationId}
+              </Typography>
+            )}
+          </Toolbar>
+        </AppBar>
         
         {/* Chat content - Mobile First Responsive */}
-        <div 
+        <Box
           ref={chatContainerRef}
-          className="flex-1 min-h-0 overflow-hidden bg-white"
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflow: 'hidden',
+            backgroundColor: theme.palette.background.default
+          }}
         >
           <EnhancedChat
             items={chatMessages}
@@ -426,8 +449,8 @@ export default function Assistant() {
             onConversationChange={handleSelectConversation}
             isLoading={isAssistantLoading}
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Bottom Sheet for Mobile/Tablet */}
       {shouldUseBottomSheet && (
