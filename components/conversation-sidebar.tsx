@@ -8,15 +8,7 @@ import {
   Paper,
   Typography,
   IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   SwipeableDrawer,
-  AppBar,
-  Toolbar,
-  CircularProgress,
   InputAdornment,
   useTheme,
   alpha,
@@ -79,10 +71,8 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
   onRename,
   onCancelEdit,
 }) => {
-  const theme = useTheme();
   const itemRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const swipeState = useSwipeGesture(itemRef, {
     threshold: 30,
@@ -96,10 +86,8 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
     onSwipeEnd: (direction, velocity) => {
       if (direction === 'left' && (Math.abs(swipeOffset) > 50 || velocity > 0.5)) {
         setSwipeOffset(-100);
-        setShowDeleteConfirm(true);
         haptic.trigger('heavy');
         setTimeout(() => {
-          setShowDeleteConfirm(false);
           setSwipeOffset(0);
         }, 3000);
       } else {

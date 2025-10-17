@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useEffect } from "react";
-import { Item, McpApprovalRequestItem } from "@/lib/assistant";
+import { Item } from "@/lib/assistant";
 import { MessageInput } from "./message-input";
 import { MessageList } from "./message-list";
 import useConversationStore from "@/stores/useConversationStore";
@@ -21,7 +21,6 @@ const Chat: React.FC<ChatProps> = ({
   onRegenerateMessage,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
   const [viewportHeight, setViewportHeight] = useState("100vh");
   const { isAssistantLoading } = useConversationStore();
   
@@ -30,7 +29,6 @@ const Chat: React.FC<ChatProps> = ({
     const checkDevice = () => {
       const width = window.innerWidth;
       setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
     };
 
     checkDevice();

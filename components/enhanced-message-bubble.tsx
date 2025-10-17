@@ -6,20 +6,13 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useEnhancedSwipe } from "@/hooks/useEnhancedSwipe";
 import { 
-  Copy, 
-  RotateCcw, 
-  Share, 
-  Heart, 
   Trash2, 
-  Reply, 
-  MoreVertical,
   Check,
   CheckCheck,
   Clock,
   AlertCircle,
   User,
-  Bot,
-  Undo
+  Bot
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import haptic from "@/lib/haptic";
@@ -47,8 +40,6 @@ interface UndoState {
 
 const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubbleProps>(({
   message,
-  onRegenerate,
-  onReply,
   onDelete,
   isGroupStart = false,
   isGroupEnd = true,
@@ -57,10 +48,8 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
   platform: propPlatform,
   messageStatus = "sent",
   className
-}, ref) => {
+}) => {
   const [platform, setPlatform] = useState<"ios" | "android" | "other">(propPlatform || "other");
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletedMessages, setDeletedMessages] = useState<Set<string>>(new Set());
   const [undoStack, setUndoStack] = useState<Map<string, UndoState>>(new Map());
@@ -68,7 +57,6 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
   
   const messageRef = useRef<HTMLDivElement>(null);
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
-  const doubleTapRef = useRef<number>(0);
   
   const isUser = message.role === "user";
   const messageText = message.content[0]?.text || "";
@@ -120,6 +108,7 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
     
     // Show undo toast
     showUndoToast();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messageId, message, onDelete]);
   
   // Handle undo
@@ -167,15 +156,11 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
   }, [messageId, handleUndo]);
   
   // Swipe handlers
-  const handleSwipeMove = useCallback((deltaX: number, deltaY: number, velocity: number, progress: number) => {
+  const handleSwipeMove = useCallback((deltaX: number, deltaY: number, _velocity: number, progress: number) => {
     if (Math.abs(deltaY) > Math.abs(deltaX)) return;
     
     // Only allow left swipe for delete
     if (deltaX >= 0) return;
-    
-    const absX = Math.abs(deltaX);
-    const maxSwipe = 100;
-    const swipeAmount = Math.min(absX, maxSwipe);
     
     if (messageRef.current) {
       if (platform === 'ios') {
@@ -365,7 +350,7 @@ const EnhancedMessageBubble = forwardRef<HTMLDivElement, EnhancedMessageBubblePr
                   isUser ? "prose-invert" : "prose-gray"
                 )}
                 components={{
-                  code({ node, className, children, ...props }) {
+                  code({ className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
                     return match ? (
                       <SyntaxHighlighter

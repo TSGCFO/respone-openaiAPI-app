@@ -7,17 +7,13 @@ import { SemanticSearch } from "./semantic-search";
 import { FloatingActionButton } from "./floating-action-button";
 import { 
   Box, 
-  Container, 
   IconButton, 
   Typography,
   useTheme,
-  Paper,
   AppBar,
   Toolbar
 } from "@mui/material";
 import {
-  Menu as MenuIcon,
-  Chat as ChatIcon,
   Forum as MessageSquareIcon
 } from "@mui/icons-material";
 import useConversationStore from "@/stores/useConversationStore";
@@ -36,7 +32,6 @@ export default function Assistant() {
     createSemanticMemory,
     resetConversation,
     loadConversation,
-    createNewConversation,
     currentConversationId 
   } = useConversationStore();
 
@@ -237,7 +232,6 @@ export default function Assistant() {
   
   // Ref for swipe gesture on chat area
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const [showSwipeHint, setShowSwipeHint] = useState(false);
   
   // Scroll detection to show/hide FAB
   useEffect(() => {
@@ -334,9 +328,8 @@ export default function Assistant() {
     // Show hint after a delay on first visit
     const hintTimeout = setTimeout(() => {
       if (!localStorage.getItem('swipeHintShown')) {
-        setShowSwipeHint(true);
+        // Swipe hint shown state removed - just mark as shown
         localStorage.setItem('swipeHintShown', 'true');
-        setTimeout(() => setShowSwipeHint(false), 3000);
       }
     }, 2000);
     

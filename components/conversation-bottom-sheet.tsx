@@ -7,20 +7,12 @@ import {
   Typography,
   TextField,
   IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   InputAdornment,
   Button,
   Paper,
-  Divider,
   CircularProgress,
   useTheme,
-  alpha,
-  Chip,
-  Avatar
+  alpha
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -31,8 +23,7 @@ import {
   Check as CheckIcon,
   Clear as ClearIcon,
   Refresh as RefreshIcon,
-  ArrowBack as ArrowBackIcon,
-  DragHandle as DragHandleIcon
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -83,10 +74,8 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
   onRename,
   onCancelEdit,
 }) => {
-  const theme = useTheme();
   const itemRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const swipeState = useSwipeGesture(itemRef, {
     threshold: 30,
@@ -100,10 +89,8 @@ const SwipeableConversationItem: React.FC<SwipeableItemProps> = ({
     onSwipeEnd: (direction, velocity) => {
       if (direction === 'left' && (Math.abs(swipeOffset) > 50 || velocity > 0.5)) {
         setSwipeOffset(-100);
-        setShowDeleteConfirm(true);
         haptic.trigger('heavy');
         setTimeout(() => {
-          setShowDeleteConfirm(false);
           setSwipeOffset(0);
         }, 3000);
       } else {
@@ -289,7 +276,6 @@ export function ConversationBottomSheet({
   onDeleteConversation,
   isOpen,
   onOpenChange,
-  triggerRef,
 }: ConversationBottomSheetProps) {
   const theme = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);

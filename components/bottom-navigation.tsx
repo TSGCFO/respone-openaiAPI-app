@@ -15,7 +15,6 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  Divider,
   Avatar
 } from "@mui/material";
 import {

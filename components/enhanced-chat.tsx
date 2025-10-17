@@ -33,7 +33,6 @@ const EnhancedChat: React.FC<EnhancedChatProps> = ({
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
-  const [viewportHeight, setViewportHeight] = useState("100vh");
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const { currentConversationId, isAssistantLoading } = useConversationStore();
   
@@ -56,8 +55,8 @@ const EnhancedChat: React.FC<EnhancedChatProps> = ({
   // Viewport height handling
   useEffect(() => {
     const updateViewportHeight = () => {
-      const vh = window.visualViewport?.height || window.innerHeight;
-      setViewportHeight(`${vh}px`);
+      // const vh = window.visualViewport?.height || window.innerHeight;
+      // Viewport height calculation removed as it was unused
     };
 
     updateViewportHeight();

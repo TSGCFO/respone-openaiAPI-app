@@ -45,6 +45,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     if (isRecording && recordingTime >= maxRecordingTime) {
       handleStopRecording();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording, recordingTime, maxRecordingTime]);
 
   // Handle audio blob when recording stops
