@@ -7,8 +7,9 @@ import { getRelevantMemories } from "@/lib/db/conversations";
 
 export async function POST(request: Request) {
   try {
-    const { messages, tools, googleIntegrationEnabled } = await request.json();
+    const { messages, tools, googleIntegrationEnabled, model, reasoningEffort } = await request.json();
     console.log("Received messages:", messages);
+    console.log("Model:", model || MODEL, "Reasoning Effort:", reasoningEffort);
 
     // Get fresh tokens (refresh if near expiry or missing access token when refresh exists)
     const { accessToken } = await getFreshAccessToken();
@@ -117,14 +118,27 @@ Remember: You have access to the user's stored memories above. Use them to provi
 
     const openai = new OpenAI();
 
-    const events = await openai.responses.create({
-      model: MODEL,
+    // Use provided model or fall back to MODEL constant
+    const selectedModel = model || MODEL;
+    
+    // Build API parameters
+    const apiParams: any = {
+      model: selectedModel,
       input: messages,
       instructions: enhancedInstructions,
       tools: toolsWithConnector as any,
       stream: true,
       parallel_tool_calls: false,
-    });
+    };
+
+    // Add reasoning_effort for GPT-5 models
+    if (selectedModel === 'gpt-5' && reasoningEffort) {
+      apiParams.reasoning_effort = reasoningEffort;
+      console.log(`Using GPT-5 with reasoning effort: ${reasoningEffort}`);
+    }
+
+    // Cast to any to bypass TypeScript's type checking for the AsyncIterable
+    const events = await openai.responses.create(apiParams) as any;
 
     // Create a ReadableStream that emits SSE data
     const stream = new ReadableStream({

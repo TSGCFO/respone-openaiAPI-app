@@ -14,6 +14,10 @@ interface ConversationState {
   isAssistantLoading: boolean;
   // User ID for the current session
   userId: string;
+  // Selected AI model
+  selectedModel: string;
+  // Reasoning effort for GPT-5 models
+  reasoningEffort: 'low' | 'medium' | 'high';
 
   setChatMessages: (items: Item[]) => void;
   setConversationItems: (messages: any[]) => void;
@@ -22,6 +26,8 @@ interface ConversationState {
   setAssistantLoading: (loading: boolean) => void;
   setCurrentConversationId: (id: number | null) => void;
   setUserId: (id: string) => void;
+  setSelectedModel: (model: string) => void;
+  setReasoningEffort: (effort: 'low' | 'medium' | 'high') => void;
   rawSet: (state: any) => void;
   resetConversation: () => void;
   createNewConversation: () => Promise<number>;
@@ -46,6 +52,8 @@ const useConversationStore = create<ConversationState>((set, get) => ({
   conversationItems: [],
   isAssistantLoading: false,
   userId: 'default_user',
+  selectedModel: 'gpt-4.1',
+  reasoningEffort: 'medium' as const,
   
   setChatMessages: (items) => set({ chatMessages: items }),
   setConversationItems: (messages) => set({ conversationItems: messages }),
@@ -58,6 +66,8 @@ const useConversationStore = create<ConversationState>((set, get) => ({
   setAssistantLoading: (loading) => set({ isAssistantLoading: loading }),
   setCurrentConversationId: (id) => set({ currentConversationId: id }),
   setUserId: (id) => set({ userId: id }),
+  setSelectedModel: (model) => set({ selectedModel: model }),
+  setReasoningEffort: (effort) => set({ reasoningEffort: effort }),
   rawSet: set,
   
   resetConversation: () =>
