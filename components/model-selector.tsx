@@ -12,6 +12,7 @@ import {
   useTheme,
   SelectChangeEvent,
   alpha,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Psychology as PsychologyIcon,
@@ -35,6 +36,7 @@ const REASONING_EFFORTS = [
 
 export default function ModelSelector() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { selectedModel, setSelectedModel, reasoningEffort, setReasoningEffort } = useConversationStore();
 
   const handleModelChange = (event: SelectChangeEvent) => {
@@ -48,11 +50,20 @@ export default function ModelSelector() {
   const showReasoningEffort = selectedModel === "gpt-5" || selectedModel === "gpt-5-pro";
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+    <Box 
+      sx={{ 
+        display: "flex", 
+        flexDirection: { xs: "column", sm: "row" },
+        alignItems: { xs: "stretch", sm: "center" }, 
+        gap: { xs: 1, sm: 2 },
+        width: "100%",
+      }}
+    >
       <FormControl 
         size="small" 
         sx={{ 
-          minWidth: 140,
+          minWidth: { xs: 100, sm: 140 },
+          flexShrink: 0,
           backgroundColor: alpha(theme.palette.background.paper, 0.8),
           borderRadius: 1,
           "& .MuiOutlinedInput-root": {
@@ -70,10 +81,10 @@ export default function ModelSelector() {
             "& .MuiSelect-select": {
               display: "flex",
               alignItems: "center",
-              py: 1,
-              px: 1.5,
+              py: { xs: 0.75, sm: 1 },
+              px: { xs: 1, sm: 1.5 },
             },
-            fontSize: "0.875rem",
+            fontSize: { xs: "0.75rem", sm: "0.875rem" },
           }}
         >
           {MODEL_OPTIONS.map((model) => {
@@ -98,8 +109,8 @@ export default function ModelSelector() {
                   },
                 }}
               >
-                <Icon sx={{ fontSize: 18, color: theme.palette.primary.main }} />
-                <Typography variant="body2">{model.label}</Typography>
+                <Icon sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.primary.main }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{isMobile ? model.label.replace('GPT-', '') : model.label}</Typography>
               </MenuItem>
             );
           })}
@@ -107,73 +118,103 @@ export default function ModelSelector() {
       </FormControl>
 
       {showReasoningEffort && (
-        <Stack 
-          direction="row" 
-          spacing={0.5}
+        <Box
           sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            width: { xs: "100%", sm: "auto" },
+            overflowX: { xs: "auto", sm: "visible" },
+            overflowY: "hidden",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+            px: { xs: 0.5, sm: 0 },
             animation: "fadeIn 0.3s ease-in-out",
             "@keyframes fadeIn": {
-              from: { opacity: 0, transform: "translateX(-10px)" },
-              to: { opacity: 1, transform: "translateX(0)" },
+              from: { opacity: 0, transform: isMobile ? "translateY(-10px)" : "translateX(-10px)" },
+              to: { opacity: 1, transform: isMobile ? "translateY(0)" : "translateX(0)" },
             },
           }}
         >
-          <Typography
-            variant="caption"
+          {!isMobile && (
+            <Typography
+              variant="caption"
+              sx={{
+                alignItems: "center",
+                mr: 0.5,
+                color: "text.secondary",
+                fontWeight: 500,
+                flexShrink: 0,
+              }}
+            >
+              Reasoning:
+            </Typography>
+          )}
+          <Stack 
+            direction="row" 
+            spacing={0.5}
             sx={{
-              display: { xs: "none", sm: "flex" },
-              alignItems: "center",
-              mr: 0.5,
-              color: "text.secondary",
-              fontWeight: 500,
+              flexShrink: 0,
+              minWidth: "max-content",
             }}
           >
-            Reasoning:
-          </Typography>
-          {REASONING_EFFORTS.map((effort) => {
-            const Icon = effort.icon;
-            const isSelected = reasoningEffort === effort.value;
-            return (
-              <Chip
-                key={effort.value}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <Icon sx={{ fontSize: 14 }} />
-                    <span>{effort.label}</span>
-                  </Box>
-                }
-                onClick={() => handleReasoningEffortChange(effort.value as 'low' | 'medium' | 'high')}
-                size="small"
-                sx={{
-                  height: 28,
-                  backgroundColor: isSelected 
-                    ? theme.palette.primary.main
-                    : alpha(theme.palette.action.selected, 0.08),
-                  color: isSelected
-                    ? theme.palette.primary.contrastText
-                    : theme.palette.text.secondary,
-                  borderColor: isSelected
-                    ? theme.palette.primary.main
-                    : theme.palette.divider,
-                  borderWidth: 1,
-                  borderStyle: "solid",
-                  "&:hover": {
-                    backgroundColor: isSelected
-                      ? theme.palette.primary.dark
-                      : alpha(theme.palette.action.selected, 0.16),
-                  },
-                  transition: "all 0.2s ease",
-                  cursor: "pointer",
-                  fontSize: "0.75rem",
-                  fontWeight: isSelected ? 600 : 400,
-                  "& .MuiChip-label": {
-                    px: 1,
-                  },
-                }}
-              />
-            );
-          })}
-        </Stack>
+            {REASONING_EFFORTS.map((effort) => {
+              const Icon = effort.icon;
+              const isSelected = reasoningEffort === effort.value;
+              return (
+                <Chip
+                  key={effort.value}
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Icon sx={{ fontSize: { xs: 16, sm: 14 } }} />
+                      <span>{effort.label}</span>
+                    </Box>
+                  }
+                  onClick={() => handleReasoningEffortChange(effort.value as 'low' | 'medium' | 'high')}
+                  size={isMobile ? "medium" : "small"}
+                  sx={{
+                    height: { xs: 40, sm: 28 },
+                    minWidth: { xs: 72, sm: "auto" },
+                    backgroundColor: isSelected 
+                      ? theme.palette.primary.main
+                      : alpha(theme.palette.action.selected, 0.08),
+                    color: isSelected
+                      ? theme.palette.primary.contrastText
+                      : theme.palette.text.secondary,
+                    borderColor: isSelected
+                      ? theme.palette.primary.main
+                      : theme.palette.divider,
+                    borderWidth: 1,
+                    borderStyle: "solid",
+                    "&:hover": {
+                      backgroundColor: isSelected
+                        ? theme.palette.primary.dark
+                        : alpha(theme.palette.action.selected, 0.16),
+                    },
+                    transition: "all 0.2s ease",
+                    cursor: "pointer",
+                    fontSize: { xs: "0.875rem", sm: "0.75rem" },
+                    fontWeight: isSelected ? 600 : 400,
+                    "& .MuiChip-label": {
+                      px: { xs: 1.5, sm: 1 },
+                      py: { xs: 1.5, sm: 1 },
+                    },
+                    // Ensure minimum touch target for Android (48px)
+                    "@media (hover: none)": {
+                      minHeight: 48,
+                      "& .MuiChip-label": {
+                        py: 1.5,
+                      },
+                    },
+                  }}
+                />
+              );
+            })}
+          </Stack>
+        </Box>
       )}
     </Box>
   );

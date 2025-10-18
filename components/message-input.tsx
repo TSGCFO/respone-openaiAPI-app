@@ -146,7 +146,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       if (response.ok) {
         const data = await response.json();
         if (data.text) {
-          setMessage(data.text);
+          // Append transcribed text to existing message (if any)
+          setMessage(prev => {
+            const existingText = prev.trim();
+            const newText = data.text.trim();
+            return existingText ? `${existingText} ${newText}` : newText;
+          });
           haptic.trigger("success");
         }
       } else {
@@ -289,39 +294,40 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           }}
         />
 
-        {/* Voice Recording Button */}
-        {!message.trim() && (
-          <Box sx={{ position: 'relative' }}>
-            <AudioRecorder
-              onAudioReady={handleAudioReady}
-              onTranscriptionRequest={handleTranscriptionRequest}
-              disabled={disabled}
-              className="min-w-[48px] min-h-[48px]"
-            />
-            {isProcessingAudio && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <CircularProgress size={20} />
-              </Box>
-            )}
-          </Box>
-        )}
+        {/* Voice Recording Button - Always visible */}
+        <Box sx={{ position: 'relative' }}>
+          <AudioRecorder
+            onAudioReady={handleAudioReady}
+            onTranscriptionRequest={handleTranscriptionRequest}
+            disabled={disabled || isRecording}
+            className="min-w-[48px] min-h-[48px]"
+          />
+          {isProcessingAudio && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+              }}
+            >
+              <CircularProgress size={20} />
+            </Box>
+          )}
+        </Box>
 
-        {/* Send Button */}
+        {/* Send Button - Shows when there's text */}
         {message.trim() && (
           <Tooltip title="Send message">
             <IconButton
               onClick={handleSend}
-              disabled={disabled}
+              disabled={disabled || isRecording || isProcessingAudio}
               sx={{
                 backgroundColor: theme.palette.primary.main,
                 color: theme.palette.primary.contrastText,
+                minWidth: 48,
+                minHeight: 48,
                 '&:hover': {
                   backgroundColor: theme.palette.primary.dark,
                 },

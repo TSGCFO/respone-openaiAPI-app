@@ -381,54 +381,75 @@ export default function Assistant() {
         >
           <Toolbar
             sx={{
-              gap: 1,
-              minHeight: { xs: 48, sm: 56, md: 64 },
-              px: { xs: 1, sm: 2, md: 3 }
+              gap: { xs: 0.5, sm: 1 },
+              minHeight: { xs: 56, sm: 60, md: 64 },
+              px: { xs: 1, sm: 2, md: 3 },
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              py: { xs: 1, sm: 0 }
             }}
           >
-            {/* Mobile/Tablet: Bottom Sheet Trigger */}
-            <IconButton
-              onClick={handleOpenBottomSheet}
-              sx={{
-                display: { xs: 'flex', lg: 'none' },
-                minWidth: 44,
-                minHeight: 44
-              }}
-              aria-label="Open conversations"
-            >
-              <MessageSquareIcon />
-            </IconButton>
-          
-          <SemanticSearch
-            currentConversationId={currentConversationId ?? undefined}
-            onSelectResult={handleSearchResultSelect}
-          />
-          
-            {/* Current conversation indicator - Responsive */}
-            {currentConversationId && (
-              <Typography
-                variant="caption"
+            {/* First Row on Mobile: Navigation and Search */}
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' }
+            }}>
+              {/* Mobile/Tablet: Bottom Sheet Trigger */}
+              <IconButton
+                onClick={handleOpenBottomSheet}
                 sx={{
-                  flex: 1,
-                  textAlign: 'center',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  color: 'text.secondary',
-                  display: { xs: 'block', lg: 'none' },
-                  fontSize: { xs: '0.75rem', md: '0.875rem' }
+                  display: { xs: 'flex', lg: 'none' },
+                  minWidth: 48,
+                  minHeight: 48,
+                  p: 1
                 }}
+                aria-label="Open conversations"
               >
-                Conversation #{currentConversationId}
-              </Typography>
-            )}
+                <MessageSquareIcon />
+              </IconButton>
+              
+              {/* Semantic Search - Hidden on mobile, visible on larger screens */}
+              <Box sx={{ 
+                display: { xs: 'none', md: 'flex' },
+                flex: { md: 1, lg: 'none' }
+              }}>
+                <SemanticSearch
+                  currentConversationId={currentConversationId ?? undefined}
+                  onSelectResult={handleSearchResultSelect}
+                />
+              </Box>
+              
+              {/* Current conversation indicator - Mobile only */}
+              {currentConversationId && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    flex: { xs: 1, sm: 'none' },
+                    textAlign: 'center',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    color: 'text.secondary',
+                    display: { xs: 'block', md: 'none' },
+                    fontSize: '0.75rem',
+                    px: 1
+                  }}
+                >
+                  Conversation #{currentConversationId}
+                </Typography>
+              )}
+            </Box>
             
-            {/* Model Selector - Responsive */}
+            {/* Second Row on Mobile / Inline on Desktop: Model Selector */}
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center',
               ml: { xs: 0, sm: 'auto' },
-              mr: { xs: 0, sm: 1 }
+              mr: { xs: 0, sm: 0 },
+              width: { xs: '100%', sm: 'auto' },
+              mt: { xs: 0.5, sm: 0 }
             }}>
               <ModelSelector />
             </Box>
