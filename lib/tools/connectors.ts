@@ -1,3 +1,5 @@
+import { McpServer } from "@/stores/useToolsStore";
+
 export type GoogleConnectorOptions = {
   enabled: boolean;
   accessToken?: string;
@@ -29,4 +31,40 @@ export function withGoogleConnector(
       require_approval: "never",
     },
   ];
+}
+
+export function withMcpServers(
+  tools: any[],
+  servers: McpServer[]
+): any[] {
+  // Filter enabled servers and add their tools
+  const mcpTools = servers
+    .filter(server => server.enabled && server.url && server.label)
+    .map(server => {
+      const mcpTool: any = {
+        type: "mcp",
+        server_label: server.label,
+        server_url: server.url,
+      };
+      
+      if (server.skip_approval) {
+        mcpTool.require_approval = "never";
+      }
+      
+      if (server.allowed_tools.trim()) {
+        mcpTool.allowed_tools = server.allowed_tools
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t);
+      }
+      
+      const token = server.authToken?.trim();
+      if (token) {
+        mcpTool.headers = { Authorization: `Bearer ${token}` };
+      }
+      
+      return mcpTool;
+    });
+  
+  return [...tools, ...mcpTools];
 }

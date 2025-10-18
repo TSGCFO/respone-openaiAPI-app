@@ -7,6 +7,7 @@ import { SemanticSearch } from "./semantic-search";
 import SettingsView from "./settings-view";
 import ContextPanel from "./tools-panel";
 import { FloatingActionButton } from "./floating-action-button";
+import ModelSelector from "./model-selector";
 import { 
   Box, 
   IconButton, 
@@ -421,6 +422,16 @@ export default function Assistant() {
                 Conversation #{currentConversationId}
               </Typography>
             )}
+            
+            {/* Model Selector - Responsive */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              ml: { xs: 0, sm: 'auto' },
+              mr: { xs: 0, sm: 1 }
+            }}>
+              <ModelSelector />
+            </Box>
           </Toolbar>
         </AppBar>
         

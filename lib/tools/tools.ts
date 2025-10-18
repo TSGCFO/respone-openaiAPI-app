@@ -50,25 +50,56 @@ export const getTools = () => {
   };
 
   const addMcp = () => {
+    if (!state.mcpEnabled) return;
+    
+    // Support multiple MCP servers
+    const enabledServers = state.mcpServers.filter(
+      server => server.enabled && server.url && server.label
+    );
+    
+    // Also support legacy single config for backwards compatibility
     const cfg = state.mcpConfig;
-    if (!(state.mcpEnabled && cfg.server_url && cfg.server_label)) return;
-    const mcpTool: any = {
-      type: "mcp",
-      server_label: cfg.server_label,
-      server_url: cfg.server_url,
-    };
-    if (cfg.skip_approval) mcpTool.require_approval = "never";
-    if (cfg.allowed_tools.trim()) {
-      mcpTool.allowed_tools = cfg.allowed_tools
-        .split(",")
-        .map((t) => t.trim())
-        .filter((t) => t);
+    if (cfg.server_url && cfg.server_label && 
+        !enabledServers.find(s => s.url === cfg.server_url)) {
+      const mcpTool: any = {
+        type: "mcp",
+        server_label: cfg.server_label,
+        server_url: cfg.server_url,
+      };
+      if (cfg.skip_approval) mcpTool.require_approval = "never";
+      if (cfg.allowed_tools.trim()) {
+        mcpTool.allowed_tools = cfg.allowed_tools
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t);
+      }
+      const token = cfg.mcpAuthToken?.trim();
+      if (token) {
+        mcpTool.headers = { Authorization: `Bearer ${token}` };
+      }
+      tools.push(mcpTool);
     }
-    const token = cfg.mcpAuthToken?.trim();
-    if (token) {
-      mcpTool.headers = { Authorization: `Bearer ${token}` };
-    }
-    tools.push(mcpTool);
+    
+    // Add tools from multiple servers
+    enabledServers.forEach(server => {
+      const mcpTool: any = {
+        type: "mcp",
+        server_label: server.label,
+        server_url: server.url,
+      };
+      if (server.skip_approval) mcpTool.require_approval = "never";
+      if (server.allowed_tools.trim()) {
+        mcpTool.allowed_tools = server.allowed_tools
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t);
+      }
+      const token = server.authToken?.trim();
+      if (token) {
+        mcpTool.headers = { Authorization: `Bearer ${token}` };
+      }
+      tools.push(mcpTool);
+    });
   };
 
   addWebSearch();

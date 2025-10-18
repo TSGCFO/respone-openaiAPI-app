@@ -12,6 +12,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Recent Updates (October 2025)
 
+### Model Selection & Reasoning Controls (NEW)
+- **Model Selector Dropdown**: Users can now select between GPT-4.1, GPT-5, and GPT-5 Pro models
+- **Reasoning Effort Controls**: When GPT-5 is selected, users can choose reasoning effort (Low/Medium/High)
+- **Dynamic API Integration**: Model and reasoning parameters are sent to OpenAI API dynamically per conversation
+
+### Multiple MCP Servers Support (NEW)
+- **Multi-Server Management**: Users can configure and manage multiple MCP servers simultaneously
+- **Server CRUD Operations**: Add, edit, delete, and toggle individual MCP servers
+- **Aggregated Tools**: Tools from all enabled MCP servers are combined and available in conversations
+- **Material UI Interface**: Clean server management panel with cards, status indicators, and auth tokens
+
 ### Material Design 3 (Material You) Android UI
 - **Complete Material UI Migration**: Entire app now uses Material UI v5 components
 - **Material You Theme**: Dynamic color system with purple/violet branding
