@@ -1,8 +1,23 @@
 "use client";
 
 import React from 'react';
-import { Mic, Square, Pause, Play, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  IconButton,
+  Box,
+  CircularProgress,
+  Typography,
+  Paper,
+  useTheme,
+  alpha,
+  keyframes,
+} from '@mui/material';
+import {
+  Mic as MicIcon,
+  Stop as StopIcon,
+  Pause as PauseIcon,
+  PlayArrow as PlayIcon,
+  ErrorOutline as ErrorIcon,
+} from '@mui/icons-material';
 
 interface MicrophoneButtonProps {
   isRecording: boolean;
@@ -17,6 +32,34 @@ interface MicrophoneButtonProps {
   className?: string;
 }
 
+// Define pulse animation for recording state
+const pulse = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+`;
+
+// Define ping animation for recording indicator
+const ping = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+`;
+
 export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   isRecording,
   isPaused,
@@ -29,6 +72,8 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   disabled = false,
   className,
 }) => {
+  const theme = useTheme();
+
   const handleMainButtonClick = () => {
     if (isRecording) {
       onStopRecording();
@@ -47,66 +92,127 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   };
 
   const getButtonColor = () => {
-    if (error) return 'bg-red-500 hover:bg-red-600';
-    if (isProcessing) return 'bg-yellow-500 hover:bg-yellow-600';
-    if (isRecording) return 'bg-red-500 hover:bg-red-600';
-    return 'bg-black hover:bg-gray-800';
+    if (error) return theme.palette.error.main;
+    if (isProcessing) return theme.palette.warning.main;
+    if (isRecording) return theme.palette.error.main;
+    return theme.palette.primary.main; // Purple theme color
   };
 
   const getButtonIcon = () => {
-    if (error) return <AlertCircle className="w-4 h-4" />;
+    if (error) return <ErrorIcon sx={{ fontSize: 24 }} />;
     if (isProcessing) return (
-      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      <CircularProgress 
+        size={24} 
+        sx={{ color: 'white' }}
+      />
     );
-    if (isRecording) return <Square className="w-4 h-4 fill-current" />;
-    return <Mic className="w-4 h-4" />;
+    if (isRecording) return <StopIcon sx={{ fontSize: 24 }} />;
+    return <MicIcon sx={{ fontSize: 24 }} />;
   };
 
   return (
-    <div className="relative inline-flex items-center gap-2">
+    <Box 
+      sx={{ 
+        position: 'relative', 
+        display: 'inline-flex', 
+        alignItems: 'center', 
+        gap: 1,
+      }}
+      className={className}
+    >
       {isRecording && !isProcessing && (onPauseRecording || onResumeRecording) && (
-        <button
+        <IconButton
           onClick={handlePauseResumeClick}
           disabled={disabled}
-          className={cn(
-            "size-7 rounded-full flex items-center justify-center text-white transition-all",
-            "bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          )}
+          size="medium"
+          sx={{
+            minWidth: 40,
+            minHeight: 40,
+            backgroundColor: alpha(theme.palette.grey[600], 0.9),
+            color: 'white',
+            '&:hover': {
+              backgroundColor: theme.palette.grey[700],
+            },
+            '&:disabled': {
+              opacity: 0.5,
+            },
+          }}
           aria-label={isPaused ? "Resume recording" : "Pause recording"}
         >
-          {isPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-        </button>
+          {isPaused ? <PlayIcon sx={{ fontSize: 20 }} /> : <PauseIcon sx={{ fontSize: 20 }} />}
+        </IconButton>
       )}
       
-      <button
-        onClick={handleMainButtonClick}
-        disabled={disabled || isProcessing}
-        className={cn(
-          "size-8 rounded-full flex items-center justify-center text-white transition-all",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
-          getButtonColor(),
-          isRecording && !isPaused && !isProcessing && "animate-pulse",
-          className
-        )}
-        aria-label={
-          isProcessing ? "Processing..." :
-          isRecording ? "Stop recording" : 
-          "Start recording"
-        }
-      >
-        <div className="relative">
+      <Box sx={{ position: 'relative' }}>
+        <IconButton
+          onClick={handleMainButtonClick}
+          disabled={disabled || isProcessing}
+          size="large"
+          sx={{
+            minWidth: 48,
+            minHeight: 48,
+            backgroundColor: getButtonColor(),
+            color: 'white',
+            position: 'relative',
+            '&:hover': {
+              backgroundColor: alpha(getButtonColor(), 0.8),
+            },
+            '&:disabled': {
+              backgroundColor: theme.palette.action.disabledBackground,
+              opacity: 0.5,
+            },
+            ...(isRecording && !isPaused && !isProcessing && {
+              animation: `${pulse} 1.5s ease-in-out infinite`,
+            }),
+          }}
+          aria-label={
+            isProcessing ? "Processing..." :
+            isRecording ? "Stop recording" : 
+            "Start recording"
+          }
+        >
           {getButtonIcon()}
           {isRecording && !isPaused && !isProcessing && (
-            <span className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-75" />
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '50%',
+                backgroundColor: theme.palette.error.main,
+                opacity: 0.75,
+                animation: `${ping} 1.5s ease-out infinite`,
+              }}
+            />
           )}
-        </div>
-      </button>
+        </IconButton>
+      </Box>
 
       {error && (
-        <div className="absolute top-full mt-2 left-0 right-0 min-w-[200px] p-2 bg-red-50 text-red-600 text-xs rounded-md shadow-lg z-50">
-          {error}
-        </div>
+        <Paper
+          elevation={4}
+          sx={{
+            position: 'absolute',
+            top: '100%',
+            mt: 1,
+            left: 0,
+            right: 0,
+            minWidth: 200,
+            p: 1.5,
+            backgroundColor: theme.palette.error.light,
+            zIndex: 50,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: theme.palette.error.contrastText,
+              display: 'block',
+            }}
+          >
+            {error}
+          </Typography>
+        </Paper>
       )}
-    </div>
+    </Box>
   );
 };
