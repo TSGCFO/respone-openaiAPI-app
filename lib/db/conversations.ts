@@ -209,7 +209,7 @@ export async function searchSemanticMemories(
           accessCount: sql`${semanticMemories.accessCount} + 1`,
           lastAccessed: new Date(),
         })
-        .where(sql`${semanticMemories.id} = ANY(${memoryIds})`);
+        .where(sql`${semanticMemories.id} = ANY(ARRAY[${sql.raw(memoryIds.join(','))}]::int[])`);
     }
     
     return result;
