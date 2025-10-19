@@ -1,30 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { MaterialThemeProvider } from "@/components/theme/MaterialThemeProvider";
+import { F7AppProvider } from "@/components/f7-app-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Responses starter app",
-  description: "Starter app for the OpenAI Responses API",
+  title: "AI Chat Assistant",
+  description: "Native Android-style AI chat with OpenAI integration",
   icons: {
     icon: "/openai_logo.svg",
   },
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'Responses App',
+    statusBarStyle: 'black-translucent',
+    title: 'AI Chat',
   },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F5EEFA' },
-    { media: '(prefers-color-scheme: dark)', color: '#1C1B1F' },
-  ],
+  themeColor: '#9c27b0',
 };
 
 export default function RootLayout({
@@ -44,16 +42,23 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+          rel="stylesheet"
+        />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-touch-fullscreen" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="format-detection" content="telephone=no" />
+        <meta name="theme-color" content="#9c27b0" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="antialiased">
-        <MaterialThemeProvider>
-          <div className="flex h-screen w-full flex-col">
-            <main>{children}</main>
+      <body>
+        <F7AppProvider>
+          <div id="app">
+            {children}
           </div>
-        </MaterialThemeProvider>
+        </F7AppProvider>
       </body>
     </html>
   );

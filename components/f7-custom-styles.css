@@ -1,0 +1,206 @@
+/* Custom Framework7 Styles for Android Native Feel */
+
+/* Material You color scheme */
+:root {
+  --f7-theme-color: #9c27b0;
+  --f7-theme-color-rgb: 156, 39, 176;
+  --f7-theme-color-shade: #7b1fa2;
+  --f7-theme-color-tint: #ba68c8;
+}
+
+/* Android Material Design typography */
+.md {
+  --f7-font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  --f7-line-height: 1.5;
+  --f7-navbar-height: 56px;
+  --f7-toolbar-height: 56px;
+  --f7-tabbar-height: 56px;
+}
+
+/* Enhanced Material Design shadows */
+.md .navbar {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.md .toolbar {
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.08);
+}
+
+.md .page-content {
+  background: #fafafa;
+}
+
+/* Android-style FAB */
+.fab {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.fab:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Messages component styling for chat */
+.messages {
+  --f7-messages-sent-bg-color: var(--f7-theme-color);
+  --f7-messages-sent-text-color: #fff;
+  --f7-messages-received-bg-color: #fff;
+  --f7-messages-received-text-color: #333;
+  --f7-message-sent-border-radius: 18px 18px 4px 18px;
+  --f7-message-received-border-radius: 18px 18px 18px 4px;
+  --f7-message-text-line-height: 1.4;
+  --f7-message-bubble-font-size: 15px;
+  --f7-message-padding-horizontal: 12px;
+  --f7-message-padding-vertical: 8px;
+}
+
+.message-bubble {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Messagebar (input area) styling */
+.messagebar {
+  background: #fff;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.08);
+}
+
+.messagebar-area {
+  --f7-messagebar-textarea-bg-color: #f5f5f5;
+  --f7-messagebar-textarea-border-radius: 24px;
+  --f7-messagebar-textarea-padding: 8px 16px;
+  --f7-messagebar-textarea-font-size: 16px;
+}
+
+/* Smart select for model selector */
+.smart-select {
+  --f7-list-item-title-font-weight: 500;
+}
+
+/* Panel (drawer) for tools */
+.panel {
+  --f7-panel-width: 280px;
+  --f7-panel-bg-color: #fff;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.15);
+}
+
+/* List styling */
+.list {
+  --f7-list-margin-vertical: 16px;
+}
+
+.list-button {
+  --f7-list-button-text-color: var(--f7-theme-color);
+  --f7-list-button-font-weight: 500;
+}
+
+/* Cards for MCP servers */
+.card {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  margin: 16px;
+}
+
+.card-header {
+  font-weight: 500;
+  padding: 16px;
+}
+
+.card-content {
+  padding: 0 16px 16px;
+}
+
+/* Popups and sheets */
+.popup, .sheet-modal {
+  --f7-popup-border-radius: 16px 16px 0 0;
+  --f7-sheet-border-radius: 16px 16px 0 0;
+}
+
+/* Toggle (switch) styling */
+.toggle {
+  --f7-toggle-active-color: var(--f7-theme-color);
+}
+
+/* Preloader */
+.preloader {
+  --f7-preloader-color: var(--f7-theme-color);
+}
+
+/* Ripple effect enhancement */
+.ripple-wave {
+  background: rgba(156, 39, 176, 0.3);
+}
+
+/* Android status bar */
+.statusbar-overlay {
+  background: var(--f7-theme-color-shade);
+}
+
+/* Pull to refresh */
+.ptr-content {
+  background: #fafafa;
+}
+
+.ptr-preloader {
+  --f7-preloader-color: var(--f7-theme-color);
+}
+
+/* Voice recording button animation */
+@keyframes pulse-recording {
+  0% {
+    box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 20px rgba(156, 39, 176, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(156, 39, 176, 0);
+  }
+}
+
+.recording-active {
+  animation: pulse-recording 2s infinite;
+}
+
+/* Chip/Badge styling for reasoning effort */
+.chip {
+  --f7-chip-bg-color: #e1bee7;
+  --f7-chip-text-color: var(--f7-theme-color-shade);
+  --f7-chip-font-weight: 500;
+  --f7-chip-padding-horizontal: 12px;
+}
+
+.chip-active {
+  --f7-chip-bg-color: var(--f7-theme-color);
+  --f7-chip-text-color: #fff;
+}
+
+/* Dark mode adjustments */
+.theme-dark {
+  --f7-page-bg-color: #121212;
+  --f7-bars-bg-color: #1e1e1e;
+  --f7-list-bg-color: #1e1e1e;
+  --f7-card-bg-color: #1e1e1e;
+  --f7-messagebar-bg-color: #1e1e1e;
+  --f7-messagebar-textarea-bg-color: #2a2a2a;
+  --f7-messages-received-bg-color: #2a2a2a;
+  --f7-messages-received-text-color: #e0e0e0;
+  --f7-text-color: #e0e0e0;
+}
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 480px) {
+  .md {
+    --f7-navbar-height: 48px;
+    --f7-toolbar-height: 48px;
+  }
+  
+  .messagebar {
+    padding: 4px;
+  }
+  
+  .fab {
+    width: 48px;
+    height: 48px;
+  }
+}
