@@ -12,6 +12,8 @@ interface ConversationState {
   conversationItems: any[];
   // Whether we are waiting for the assistant response
   isAssistantLoading: boolean;
+  // Whether messages are currently streaming
+  isStreaming: boolean;
   // User ID for the current session
   userId: string;
   // Selected AI model
@@ -24,6 +26,7 @@ interface ConversationState {
   addChatMessage: (item: Item) => void;
   addConversationItem: (message: ChatCompletionMessageParam) => void;
   setAssistantLoading: (loading: boolean) => void;
+  setIsStreaming: (streaming: boolean) => void;
   setCurrentConversationId: (id: number | null) => void;
   setUserId: (id: string) => void;
   setSelectedModel: (model: string) => void;
@@ -51,6 +54,7 @@ const useConversationStore = create<ConversationState>((set, get) => ({
   ],
   conversationItems: [],
   isAssistantLoading: false,
+  isStreaming: false,
   userId: 'default_user',
   selectedModel: 'gpt-4.1',
   reasoningEffort: 'medium' as const,
@@ -64,6 +68,7 @@ const useConversationStore = create<ConversationState>((set, get) => ({
       conversationItems: [...state.conversationItems, message],
     })),
   setAssistantLoading: (loading) => set({ isAssistantLoading: loading }),
+  setIsStreaming: (streaming) => set({ isStreaming: streaming }),
   setCurrentConversationId: (id) => set({ currentConversationId: id }),
   setUserId: (id) => set({ userId: id }),
   setSelectedModel: (model) => set({ selectedModel: model }),
@@ -148,14 +153,7 @@ const useConversationStore = create<ConversationState>((set, get) => ({
         };
       }).flat();
       
-      // Add initial message if empty
-      if (chatMessages.length === 0) {
-        chatMessages.push({
-          type: "message",
-          role: "assistant",
-          content: [{ type: "output_text", text: INITIAL_MESSAGE }],
-        });
-      }
+      // Don't add initial message - let welcome screen show
       
       set({ 
         currentConversationId: conversationId,

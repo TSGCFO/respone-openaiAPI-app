@@ -2,8 +2,13 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { F7SimpleChat } from '@/components/f7-simple-chat';
+import { ModernChat } from '@/components/modern-chat';
 import useConversationStore from '@/stores/useConversationStore';
+
+// Import Framework7 styles
+import 'framework7/css/bundle';
+import 'framework7-icons/css/framework7-icons.css';
+import 'swiper/css';
 
 export default function Main() {
   const router = useRouter();
@@ -19,5 +24,13 @@ export default function Main() {
     }
   }, [router, resetConversation]);
 
-  return <F7SimpleChat />;
+  // Add dark mode support
+  useEffect(() => {
+    document.body.classList.add('font-sans', 'antialiased');
+    return () => {
+      document.body.classList.remove('font-sans', 'antialiased');
+    };
+  }, []);
+
+  return <ModernChat />;
 }
