@@ -131,9 +131,9 @@ Remember: You have access to the user's stored memories above. Use them to provi
       parallel_tool_calls: false,
     };
 
-    // Add reasoning_effort for GPT-5 models
+    // Add reasoning.effort for GPT-5 models
     if (selectedModel === 'gpt-5' && reasoningEffort) {
-      apiParams.reasoning_effort = reasoningEffort;
+      apiParams.reasoning = { effort: reasoningEffort };
       console.log(`Using GPT-5 with reasoning effort: ${reasoningEffort}`);
     }
 
