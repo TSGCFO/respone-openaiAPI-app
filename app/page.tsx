@@ -2,13 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernChat } from '@/components/modern-chat';
+import { ModernChatFixed } from '@/components/modern-chat-fixed';
 import useConversationStore from '@/stores/useConversationStore';
-
-// Import Framework7 styles
-import 'framework7/css/bundle';
-import 'framework7-icons/css/framework7-icons.css';
-import 'swiper/css';
 
 export default function Main() {
   const router = useRouter();
@@ -32,5 +27,5 @@ export default function Main() {
     };
   }, []);
 
-  return <ModernChat />;
+  return <ModernChatFixed />;
 }
