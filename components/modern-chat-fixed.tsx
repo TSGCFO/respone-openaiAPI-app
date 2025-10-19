@@ -8,6 +8,7 @@ import { processMessages } from '@/lib/assistant';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import ToolsPanel from '@/components/tools-panel';
 
 // Material Design Icons SVG components
 const ChatIcon = () => (
@@ -87,8 +88,10 @@ export function ModernChatFixed() {
     chatMessages,
     conversationItems,
     addChatMessage,
+    addConversationItem,
     isStreaming,
     setIsStreaming,
+    resetConversation,
   } = useConversationStore();
   
   const { selectedModel, reasoningEffort, setSelectedModel, setReasoningEffort } = useToolsStore();
@@ -96,7 +99,10 @@ export function ModernChatFixed() {
   const [message, setMessage] = useState('');
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showToolsPanel, setShowToolsPanel] = useState(false);
+  const [showMcpPanel, setShowMcpPanel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
   
   const {
@@ -111,6 +117,23 @@ export function ModernChatFixed() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   // Add haptic feedback
   const haptic = (intensity: number = 1) => {
@@ -134,12 +157,22 @@ export function ModernChatFixed() {
       },
     };
     
+    // Add to chat messages for display
     addChatMessage(userMessage);
+    
+    // Add to conversation items for API with correct format
+    const conversationMessage = {
+      role: 'user',
+      content: [{ type: 'input_text', text: message }],
+    };
+    addConversationItem(conversationMessage);
+    
     setMessage('');
     setIsStreaming(true);
     
     try {
-      await processMessages([...conversationItems, { role: 'user', content: message }]);
+      // processMessages reads from store directly, no parameters needed
+      await processMessages();
     } catch (error) {
       console.error('Error processing messages:', error);
     } finally {
@@ -238,12 +271,71 @@ export function ModernChatFixed() {
               <p className="text-xs opacity-90 font-medium">Powered by GPT</p>
             </div>
           </div>
-          <button 
-            onClick={() => {haptic(); setShowMenu(!showMenu);}}
-            className="w-10 h-10 hover:bg-white/10 rounded-full flex items-center justify-center transition-all duration-200"
-          >
-            <MenuIcon />
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button 
+              onClick={() => {haptic(); setShowMenu(!showMenu);}}
+              className="w-10 h-10 hover:bg-white/10 rounded-full flex items-center justify-center transition-all duration-200"
+            >
+              <MenuIcon />
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 w-56 z-50 animate-fadeIn">
+                <button
+                  onClick={() => {
+                    haptic();
+                    setShowToolsPanel(!showToolsPanel);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
+                  </svg>
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">
+                    Tools Settings
+                  </span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    haptic();
+                    setShowMcpPanel(!showMcpPanel);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-6c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-4v-7h4v7z"/>
+                  </svg>
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">
+                    MCP Servers
+                  </span>
+                </button>
+                
+                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                
+                <button
+                  onClick={() => {
+                    haptic();
+                    if (confirm('Are you sure you want to clear the chat? This will delete all messages.')) {
+                      resetConversation();
+                    }
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                  </svg>
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">
+                    Clear Chat
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Model Selector */}
@@ -440,6 +532,68 @@ export function ModernChatFixed() {
         </div>
       )}
 
+      {/* Tools Panel Sliding Drawer */}
+      {showToolsPanel && (
+        <div className="fixed inset-0 z-50 flex">
+          <div 
+            className="flex-1 bg-black/50 backdrop-blur-sm" 
+            onClick={() => setShowToolsPanel(false)}
+          />
+          <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight overflow-y-auto">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">Tools Settings</h2>
+              <button 
+                onClick={() => setShowToolsPanel(false)}
+                className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">
+              <ToolsPanel />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MCP Servers Panel */}
+      {showMcpPanel && (
+        <div className="fixed inset-0 z-50 flex">
+          <div 
+            className="flex-1 bg-black/50 backdrop-blur-sm" 
+            onClick={() => setShowMcpPanel(false)}
+          />
+          <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">MCP Servers</h2>
+              <button 
+                onClick={() => setShowMcpPanel(false)}
+                className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Configure MCP servers for advanced tool integration.
+              </p>
+              <div className="mt-4 space-y-3">
+                <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <p className="text-sm text-gray-800 dark:text-gray-200">No MCP servers configured</p>
+                  <button className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">
+                    Add Server
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
@@ -449,8 +603,13 @@ export function ModernChatFixed() {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(100%); }
+          to { opacity: 1; transform: translateX(0); }
+        }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         .animate-slideUp { animation: slideUp 0.3s ease-out; }
+        .animate-slideInRight { animation: slideInRight 0.3s ease-out; }
         .prose pre { background: transparent !important; padding: 0 !important; }
         .prose code { font-size: 0.875rem; }
         .prose { color: inherit; }
