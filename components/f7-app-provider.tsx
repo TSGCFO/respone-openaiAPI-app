@@ -1,8 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { App, f7ready, f7 } from 'framework7-react';
-import { f7params } from '@/lib/f7-params';
+import React from 'react';
 
 // Import Framework7 styles
 import 'framework7/css/bundle';
@@ -17,29 +15,25 @@ interface F7AppProviderProps {
 }
 
 export function F7AppProvider({ children }: F7AppProviderProps) {
-  useEffect(() => {
-    f7ready((f7) => {
-      // Called on Framework7 initialization
-      console.log('Framework7 initialized');
-      
-      // Add Android-specific classes to body
-      if (f7.theme === 'md') {
-        document.body.classList.add('theme-dark', 'color-theme-purple');
-      }
-      
-      // Set up haptic feedback for Android
-      if ('vibrate' in navigator) {
-        f7.on('click', () => {
-          // Light haptic feedback on all clicks (Android pattern)
-          navigator.vibrate(1);
-        });
-      }
-    });
+  // Simplified provider without Framework7 App wrapper
+  // to avoid conflicts with Next.js
+  
+  React.useEffect(() => {
+    // Add Android-specific classes to body
+    document.body.classList.add('theme-dark', 'color-theme-purple', 'md');
+    
+    // Set up haptic feedback for Android
+    if ('vibrate' in navigator) {
+      document.addEventListener('click', () => {
+        // Light haptic feedback on all clicks (Android pattern)
+        navigator.vibrate(1);
+      });
+    }
+    
+    return () => {
+      document.body.classList.remove('theme-dark', 'color-theme-purple', 'md');
+    };
   }, []);
 
-  return (
-    <App {...f7params}>
-      {children}
-    </App>
-  );
+  return <>{children}</>;
 }
