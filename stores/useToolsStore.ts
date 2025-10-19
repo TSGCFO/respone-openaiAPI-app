@@ -70,6 +70,12 @@ interface StoreState {
   updateMcpServer: (id: string, server: Partial<McpServer>) => void;
   removeMcpServer: (id: string) => void;
   setMcpServers: (servers: McpServer[]) => void;
+  // Model selection
+  selectedModel: string;
+  setSelectedModel: (model: string) => void;
+  // Reasoning effort for GPT-5
+  reasoningEffort: 'low' | 'medium' | 'high';
+  setReasoningEffort: (effort: 'low' | 'medium' | 'high') => void;
 }
 
 // Helper function to generate unique ID
@@ -109,6 +115,8 @@ const useToolsStore = create<StoreState>()(
         mcpAuthToken: "",
       },
       mcpServers: [],
+      selectedModel: 'gpt-4.1',
+      reasoningEffort: 'medium' as const,
       fileSearchEnabled: false,
       previousFileSearchEnabled: false,
       setFileSearchEnabled: (enabled) => {
@@ -165,6 +173,8 @@ const useToolsStore = create<StoreState>()(
         }));
       },
       setMcpServers: (servers) => set({ mcpServers: servers }),
+      setSelectedModel: (model) => set({ selectedModel: model }),
+      setReasoningEffort: (effort) => set({ reasoningEffort: effort }),
     }),
     {
       name: "tools-store",
