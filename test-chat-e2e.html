@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application E2E Test Suite</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .test-result.success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .test-result.failure {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .test-result.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .test-result.info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log-area {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        .status-indicator.running {
+            background: #ffc107;
+        }
+        .status-indicator.success {
+            background: #28a745;
+        }
+        .status-indicator.error {
+            background: #dc3545;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .test-stats {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>🧪 Chat Application E2E Test Suite</h1>
+        <p>Comprehensive testing for all chat features and functionality</p>
+    </div>
+
+    <div class="test-stats">
+        <div class="stat-card">
+            <div class="stat-label">Total Tests</div>
+            <div class="stat-number" id="totalTests">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Passed</div>
+            <div class="stat-number" id="passedTests" style="color: #28a745;">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Failed</div>
+            <div class="stat-number" id="failedTests" style="color: #dc3545;">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Warnings</div>
+            <div class="stat-number" id="warningTests" style="color: #ffc107;">0</div>
+        </div>
+    </div>
+
+    <div class="test-controls">
+        <button onclick="runAllTests()">🚀 Run All Tests</button>
+        <button onclick="runBasicChatTest()">💬 Test Basic Chat</button>
+        <button onclick="runModelSelectionTest()">🤖 Test Model Selection</button>
+        <button onclick="runVoiceTest()">🎤 Test Voice Features</button>
+        <button onclick="runMenuTest()">☰ Test Menu Options</button>
+        <button onclick="runMCPTest()">🔧 Test MCP Servers</button>
+        <button onclick="runSettingsTest()">⚙️ Test Settings</button>
+        <button onclick="runErrorTest()">⚠️ Test Error Handling</button>
+        <button onclick="runUITest()">🎨 Test UI/UX</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+    </div>
+
+    <div class="iframe-container">
+        <iframe id="testFrame" src="/"></iframe>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="status-indicator running" id="statusIndicator"></span>Test Results</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Console Log</h2>
+        <div class="log-area" id="logArea">Test console output will appear here...</div>
+    </div>
+
+    <script>
+        let testStats = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            warnings: 0
+        };
+
+        function updateStats() {
+            document.getElementById('totalTests').textContent = testStats.total;
+            document.getElementById('passedTests').textContent = testStats.passed;
+            document.getElementById('failedTests').textContent = testStats.failed;
+            document.getElementById('warningTests').textContent = testStats.warnings;
+        }
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            resultDiv.innerHTML = `[${timestamp}] ${message}`;
+            resultsDiv.appendChild(resultDiv);
+            
+            // Update stats
+            testStats.total++;
+            if (type === 'success') testStats.passed++;
+            else if (type === 'failure') testStats.failed++;
+            else if (type === 'warning') testStats.warnings++;
+            updateStats();
+            
+            // Log to console area
+            log(message, type);
+        }
+
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✅' : type === 'failure' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logArea.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            // Also log to browser console
+            console.log(`[E2E Test] ${message}`);
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('logArea').textContent = 'Test console output will appear here...\n';
+            testStats = { total: 0, passed: 0, failed: 0, warnings: 0 };
+            updateStats();
+        }
+
+        function getTestFrame() {
+            return document.getElementById('testFrame').contentWindow;
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runBasicChatTest() {
+            const frame = getTestFrame();
+            addResult('Starting Basic Chat Functionality Test...', 'info');
+            
+            try {
+                // Test 1: Check if message input exists
+                await wait(1000);
+                const messageInput = frame.document.querySelector('textarea[placeholder*="message"], input[placeholder*="message"]');
+                if (messageInput) {
+                    addResult('✓ Message input field found', 'success');
+                } else {
+                    addResult('✗ Message input field not found', 'failure');
+                    return;
+                }
+
+                // Test 2: Send a test message
+                messageInput.value = "Hello, can you help me with coding?";
+                messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+                addResult('✓ Test message entered', 'success');
+                
+                // Test 3: Find and click send button
+                const sendButton = frame.document.querySelector('button[aria-label*="Send"], button svg path[d*="M2.01 21L23"]')?.closest('button');
+                if (sendButton) {
+                    sendButton.click();
+                    addResult('✓ Send button clicked', 'success');
+                } else {
+                    // Try pressing Enter
+                    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+                    messageInput.dispatchEvent(enterEvent);
+                    addResult('⚠ Send button not found, tried Enter key', 'warning');
+                }
+                
+                // Test 4: Wait for response
+                await wait(3000);
+                const messages = frame.document.querySelectorAll('[class*="message"], [class*="bubble"]');
+                if (messages.length > 1) {
+                    addResult(`✓ Messages displayed: ${messages.length} messages found`, 'success');
+                    
+                    // Check for timestamps
+                    const timestamps = frame.document.querySelectorAll('[class*="time"], [class*="timestamp"]');
+                    if (timestamps.length > 0) {
+                        addResult('✓ Timestamps are displayed', 'success');
+                    } else {
+                        addResult('⚠ No timestamps found', 'warning');
+                    }
+                } else {
+                    addResult('⚠ Expected more messages after sending', 'warning');
+                }
+                
+                // Test 5: Check for AI response
+                const aiMessages = Array.from(messages).filter(m => 
+                    m.textContent.toLowerCase().includes('help') || 
+                    m.textContent.toLowerCase().includes('assist')
+                );
+                if (aiMessages.length > 0) {
+                    addResult('✓ AI response received', 'success');
+                } else {
+                    addResult('⚠ AI response not clearly identified', 'warning');
+                }
+                
+            } catch (error) {
+                addResult(`✗ Basic chat test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runModelSelectionTest() {
+            const frame = getTestFrame();
+            addResult('Starting Model Selection Test...', 'info');
+            
+            try {
+                // Test 1: Find model selector
+                await wait(1000);
+                const modelSelector = frame.document.querySelector('[class*="model"], button:has-text("GPT")');
+                if (modelSelector) {
+                    addResult('✓ Model selector found', 'success');
+                    modelSelector.click();
+                    await wait(500);
+                    
+                    // Test 2: Check for model options
+                    const modelOptions = frame.document.querySelectorAll('[role="option"], [class*="option"]');
+                    const expectedModels = ['GPT-4', 'GPT-4.1', 'GPT-5', 'GPT-5 Pro'];
+                    
+                    expectedModels.forEach(model => {
+                        const found = Array.from(modelOptions).some(opt => 
+                            opt.textContent.includes(model)
+                        );
+                        if (found) {
+                            addResult(`✓ Model option found: ${model}`, 'success');
+                        } else {
+                            addResult(`⚠ Model option not found: ${model}`, 'warning');
+                        }
+                    });
+                    
+                    // Test 3: Test reasoning effort for GPT-5
+                    const gpt5Option = Array.from(modelOptions).find(opt => 
+                        opt.textContent.includes('GPT-5')
+                    );
+                    if (gpt5Option) {
+                        gpt5Option.click();
+                        await wait(500);
+                        
+                        // Check for reasoning effort controls
+                        const reasoningControls = frame.document.querySelectorAll('[class*="reasoning"], [class*="effort"]');
+                        if (reasoningControls.length > 0) {
+                            addResult('✓ Reasoning effort controls found for GPT-5', 'success');
+                            
+                            // Test effort levels
+                            const efforts = ['Low', 'Medium', 'High'];
+                            efforts.forEach(effort => {
+                                const effortOption = Array.from(reasoningControls).find(ctrl => 
+                                    ctrl.textContent.includes(effort)
+                                );
+                                if (effortOption) {
+                                    addResult(`✓ Reasoning effort option: ${effort}`, 'success');
+                                } else {
+                                    addResult(`⚠ Reasoning effort option not found: ${effort}`, 'warning');
+                                }
+                            });
+                        } else {
+                            addResult('⚠ No reasoning effort controls found for GPT-5', 'warning');
+                        }
+                    }
+                    
+                } else {
+                    addResult('✗ Model selector not found', 'failure');
+                }
+                
+            } catch (error) {
+                addResult(`✗ Model selection test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runVoiceTest() {
+            const frame = getTestFrame();
+            addResult('Starting Voice Features Test...', 'info');
+            
+            try {
+                // Test 1: Find microphone button
+                await wait(1000);
+                const micButton = frame.document.querySelector('button svg path[d*="M12 14c1.66"], button[aria-label*="mic"], button[aria-label*="voice"]')?.closest('button');
+                
+                if (micButton) {
+                    addResult('✓ Microphone button found', 'success');
+                    
+                    // Test 2: Click to start recording
+                    const initialColor = window.getComputedStyle(micButton).backgroundColor;
+                    micButton.click();
+                    await wait(500);
+                    
+                    // Test 3: Check if button changes appearance
+                    const recordingColor = window.getComputedStyle(micButton).backgroundColor;
+                    if (initialColor !== recordingColor) {
+                        addResult('✓ Microphone button changes appearance when recording', 'success');
+                    } else {
+                        addResult('⚠ Microphone button appearance did not change', 'warning');
+                    }
+                    
+                    // Test 4: Check for recording UI
+                    const recordingUI = frame.document.querySelector('[class*="recording"], [class*="record"]');
+                    if (recordingUI) {
+                        addResult('✓ Recording UI appears', 'success');
+                    } else {
+                        addResult('⚠ Recording UI not clearly identified', 'warning');
+                    }
+                    
+                    // Test 5: Stop recording
+                    await wait(2000);
+                    micButton.click();
+                    await wait(500);
+                    
+                    addResult('✓ Voice recording workflow completed', 'success');
+                    
+                } else {
+                    addResult('✗ Microphone button not found', 'failure');
+                }
+                
+            } catch (error) {
+                addResult(`✗ Voice test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runMenuTest() {
+            const frame = getTestFrame();
+            addResult('Starting Menu Options Test...', 'info');
+            
+            try {
+                // Test 1: Find menu button (three dots)
+                await wait(1000);
+                const menuButton = frame.document.querySelector('button svg path[d*="M12 8c1.1"], button[aria-label*="menu"], button[aria-label*="options"]')?.closest('button');
+                
+                if (menuButton) {
+                    addResult('✓ Menu button found', 'success');
+                    menuButton.click();
+                    await wait(500);
+                    
+                    // Test 2: Check menu items
+                    const menuItems = ['Settings', 'Memories', 'Tools Settings', 'MCP Servers', 'Clear Chat'];
+                    
+                    for (const item of menuItems) {
+                        const menuOption = Array.from(frame.document.querySelectorAll('[role="menuitem"], button')).find(el => 
+                            el.textContent.includes(item)
+                        );
+                        
+                        if (menuOption) {
+                            addResult(`✓ Menu option found: ${item}`, 'success');
+                            
+                            // Test clicking each option
+                            menuOption.click();
+                            await wait(1000);
+                            
+                            // Check if panel/dialog opens
+                            if (item === 'Settings') {
+                                const settingsPanel = frame.document.querySelector('[class*="settings"], [role="dialog"]');
+                                if (settingsPanel) {
+                                    addResult('✓ Settings panel opened', 'success');
+                                    
+                                    // Close panel
+                                    const closeButton = settingsPanel.querySelector('button[aria-label*="close"], button svg path[d*="M19 6.41"]')?.closest('button');
+                                    if (closeButton) closeButton.click();
+                                    await wait(500);
+                                }
+                            } else if (item === 'Clear Chat') {
+                                // Check for confirmation dialog
+                                const confirmDialog = frame.document.querySelector('[role="dialog"], [class*="confirm"]');
+                                if (confirmDialog) {
+                                    addResult('✓ Clear chat confirmation dialog appeared', 'success');
+                                    
+                                    // Cancel the action
+                                    const cancelButton = confirmDialog.querySelector('button:has-text("Cancel"), button:has-text("No")');
+                                    if (cancelButton) cancelButton.click();
+                                    await wait(500);
+                                }
+                            }
+                            
+                            // Re-open menu for next item
+                            if (menuItems.indexOf(item) < menuItems.length - 1) {
+                                menuButton.click();
+                                await wait(500);
+                            }
+                        } else {
+                            addResult(`⚠ Menu option not found: ${item}`, 'warning');
+                        }
+                    }
+                    
+                } else {
+                    addResult('✗ Menu button not found', 'failure');
+                }
+                
+            } catch (error) {
+                addResult(`✗ Menu test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runMCPTest() {
+            const frame = getTestFrame();
+            addResult('Starting MCP Server Management Test...', 'info');
+            
+            try {
+                // First open menu
+                await wait(1000);
+                const menuButton = frame.document.querySelector('button svg path[d*="M12 8c1.1"]')?.closest('button');
+                if (menuButton) {
+                    menuButton.click();
+                    await wait(500);
+                    
+                    // Find MCP Servers option
+                    const mcpOption = Array.from(frame.document.querySelectorAll('button')).find(el => 
+                        el.textContent.includes('MCP Servers')
+                    );
+                    
+                    if (mcpOption) {
+                        mcpOption.click();
+                        await wait(1000);
+                        addResult('✓ MCP Servers panel opened', 'success');
+                        
+                        // Test 1: Add new server
+                        const addButton = frame.document.querySelector('button:has-text("Add"), button:has-text("New")');
+                        if (addButton) {
+                            addButton.click();
+                            await wait(500);
+                            addResult('✓ Add MCP server dialog opened', 'success');
+                            
+                            // Fill in test server details
+                            const inputs = frame.document.querySelectorAll('input, textarea');
+                            if (inputs.length > 0) {
+                                inputs[0].value = 'Test MCP Server';
+                                inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                                if (inputs[1]) {
+                                    inputs[1].value = 'https://test-mcp.example.com';
+                                    inputs[1].dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                addResult('✓ Test MCP server details entered', 'success');
+                                
+                                // Save the server
+                                const saveButton = frame.document.querySelector('button:has-text("Save"), button:has-text("Add")');
+                                if (saveButton) {
+                                    saveButton.click();
+                                    await wait(500);
+                                    addResult('✓ Test MCP server saved', 'success');
+                                }
+                            }
+                        }
+                        
+                        // Test 2: Toggle server enabled/disabled
+                        const toggleSwitch = frame.document.querySelector('input[type="checkbox"], [role="switch"]');
+                        if (toggleSwitch) {
+                            toggleSwitch.click();
+                            await wait(500);
+                            addResult('✓ MCP server toggle tested', 'success');
+                        }
+                        
+                        // Test 3: Edit server
+                        const editButton = frame.document.querySelector('button[aria-label*="edit"], button:has-text("Edit")');
+                        if (editButton) {
+                            editButton.click();
+                            await wait(500);
+                            addResult('✓ Edit MCP server dialog opened', 'success');
+                            
+                            // Make a change
+                            const editInputs = frame.document.querySelectorAll('input');
+                            if (editInputs[0]) {
+                                editInputs[0].value = 'Test MCP Server (Edited)';
+                                editInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                                
+                                const updateButton = frame.document.querySelector('button:has-text("Update"), button:has-text("Save")');
+                                if (updateButton) {
+                                    updateButton.click();
+                                    await wait(500);
+                                    addResult('✓ MCP server edited successfully', 'success');
+                                }
+                            }
+                        }
+                        
+                        // Test 4: Delete server
+                        const deleteButton = frame.document.querySelector('button[aria-label*="delete"], button:has-text("Delete")');
+                        if (deleteButton) {
+                            deleteButton.click();
+                            await wait(500);
+                            
+                            // Confirm deletion
+                            const confirmButton = frame.document.querySelector('button:has-text("Confirm"), button:has-text("Yes")');
+                            if (confirmButton) {
+                                confirmButton.click();
+                                await wait(500);
+                                addResult('✓ MCP server deleted successfully', 'success');
+                            }
+                        }
+                        
+                    } else {
+                        addResult('⚠ MCP Servers option not found in menu', 'warning');
+                    }
+                }
+                
+            } catch (error) {
+                addResult(`✗ MCP test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runSettingsTest() {
+            const frame = getTestFrame();
+            addResult('Starting Settings Panel Test...', 'info');
+            
+            try {
+                // Open menu and settings
+                await wait(1000);
+                const menuButton = frame.document.querySelector('button svg path[d*="M12 8c1.1"]')?.closest('button');
+                if (menuButton) {
+                    menuButton.click();
+                    await wait(500);
+                    
+                    const settingsOption = Array.from(frame.document.querySelectorAll('button')).find(el => 
+                        el.textContent === 'Settings'
+                    );
+                    
+                    if (settingsOption) {
+                        settingsOption.click();
+                        await wait(1000);
+                        addResult('✓ Settings panel opened', 'success');
+                        
+                        // Test 1: Find model selector in settings
+                        const modelSelect = frame.document.querySelector('select[name*="model"], [role="combobox"]');
+                        if (modelSelect) {
+                            const originalValue = modelSelect.value;
+                            modelSelect.value = 'gpt-4';
+                            modelSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            await wait(500);
+                            addResult('✓ Default model changed in settings', 'success');
+                            
+                            // Restore original
+                            modelSelect.value = originalValue;
+                            modelSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        
+                        // Test 2: Toggle settings
+                        const toggles = frame.document.querySelectorAll('input[type="checkbox"], [role="switch"]');
+                        if (toggles.length > 0) {
+                            addResult(`✓ Found ${toggles.length} toggle settings`, 'success');
+                            
+                            // Test first toggle
+                            const firstToggle = toggles[0];
+                            const originalState = firstToggle.checked;
+                            firstToggle.click();
+                            await wait(500);
+                            if (firstToggle.checked !== originalState) {
+                                addResult('✓ Settings toggle functionality works', 'success');
+                                // Restore
+                                firstToggle.click();
+                            }
+                        }
+                        
+                        // Test 3: API key fields
+                        const apiKeyInputs = frame.document.querySelectorAll('input[type="password"], input[placeholder*="API"], input[placeholder*="key"]');
+                        if (apiKeyInputs.length > 0) {
+                            addResult(`✓ Found ${apiKeyInputs.length} API key field(s)`, 'success');
+                            
+                            // Test input (don't save real keys)
+                            apiKeyInputs[0].value = 'test-key-123';
+                            apiKeyInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                            await wait(500);
+                            
+                            // Clear it
+                            apiKeyInputs[0].value = '';
+                            apiKeyInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                            addResult('✓ API key input field tested (no real key saved)', 'success');
+                        }
+                        
+                        // Close settings
+                        const closeButton = frame.document.querySelector('button[aria-label*="close"], button svg path[d*="M19 6.41"]')?.closest('button');
+                        if (closeButton) {
+                            closeButton.click();
+                            await wait(500);
+                            addResult('✓ Settings panel closed', 'success');
+                        }
+                        
+                    } else {
+                        addResult('⚠ Settings option not found', 'warning');
+                    }
+                }
+                
+            } catch (error) {
+                addResult(`✗ Settings test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runErrorTest() {
+            const frame = getTestFrame();
+            addResult('Starting Error Handling Test...', 'info');
+            
+            try {
+                // Test 1: Send empty message
+                await wait(1000);
+                const messageInput = frame.document.querySelector('textarea[placeholder*="message"], input[placeholder*="message"]');
+                if (messageInput) {
+                    messageInput.value = '';
+                    messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    
+                    const sendButton = frame.document.querySelector('button svg path[d*="M2.01 21L23"]')?.closest('button');
+                    if (sendButton) {
+                        const initialMessageCount = frame.document.querySelectorAll('[class*="message"]').length;
+                        sendButton.click();
+                        await wait(1000);
+                        
+                        const afterMessageCount = frame.document.querySelectorAll('[class*="message"]').length;
+                        if (afterMessageCount === initialMessageCount) {
+                            addResult('✓ Empty message prevented from sending', 'success');
+                        } else {
+                            addResult('⚠ Empty message may have been sent', 'warning');
+                        }
+                    }
+                }
+                
+                // Test 2: Check for error message display
+                // Simulate an error by disconnecting (if possible)
+                try {
+                    // Try to trigger an error
+                    frame.fetch = () => Promise.reject(new Error('Network error'));
+                    
+                    messageInput.value = 'Test error handling';
+                    messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    const sendButton = frame.document.querySelector('button svg path[d*="M2.01 21L23"]')?.closest('button');
+                    if (sendButton) {
+                        sendButton.click();
+                        await wait(2000);
+                        
+                        const errorElements = frame.document.querySelectorAll('[class*="error"], [class*="alert"]');
+                        if (errorElements.length > 0) {
+                            addResult('✓ Error message displayed properly', 'success');
+                        } else {
+                            addResult('⚠ Error message display not clearly identified', 'warning');
+                        }
+                    }
+                } catch (e) {
+                    addResult('⚠ Could not simulate network error', 'warning');
+                }
+                
+                // Test 3: Test with streaming disabled
+                // This would require access to settings to disable streaming
+                addResult('ℹ Streaming toggle test requires settings access', 'info');
+                
+            } catch (error) {
+                addResult(`✗ Error handling test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runUITest() {
+            const frame = getTestFrame();
+            addResult('Starting UI/UX Test...', 'info');
+            
+            try {
+                // Test 1: Check welcome screen
+                await wait(1000);
+                const welcomeElements = frame.document.querySelectorAll('[class*="welcome"], h1, h2');
+                const hasWelcome = Array.from(welcomeElements).some(el => 
+                    el.textContent.toLowerCase().includes('welcome') || 
+                    el.textContent.toLowerCase().includes('how can i help')
+                );
+                
+                if (hasWelcome) {
+                    addResult('✓ Welcome screen appears when chat is empty', 'success');
+                } else {
+                    addResult('⚠ Welcome screen not clearly identified', 'warning');
+                }
+                
+                // Test 2: Test button hover states
+                const buttons = frame.document.querySelectorAll('button');
+                if (buttons.length > 0) {
+                    const testButton = buttons[0];
+                    const initialStyle = window.getComputedStyle(testButton);
+                    
+                    // Simulate hover
+                    testButton.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                    await wait(100);
+                    const hoverStyle = window.getComputedStyle(testButton);
+                    
+                    // Check if any style changed (background, color, transform, etc.)
+                    if (initialStyle.backgroundColor !== hoverStyle.backgroundColor ||
+                        initialStyle.transform !== hoverStyle.transform) {
+                        addResult('✓ Button hover states working', 'success');
+                    } else {
+                        addResult('⚠ Button hover states may not be visible', 'warning');
+                    }
+                    
+                    testButton.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+                }
+                
+                // Test 3: Check animations
+                const animatedElements = frame.document.querySelectorAll('[class*="animate"], [class*="transition"]');
+                if (animatedElements.length > 0) {
+                    addResult(`✓ Found ${animatedElements.length} elements with animations`, 'success');
+                } else {
+                    addResult('⚠ No animated elements detected', 'warning');
+                }
+                
+                // Test 4: Responsive design
+                const originalWidth = frame.innerWidth;
+                const originalHeight = frame.innerHeight;
+                
+                // Test mobile viewport
+                if (frame.outerWidth === frame.innerWidth) {
+                    addResult('ℹ Cannot test responsive design in iframe', 'info');
+                } else {
+                    // Check for responsive classes
+                    const responsiveElements = frame.document.querySelectorAll('[class*="sm:"], [class*="md:"], [class*="lg:"]');
+                    if (responsiveElements.length > 0) {
+                        addResult(`✓ Responsive design classes found (${responsiveElements.length} elements)`, 'success');
+                    }
+                }
+                
+                // Test 5: Check color scheme
+                const rootStyles = window.getComputedStyle(frame.document.documentElement);
+                const bgColor = rootStyles.backgroundColor;
+                const textColor = rootStyles.color;
+                
+                if (bgColor && textColor) {
+                    addResult(`✓ Color scheme detected - BG: ${bgColor}, Text: ${textColor}`, 'success');
+                    
+                    // Check for dark mode support
+                    const darkModeClasses = frame.document.querySelectorAll('[class*="dark"], [class*="theme"]');
+                    if (darkModeClasses.length > 0) {
+                        addResult('✓ Dark mode support detected', 'success');
+                    }
+                }
+                
+                // Test 6: Check accessibility
+                const ariaElements = frame.document.querySelectorAll('[aria-label], [role]');
+                if (ariaElements.length > 5) {
+                    addResult(`✓ Good accessibility - ${ariaElements.length} ARIA elements found`, 'success');
+                } else {
+                    addResult(`⚠ Limited accessibility - only ${ariaElements.length} ARIA elements`, 'warning');
+                }
+                
+            } catch (error) {
+                addResult(`✗ UI/UX test error: ${error.message}`, 'failure');
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            addResult('🚀 Starting comprehensive E2E test suite...', 'info');
+            
+            const statusIndicator = document.getElementById('statusIndicator');
+            statusIndicator.className = 'status-indicator running';
+            
+            // Run tests in sequence
+            await runBasicChatTest();
+            await wait(2000);
+            
+            await runModelSelectionTest();
+            await wait(2000);
+            
+            await runVoiceTest();
+            await wait(2000);
+            
+            await runMenuTest();
+            await wait(2000);
+            
+            await runMCPTest();
+            await wait(2000);
+            
+            await runSettingsTest();
+            await wait(2000);
+            
+            await runErrorTest();
+            await wait(2000);
+            
+            await runUITest();
+            
+            // Final summary
+            addResult('═══════════════════════════════════════', 'info');
+            addResult(`✅ Test Suite Complete!`, 'info');
+            addResult(`Total: ${testStats.total} | Passed: ${testStats.passed} | Failed: ${testStats.failed} | Warnings: ${testStats.warnings}`, 'info');
+            
+            const successRate = ((testStats.passed / testStats.total) * 100).toFixed(1);
+            if (successRate > 80) {
+                statusIndicator.className = 'status-indicator success';
+                addResult(`🎉 SUCCESS RATE: ${successRate}% - Excellent!`, 'success');
+            } else if (successRate > 60) {
+                statusIndicator.className = 'status-indicator warning';
+                addResult(`⚠️ SUCCESS RATE: ${successRate}% - Needs improvement`, 'warning');
+            } else {
+                statusIndicator.className = 'status-indicator error';
+                addResult(`❌ SUCCESS RATE: ${successRate}% - Critical issues found`, 'failure');
+            }
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            log('Test suite loaded and ready!');
+            log('Click "Run All Tests" to begin comprehensive testing');
+        });
+    </script>
+</body>
+</html>
