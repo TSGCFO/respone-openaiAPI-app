@@ -160,7 +160,10 @@ const useConversationStore = create<ConversationState>((set, get) => ({
         chatMessages,
         conversationItems: messages.map((m: any) => ({
           role: m.role,
-          content: m.content,
+          content: [{ 
+            type: m.role === 'user' ? 'input_text' : 'output_text', 
+            text: m.content 
+          }],
         })),
       });
     } catch (error) {

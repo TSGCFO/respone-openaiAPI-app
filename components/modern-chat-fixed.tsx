@@ -102,6 +102,7 @@ export function ModernChatFixed() {
     isStreaming,
     setIsStreaming,
     resetConversation,
+    saveMessage,
   } = useConversationStore();
   
   const { selectedModel, reasoningEffort, setSelectedModel, setReasoningEffort } = useToolsStore();
@@ -178,6 +179,9 @@ export function ModernChatFixed() {
       content: [{ type: 'input_text', text: message }],
     };
     addConversationItem(conversationMessage);
+    
+    // Save user message to database for persistence
+    await saveMessage('user', message);
     
     setMessage('');
     setIsStreaming(true);
