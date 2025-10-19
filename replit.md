@@ -12,6 +12,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Recent Updates (October 2025)
 
+### Framework7 Android Native UI Migration (LATEST)
+- **Complete Framework7 Integration**: Replaced Material UI with Framework7 for authentic Android experience
+- **Android Native Components**: Using Framework7's mobile-first components designed for native feel
+- **Purple Material You Theme**: Maintained purple/violet branding with Framework7's Material theme
+- **Simplified Integration**: Framework7 components without full app wrapper to maintain Next.js compatibility
+- **Mobile-Optimized Touch**: 48dp touch targets, haptic feedback, and Android-style interactions
+- **Framework7 Icons**: Using official Framework7 icon set for consistent Android appearance
+
 ### Model Selection & Reasoning Controls (NEW)
 - **Model Selector Dropdown**: Users can now select between GPT-4.1, GPT-5, and GPT-5 Pro models
 - **Reasoning Effort Controls**: When GPT-5 is selected, users can choose reasoning effort (Low/Medium/High)
@@ -23,14 +31,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Aggregated Tools**: Tools from all enabled MCP servers are combined and available in conversations
 - **Material UI Interface**: Clean server management panel with cards, status indicators, and auth tokens
 
-### Material Design 3 (Material You) Android UI
-- **Complete Material UI Migration**: Entire app now uses Material UI v5 components
-- **Material You Theme**: Dynamic color system with purple/violet branding
-- **Android-Native Components**: Material Cards, TextFields, Buttons with ripple effects
-- **Material Icons**: Replaced all icons with official Material Design icons
-- **Elevation System**: Proper Material shadows and depth (0dp-12dp)
-- **Responsive Design**: Mobile-first with 48dp touch targets
-- **Material Motion**: Smooth animations following Material Design specs
+### Framework7 Android Native UI
+- **Framework7 Components**: Using Framework7-React for authentic Android mobile experience
+- **Material Theme**: Purple Material You design with Framework7's Material styling
+- **Native Android Feel**: Message bubbles, navbar, and input field match Android Messages app
+- **Framework7 Icons**: Complete icon set for mobile UI consistency
+- **Simplified Integration**: Using Framework7 components directly without full framework wrapper
+- **Responsive Design**: Mobile-first with proper touch targets and gestures
+- **Haptic Feedback**: Android-style vibration on interactions
 
 ### Voice Features Added
 - **Speech-to-Text**: Integrated OpenAI Whisper API for audio transcription
@@ -122,9 +130,13 @@ This is a Next.js 15 (App Router) TypeScript application that demonstrates the O
 - `app/api/google/*`: Google OAuth flow handlers
 
 **UI Components**
-- `components/assistant.tsx`: Main chat interface
+- `components/f7-simple-chat.tsx`: Main chat interface with Framework7 components
+- `components/f7-app-provider.tsx`: Framework7 theme and styling provider
+- `components/f7-mcp-servers-panel.tsx`: MCP server management panel
+- `components/f7-model-selector.tsx`: Model selection dropdown
+- `components/f7-reasoning-selector.tsx`: Reasoning effort controls
+- `components/f7-custom-styles.css`: Custom Android Material styling
 - `components/tool-call.tsx`: Tool execution progress display
-- `components/tools-panel.tsx`: Tool configuration panel
 - `components/AudioRecorder.tsx`: Voice recording UI
 - `components/AudioPlayer.tsx`: TTS playback controls
 
