@@ -3,32 +3,10 @@ import React from "react";
 import FileSearchSetup from "./file-search-setup";
 import WebSearchConfig from "./websearch-config";
 import FunctionsView from "./functions-view";
-// import McpServersPanel from "./mcp-servers-panel"; // Temporarily removed due to Material-UI dependency
+import McpServersPanel from "./mcp-servers-panel";
 import PanelConfig from "./panel-config";
 import useToolsStore from "@/stores/useToolsStore";
 import GoogleIntegrationPanel from "@/components/google-integration";
-
-// Simple MCP Panel component to avoid Material-UI dependency
-const SimpleMcpPanel = () => {
-  const { mcpServers, mcpEnabled } = useToolsStore();
-  
-  return (
-    <div className="text-sm">
-      {mcpServers.length > 0 ? (
-        <div className="space-y-2">
-          {mcpServers.map((server) => (
-            <div key={server.id} className="p-2 bg-gray-100 rounded">
-              <div className="font-medium">{server.label}</div>
-              <div className="text-xs text-gray-600">{server.url}</div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-500">No MCP servers configured</p>
-      )}
-    </div>
-  );
-};
 
 export default function ContextPanel() {
   const {
@@ -120,7 +98,7 @@ export default function ContextPanel() {
                 enabled={mcpEnabled}
                 setEnabled={setMcpEnabled}
               >
-                <SimpleMcpPanel />
+                <McpServersPanel />
               </PanelConfig>
             </div>
             

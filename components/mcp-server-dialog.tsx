@@ -1,19 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Switch,
-  FormControlLabel,
-  Box,
-  Typography,
-  Alert,
-  Stack,
-} from "@mui/material";
 import type { McpServer } from "@/stores/useToolsStore";
 
 interface McpServerDialogProps {
@@ -106,153 +92,194 @@ export default function McpServerDialog({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 z-50 animate-fadeIn"
+        onClick={onClose}
+      />
+      
+      {/* Dialog */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl animate-slideUp">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 rounded-t-2xl">
+            <h2 className="text-xl font-bold">
+              {initialData ? "Edit MCP Server" : "Add MCP Server"}
+            </h2>
+          </div>
+          
+          {/* Content */}
+          <div className="p-6 space-y-4">
+            {/* Server Label */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Server Label <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.label}
+                onChange={handleChange("label")}
+                placeholder="My MCP Server"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                  errors.label 
+                    ? 'border-red-500' 
+                    : 'border-gray-300 dark:border-gray-600'
+                } bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100`}
+              />
+              <p className={`text-xs mt-1 ${errors.label ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                {errors.label || "A friendly name for this server"}
+              </p>
+            </div>
+            
+            {/* Server URL */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Server URL <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.url}
+                onChange={handleChange("url")}
+                placeholder="https://example.com/mcp"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                  errors.url 
+                    ? 'border-red-500' 
+                    : 'border-gray-300 dark:border-gray-600'
+                } bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100`}
+              />
+              <p className={`text-xs mt-1 ${errors.url ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                {errors.url || "The MCP server endpoint URL"}
+              </p>
+            </div>
+            
+            {/* Allowed Tools */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Allowed Tools
+              </label>
+              <input
+                type="text"
+                value={formData.allowed_tools}
+                onChange={handleChange("allowed_tools")}
+                placeholder="tool1,tool2,tool3"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+              />
+              <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                Comma-separated list of allowed tool names (leave empty for all)
+              </p>
+            </div>
+            
+            {/* Auth Token */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Auth Token
+              </label>
+              <input
+                type="password"
+                value={formData.authToken}
+                onChange={handleChange("authToken")}
+                placeholder="Bearer token"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+              />
+              <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                Bearer token for authentication (optional)
+              </p>
+            </div>
+            
+            {/* Skip Approval Switch */}
+            <div className="flex items-start gap-3">
+              <button
+                onClick={() => setFormData(prev => ({ ...prev, skip_approval: !prev.skip_approval }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  formData.skip_approval ? 'bg-purple-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.skip_approval ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Skip approval
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Automatically approve tool calls from this server
+                </p>
+              </div>
+            </div>
+            
+            {/* Enable Server Switch */}
+            <div className="flex items-start gap-3">
+              <button
+                onClick={() => setFormData(prev => ({ ...prev, enabled: !prev.enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  formData.enabled ? 'bg-green-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Enable server
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Server will be active immediately when enabled
+                </p>
+              </div>
+            </div>
+            
+            {/* Error Alert */}
+            {Object.keys(errors).length > 0 && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-500 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+                <p className="text-sm">Please fix the errors above before saving</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Footer */}
+          <div className="flex gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all font-medium shadow-lg hover:shadow-xl active:scale-95"
+            >
+              {initialData ? "Update" : "Add"} Server
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-      }}
-    >
-      <DialogTitle sx={{ 
-        backgroundColor: 'primary.main', 
-        color: 'primary.contrastText',
-        fontWeight: 600,
-      }}>
-        {initialData ? "Edit MCP Server" : "Add MCP Server"}
-      </DialogTitle>
-      <DialogContent sx={{ pt: 3 }}>
-        <Stack spacing={3}>
-          <TextField
-            label="Server Label"
-            fullWidth
-            value={formData.label}
-            onChange={handleChange("label")}
-            error={!!errors.label}
-            helperText={errors.label || "A friendly name for this server"}
-            required
-            variant="outlined"
-            size="small"
-          />
-          
-          <TextField
-            label="Server URL"
-            fullWidth
-            value={formData.url}
-            onChange={handleChange("url")}
-            error={!!errors.url}
-            helperText={errors.url || "The MCP server endpoint URL"}
-            required
-            placeholder="https://example.com/mcp"
-            variant="outlined"
-            size="small"
-          />
-          
-          <TextField
-            label="Allowed Tools"
-            fullWidth
-            value={formData.allowed_tools}
-            onChange={handleChange("allowed_tools")}
-            helperText="Comma-separated list of allowed tool names (leave empty for all)"
-            placeholder="tool1,tool2,tool3"
-            variant="outlined"
-            size="small"
-          />
-          
-          <TextField
-            label="Auth Token"
-            fullWidth
-            value={formData.authToken}
-            onChange={handleChange("authToken")}
-            helperText="Bearer token for authentication (optional)"
-            placeholder="Bearer token"
-            type="password"
-            variant="outlined"
-            size="small"
-          />
-          
-          <Box>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.skip_approval}
-                  onChange={handleChange("skip_approval")}
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": {
-                      color: "primary.main",
-                    },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                      backgroundColor: "primary.main",
-                    },
-                  }}
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2">Skip approval</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Automatically approve tool calls from this server
-                  </Typography>
-                </Box>
-              }
-            />
-          </Box>
-          
-          <Box>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.enabled}
-                  onChange={handleChange("enabled")}
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": {
-                      color: "success.main",
-                    },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                      backgroundColor: "success.main",
-                    },
-                  }}
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2">Enable server</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Server will be active immediately when enabled
-                  </Typography>
-                </Box>
-              }
-            />
-          </Box>
-          
-          {Object.keys(errors).length > 0 && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              Please fix the errors above before saving
-            </Alert>
-          )}
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button onClick={onClose} variant="outlined">
-          Cancel
-        </Button>
-        <Button 
-          onClick={handleSave} 
-          variant="contained"
-          sx={{
-            backgroundColor: "primary.main",
-            "&:hover": {
-              backgroundColor: "primary.dark",
-            },
-          }}
-        >
-          {initialData ? "Update" : "Add"} Server
-        </Button>
-      </DialogActions>
-    </Dialog>
+        @keyframes slideUp {
+          from { 
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </>
   );
 }

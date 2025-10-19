@@ -9,6 +9,14 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ToolsPanel from '@/components/tools-panel';
+import McpServersPanel from '@/components/mcp-servers-panel';
+
+// Close Icon
+const CloseIcon = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+  </svg>
+);
 
 // Material Design Icons SVG components
 const ChatIcon = () => (
@@ -539,16 +547,14 @@ export function ModernChatFixed() {
             className="flex-1 bg-black/50 backdrop-blur-sm" 
             onClick={() => setShowToolsPanel(false)}
           />
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight overflow-y-auto">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">Tools Settings</h2>
+          <div className="w-full max-w-lg bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight overflow-y-auto">
+            <div className="p-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-between">
+              <h2 className="text-lg font-bold">Tools Settings</h2>
               <button 
                 onClick={() => setShowToolsPanel(false)}
-                className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
+                className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-all"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
+                <CloseIcon />
               </button>
             </div>
             <div className="p-4">
@@ -565,30 +571,18 @@ export function ModernChatFixed() {
             className="flex-1 bg-black/50 backdrop-blur-sm" 
             onClick={() => setShowMcpPanel(false)}
           />
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">MCP Servers</h2>
+          <div className="w-full max-w-lg bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight overflow-y-auto">
+            <div className="p-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-between">
+              <h2 className="text-lg font-bold">MCP Servers</h2>
               <button 
                 onClick={() => setShowMcpPanel(false)}
-                className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
+                className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-all"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
+                <CloseIcon />
               </button>
             </div>
-            <div className="p-4">
-              <p className="text-gray-600 dark:text-gray-400">
-                Configure MCP servers for advanced tool integration.
-              </p>
-              <div className="mt-4 space-y-3">
-                <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-800 dark:text-gray-200">No MCP servers configured</p>
-                  <button className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">
-                    Add Server
-                  </button>
-                </div>
-              </div>
+            <div className="p-4 h-full">
+              <McpServersPanel />
             </div>
           </div>
         </div>
