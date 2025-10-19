@@ -10,6 +10,8 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ToolsPanel from '@/components/tools-panel';
 import McpServersPanel from '@/components/mcp-servers-panel';
+import ModernSettingsPanel from '@/components/modern-settings-panel';
+import ModernMemoriesPanel from '@/components/modern-memories-panel';
 
 // Close Icon
 const CloseIcon = () => (
@@ -109,6 +111,8 @@ export function ModernChatFixed() {
   const [showMenu, setShowMenu] = useState(false);
   const [showToolsPanel, setShowToolsPanel] = useState(false);
   const [showMcpPanel, setShowMcpPanel] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showMemoriesPanel, setShowMemoriesPanel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
@@ -290,6 +294,40 @@ export function ModernChatFixed() {
             {/* Dropdown Menu */}
             {showMenu && (
               <div className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 w-56 z-50 animate-fadeIn">
+                <button
+                  onClick={() => {
+                    haptic();
+                    setShowSettingsPanel(!showSettingsPanel);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                  </svg>
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">
+                    Settings
+                  </span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    haptic();
+                    setShowMemoriesPanel(!showMemoriesPanel);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13 3C9.23 3 6.19 5.95 6 9.66l-1.92 2.53c-.24.31.05.81.4.81H6v3c0 1.11.89 2 2 2h1v3h7v-4.68c3.3-1.3 5.65-4.5 5.65-8.26C21.65 5.21 18.79 2 15 2l-2 1zm3.5 8.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                  </svg>
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">
+                    Memories
+                  </span>
+                </button>
+                
+                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                
                 <button
                   onClick={() => {
                     haptic();
@@ -587,6 +625,18 @@ export function ModernChatFixed() {
           </div>
         </div>
       )}
+
+      {/* Settings Panel */}
+      <ModernSettingsPanel 
+        isOpen={showSettingsPanel}
+        onClose={() => setShowSettingsPanel(false)}
+      />
+
+      {/* Memories Panel */}
+      <ModernMemoriesPanel 
+        isOpen={showMemoriesPanel}
+        onClose={() => setShowMemoriesPanel(false)}
+      />
 
       <style jsx>{`
         @keyframes fadeIn {
