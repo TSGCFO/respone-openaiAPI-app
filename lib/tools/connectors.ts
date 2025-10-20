@@ -41,9 +41,18 @@ export function withMcpServers(
   const mcpTools = servers
     .filter(server => server.enabled && server.url && server.label)
     .map(server => {
+      // Sanitize server label: replace spaces and invalid characters with underscores
+      // Ensure it starts with a letter and contains only letters, digits, '-' and '_'
+      const sanitizedLabel = server.label
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, '_')  // Replace invalid chars with underscore
+        .replace(/^[^a-zA-Z]/, 'Server_')  // Ensure starts with letter
+        .replace(/_+/g, '_')  // Replace multiple underscores with single
+        .substring(0, 50);  // Limit length to be safe
+      
       const mcpTool: any = {
         type: "mcp",
-        server_label: server.label,
+        server_label: sanitizedLabel,
         server_url: server.url,
       };
       
