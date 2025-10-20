@@ -11,10 +11,8 @@ import {
   Messagebar,
   MessagebarAttachment,
   MessagebarAttachments,
-  MessagebarSheet,
   Link,
   f7,
-  Button,
   Icon,
   Fab,
   Toolbar,
@@ -32,26 +30,23 @@ export function F7ChatPage() {
   const {
     chatMessages,
     conversationItems,
-    appendMessage,
-    updateMessage,
+    addChatMessage,
     isStreaming,
     setIsStreaming,
-    currentConversationId,
   } = useConversationStore();
   
   const { selectedModel, reasoningEffort } = useToolsStore();
   
   const [message, setMessage] = useState('');
-  const [attachments, setAttachments] = useState([]);
+  const [attachments, setAttachments] = useState<any[]>([]);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
-  const messagesRef = useRef(null);
+  const messagesRef = useRef<any>(null);
   
   const {
     isRecording,
     startRecording,
     stopRecording,
     audioBlob,
-    audioUrl,
     resetRecording,
   } = useAudioRecorder();
   
@@ -77,13 +72,17 @@ export function F7ChatPage() {
       timestamp: new Date(),
     };
     
-    appendMessage(userMessage);
+    addChatMessage({
+      type: 'message',
+      role: 'user' as const,
+      content: [{ type: 'input_text', text: message }]
+    });
     setMessage('');
     setAttachments([]);
     setIsStreaming(true);
     
     try {
-      await processMessages([...conversationItems, userMessage]);
+      await processMessages();
     } catch (error) {
       console.error('Error processing messages:', error);
       f7.dialog.alert('Failed to send message. Please try again.');
@@ -173,24 +172,21 @@ export function F7ChatPage() {
             </div>
           </Block>
         ) : (
-          chatMessages.map((msg, index) => (
-            <Message
-              key={msg.id || index}
-              type={msg.role === 'user' ? 'sent' : 'received'}
-              text={typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}
-              textFooter={
-                msg.timestamp 
-                  ? new Date(msg.timestamp).toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })
-                  : ''
-              }
-              first={index === 0 || chatMessages[index - 1]?.role !== msg.role}
-              last={index === chatMessages.length - 1 || chatMessages[index + 1]?.role !== msg.role}
-              tail={index === chatMessages.length - 1 || chatMessages[index + 1]?.role !== msg.role}
-            />
-          ))
+          chatMessages
+            .filter((item) => item.type === 'message')
+            .map((msg: any, index) => (
+              <Message
+                key={(msg as any).id || index}
+                type={msg.role === 'user' ? 'sent' : 'received'}
+                text={typeof msg.content === 'string' ? msg.content : 
+                      Array.isArray(msg.content) ? msg.content.map((c: any) => c.text || '').join('') :
+                      JSON.stringify(msg.content)}
+                textFooter={''}
+                first={index === 0 || chatMessages[index - 1]?.type === 'message' && (chatMessages[index - 1] as any)?.role !== msg.role}
+                last={index === chatMessages.length - 1 || chatMessages[index + 1]?.type === 'message' && (chatMessages[index + 1] as any)?.role !== msg.role}
+                tail={index === chatMessages.length - 1 || chatMessages[index + 1]?.type === 'message' && (chatMessages[index + 1] as any)?.role !== msg.role}
+              />
+            ))
         )}
         
         {isStreaming && (

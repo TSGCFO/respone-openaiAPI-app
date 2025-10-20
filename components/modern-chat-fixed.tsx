@@ -174,9 +174,9 @@ export function ModernChatFixed() {
     addChatMessage(userMessage);
     
     // Add to conversation items for API with correct format
-    const conversationMessage = {
+    const conversationMessage: any = {
       role: 'user',
-      content: [{ type: 'input_text', text: message }],
+      content: message,
     };
     addConversationItem(conversationMessage);
     

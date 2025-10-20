@@ -66,7 +66,7 @@ export function ModernChat() {
     setIsStreaming(true);
     
     try {
-      await processMessages([...conversationItems, { role: 'user', content: message }]);
+      await processMessages();
     } catch (error) {
       console.error('Error processing messages:', error);
     } finally {

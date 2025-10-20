@@ -125,7 +125,7 @@ export default function McpServersPanel() {
               No MCP servers configured
             </p>
             <p className="text-sm text-gray-400 dark:text-gray-500">
-              Click "Add Server" to configure your first MCP server
+              Click &quot;Add Server&quot; to configure your first MCP server
             </p>
           </div>
         ) : (
@@ -146,7 +146,9 @@ export default function McpServersPanel() {
                         {server.label}
                       </h4>
                       {server.enabled && (
-                        <CheckCircleIcon className="text-green-500" />
+                        <span className="text-green-500">
+                          <CheckCircleIcon />
+                        </span>
                       )}
                     </div>
                     

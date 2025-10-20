@@ -7,7 +7,6 @@ import ToolCall from "./tool-call";
 import Annotations from "./annotations";
 import McpToolsList from "./mcp-tools-list";
 import McpApproval from "./mcp-approval";
-import LoadingMessage from "./loading-message";
 import MobileTypingIndicator from "./mobile-typing-indicator";
 import { ChevronDown, RefreshCw, Loader2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -284,34 +283,21 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
                 <ToolCall
                   key={index}
                   toolCall={item}
-                  className="animate-fade-in"
                 />
               );
-            } else if (item.type === "mcp_tool") {
+            } else if (item.type === "mcp_list_tools") {
               return (
                 <McpToolsList
                   key={index}
-                  tools={(item as any).tools}
-                  className="animate-fade-in"
+                  item={item as any}
                 />
               );
             } else if (item.type === "mcp_approval_request") {
               return (
                 <McpApproval
                   key={index}
-                  request={item as McpApprovalRequestItem}
-                  onResponse={(approved: boolean) => {
-                    onApprovalResponse(approved, item.id);
-                  }}
-                  className="animate-fade-in"
-                />
-              );
-            } else if (item.type === "annotations") {
-              return (
-                <Annotations
-                  key={index}
-                  annotations={(item as any).annotations}
-                  className="animate-fade-in"
+                  item={item as McpApprovalRequestItem}
+                  onRespond={onApprovalResponse}
                 />
               );
             }
