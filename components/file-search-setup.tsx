@@ -91,10 +91,14 @@ export default function FileSearchSetup() {
       </div>
       <div className="flex mt-4">
         <FileUpload
-          vectorStoreId={vectorStore?.id ?? ""}
-          vectorStoreName={vectorStore?.name ?? ""}
-          onAddStore={(id) => handleAddStore(id)}
-          onUnlinkStore={() => unlinkStore()}
+          accept=".txt,.md,.pdf,.doc,.docx"
+          onUpload={async (files) => {
+            // This would normally upload files to create a vector store
+            console.log("Files to upload:", files);
+            // For now, just show a message
+            alert("File upload functionality not yet implemented");
+            return null;
+          }}
         />
       </div>
     </div>

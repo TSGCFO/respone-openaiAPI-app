@@ -57,11 +57,6 @@ export const f7params: Framework7Parameters = {
     androidOverlaysWebView: true,
   },
   
-  // Pull to refresh
-  pullToRefresh: {
-    enabled: true,
-  },
-  
   // Navbar
   navbar: {
     hideOnPageScroll: false,

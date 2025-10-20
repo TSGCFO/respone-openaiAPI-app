@@ -1,14 +1,4 @@
-export { MaterialThemeProvider, useMaterialTheme } from './MaterialThemeProvider';
-export {
-  materialYouColors,
-  md3Elevations,
-  md3Shapes,
-  materialMotion,
-  getElevation,
-  createMaterialYouTheme,
-  materialYouLightTheme,
-  materialYouDarkTheme,
-} from './materialYouTheme';
+// Material utilities for the application
 export {
   hapticFeedback,
   createRippleEffect,

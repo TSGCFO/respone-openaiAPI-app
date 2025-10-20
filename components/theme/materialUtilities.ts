@@ -1,4 +1,34 @@
-import { materialMotion, materialYouColors } from './materialYouTheme';
+// Material You theme constants
+export const materialMotion = {
+  duration: {
+    short: 200,
+    short2: 250,
+    short3: 150,
+    short4: 100,
+    medium: 300,
+    medium1: 350,
+    medium2: 400,
+    long: 500,
+    long2: 600,
+  },
+  easing: {
+    standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    accelerate: 'cubic-bezier(0.4, 0, 1, 1)',
+    decelerate: 'cubic-bezier(0, 0, 0.2, 1)',
+    emphasized: 'cubic-bezier(0.2, 0, 0, 1)',
+    emphasizedDecelerate: 'cubic-bezier(0.05, 0.7, 0.1, 1.0)',
+    emphasizedAccelerate: 'cubic-bezier(0.3, 0.0, 0.8, 0.15)',
+  },
+};
+
+export const materialYouColors = {
+  primary: '#7C3AED',
+  onPrimary: '#FFFFFF',
+  surface: '#FFFFFF',
+  onSurface: '#1A1A1A',
+  background: '#F3F4F6',
+  onBackground: '#1A1A1A',
+};
 
 // Haptic feedback utilities for Android devices
 export const hapticFeedback = {
@@ -57,7 +87,7 @@ export const createRippleEffect = (event: React.MouseEvent<HTMLElement>) => {
   ripple.style.position = 'absolute';
   ripple.style.borderRadius = '50%';
   ripple.style.transform = 'scale(0)';
-  ripple.style.animation = `ripple ${materialMotion.duration.medium2}ms ${materialMotion.easing.emphasized}`;
+  ripple.style.animation = `ripple ${materialMotion.duration.medium}ms ${materialMotion.easing.standard}`;
   ripple.style.backgroundColor = 'currentColor';
   ripple.style.opacity = '0.15';
   ripple.style.pointerEvents = 'none';
@@ -87,8 +117,8 @@ export const touchFeedback = {
 // System bar configuration
 export const configureSystemBars = (mode: 'light' | 'dark') => {
   const themeColor = mode === 'light' 
-    ? materialYouColors.neutral[95]
-    : materialYouColors.neutral[10];
+    ? '#F3F4F6'  // Light mode background
+    : '#1A1A1A'; // Dark mode background
   
   // Update theme color meta tag
   let metaThemeColor = document.querySelector('meta[name="theme-color"]');
