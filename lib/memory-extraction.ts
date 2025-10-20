@@ -1,5 +1,3 @@
-import OpenAI from 'openai';
-
 export interface ExtractedFact {
   fact: string;
   type: 'personal_info' | 'preference' | 'location' | 'work' | 'relationship' | 'general';

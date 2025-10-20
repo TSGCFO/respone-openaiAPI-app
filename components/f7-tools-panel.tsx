@@ -16,6 +16,7 @@ import {
   f7,
 } from 'framework7-react';
 import useToolsStore from '@/stores/useToolsStore';
+import useConversationStore from '@/stores/useConversationStore';
 
 export function F7ToolsPanel() {
   const {
@@ -118,8 +119,7 @@ export function F7ToolsPanel() {
               'Clear Conversations',
               () => {
                 // Clear conversations using the conversation store
-                const conversationStore = require('@/stores/useConversationStore').default;
-                conversationStore.getState().resetConversation();
+                useConversationStore.getState().resetConversation();
                 f7.toast
                   .create({
                     text: 'Conversations cleared',

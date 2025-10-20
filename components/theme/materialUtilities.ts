@@ -73,7 +73,7 @@ export const createRippleEffect = (event: React.MouseEvent<HTMLElement>) => {
 
 // Touch feedback utilities
 export const touchFeedback = {
-  onTouchStart: (element: HTMLElement, isLight = true) => {
+  onTouchStart: (element: HTMLElement) => {
     element.style.transform = 'scale(0.98)';
     element.style.transition = `transform ${materialMotion.duration.short2}ms ${materialMotion.easing.emphasizedDecelerate}`;
     hapticFeedback.light();
@@ -193,7 +193,7 @@ export const smoothScroll = {
     
     requestAnimationFrame(scroll);
   },
-  toElement: (element: HTMLElement, duration = materialMotion.duration.medium2) => {
+  toElement: (element: HTMLElement) => {
     element.scrollIntoView({
       behavior: 'smooth',
       block: 'center',

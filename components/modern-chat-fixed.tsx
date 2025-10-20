@@ -96,7 +96,6 @@ const QuestionIcon = () => (
 export function ModernChatFixed() {
   const {
     chatMessages,
-    conversationItems,
     addChatMessage,
     addConversationItem,
     isStreaming,

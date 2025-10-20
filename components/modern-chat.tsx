@@ -13,7 +13,6 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 export function ModernChat() {
   const store = useConversationStore();
   const chatMessages = store.chatMessages;
-  const conversationItems = store.conversationItems;
   const addChatMessage = store.addChatMessage;
   const isStreaming = store.isStreaming;
   const setIsStreaming = store.setIsStreaming;

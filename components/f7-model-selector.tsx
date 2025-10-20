@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { List, ListItem, f7 } from 'framework7-react';
+import { f7 } from 'framework7-react';
 import useToolsStore from '@/stores/useToolsStore';
 
 const MODEL_OPTIONS = [
@@ -39,7 +39,7 @@ export function ModelSelector() {
           color: 'red',
         }
       ],
-      targetEl: document.querySelector('.model-selector'),
+      targetEl: document.querySelector('.model-selector') as HTMLElement,
     });
     actions.open();
   };

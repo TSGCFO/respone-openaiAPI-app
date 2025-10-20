@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { Item, McpApprovalRequestItem, MessageItem } from "@/lib/assistant";
+import { Item, McpApprovalRequestItem } from "@/lib/assistant";
 import MessageBubble from "./message-bubble";
 import ToolCall from "./tool-call";
 import Annotations from "./annotations";
 import McpToolsList from "./mcp-tools-list";
 import McpApproval from "./mcp-approval";
-import LoadingMessage from "./loading-message";
 import TypingIndicator from "./typing-indicator";
 import { ChevronDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,7 +34,6 @@ export const MessageList: React.FC<MessageListProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [platform, setPlatform] = useState<"ios" | "android" | "other">("other");
   
@@ -117,7 +115,6 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   // Process messages for grouping
   const processedMessages = useMemo(() => {
-    const messages = items.filter(item => item.type === "message") as MessageItem[];
     const processed: Array<{
       item: Item;
       isGroupStart: boolean;

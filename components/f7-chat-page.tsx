@@ -9,14 +9,10 @@ import {
   Messages,
   Message,
   Messagebar,
-  MessagebarAttachment,
-  MessagebarAttachments,
   Link,
   f7,
   Icon,
-  Fab,
   Toolbar,
-  Preloader,
   Block,
 } from 'framework7-react';
 import useConversationStore from '@/stores/useConversationStore';
@@ -29,17 +25,14 @@ import { ReasoningEffortSelector } from './f7-reasoning-selector';
 export function F7ChatPage() {
   const {
     chatMessages,
-    conversationItems,
     addChatMessage,
     isStreaming,
     setIsStreaming,
   } = useConversationStore();
   
-  const { selectedModel, reasoningEffort } = useToolsStore();
+  const { selectedModel } = useToolsStore();
   
   const [message, setMessage] = useState('');
-  const [attachments, setAttachments] = useState<any[]>([]);
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const messagesRef = useRef<any>(null);
   
   const {
@@ -62,15 +55,8 @@ export function F7ChatPage() {
   }, [chatMessages]);
 
   const handleSendMessage = async () => {
-    if (!message.trim() && attachments.length === 0) return;
+    if (!message.trim()) return;
     if (isStreaming) return;
-    
-    const userMessage = {
-      id: Date.now().toString(),
-      role: 'user' as const,
-      content: message,
-      timestamp: new Date(),
-    };
     
     addChatMessage({
       type: 'message',
@@ -78,7 +64,6 @@ export function F7ChatPage() {
       content: [{ type: 'input_text', text: message }]
     });
     setMessage('');
-    setAttachments([]);
     setIsStreaming(true);
     
     try {
@@ -94,7 +79,6 @@ export function F7ChatPage() {
   const handleVoiceRecord = async () => {
     if (isRecording) {
       stopRecording();
-      setIsProcessingAudio(true);
       
       // Process audio with Whisper
       if (audioBlob) {
@@ -115,7 +99,6 @@ export function F7ChatPage() {
           console.error('Transcription error:', error);
           f7.dialog.alert('Failed to transcribe audio.');
         } finally {
-          setIsProcessingAudio(false);
           resetRecording();
         }
       }
@@ -202,7 +185,6 @@ export function F7ChatPage() {
         placeholder="Type a message..."
         value={message}
         onInput={(e) => setMessage(e.target.value)}
-        attachmentsVisible={attachments.length > 0}
         sheetVisible={false}
       >
         <Link
@@ -235,67 +217,7 @@ export function F7ChatPage() {
         >
           <Icon f7="paperplane" size={24} color="primary" />
         </Link>
-        
-        {attachments.length > 0 && (
-          <MessagebarAttachments>
-            {attachments.map((attachment, index) => (
-              <MessagebarAttachment
-                key={index}
-                image={attachment.image}
-                onAttachmentDelete={() => {
-                  const newAttachments = [...attachments];
-                  newAttachments.splice(index, 1);
-                  setAttachments(newAttachments);
-                }}
-              />
-            ))}
-          </MessagebarAttachments>
-        )}
       </Messagebar>
-
-      {/* Android-style FAB for Quick Actions */}
-      <Fab
-        position="right-bottom"
-        slot="fixed"
-        color="purple"
-        onClick={() => {
-          // Quick action menu
-          const actions = f7.actions.create({
-            buttons: [
-              {
-                text: 'Clear Chat',
-                onClick: () => {
-                  f7.dialog.confirm('Clear all messages?', () => {
-                    // Clear messages
-                    useConversationStore.getState().resetConversation();
-                  });
-                }
-              },
-              {
-                text: 'Export Chat',
-                onClick: () => {
-                  f7.dialog.alert('Export feature coming soon!');
-                }
-              },
-              {
-                text: 'Cancel',
-                color: 'red',
-              }
-            ]
-          });
-          actions.open();
-        }}
-      >
-        <Icon f7="plus" />
-      </Fab>
-
-      {/* Processing Indicator */}
-      {isProcessingAudio && (
-        <div className="processing-overlay">
-          <Preloader color="purple" />
-          <p>Processing audio...</p>
-        </div>
-      )}
     </Page>
   );
 }

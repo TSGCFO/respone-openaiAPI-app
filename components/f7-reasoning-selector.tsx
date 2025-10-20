@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Segmented, Button, f7 } from 'framework7-react';
+import { Segmented, Button } from 'framework7-react';
 import useToolsStore from '@/stores/useToolsStore';
 
 export function ReasoningEffortSelector() {

@@ -8,7 +8,6 @@ import {
   NavRight,
   Link,
   List,
-  ListItem,
   Card,
   CardHeader,
   CardContent,
@@ -207,7 +206,7 @@ export function F7McpServersPanel() {
         </Toolbar>
         <PageContent>
           <BlockTitle>{editingServer ? 'Edit Server' : 'Add MCP Server'}</BlockTitle>
-          <List noHairlinesMd>
+          <List>
             <ListInput
               label="Server Name"
               type="text"

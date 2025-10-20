@@ -83,19 +83,24 @@ export async function deleteConversation(id: number): Promise<void> {
 }
 
 // Message management
-export async function createMessage(data: NewMessage & { generateEmbedding?: boolean }): Promise<Message> {
+export async function createMessage(data: Omit<NewMessage, 'content'> & { content: string | any[], generateEmbedding?: boolean }): Promise<Message> {
+  // Convert array content to JSON string if needed
+  const contentStr = typeof data.content === 'string' 
+    ? data.content 
+    : JSON.stringify(data.content);
+    
   const messageData: NewMessage = {
     conversationId: data.conversationId,
     role: data.role,
-    content: data.content,
+    content: contentStr,
     contentType: data.contentType || 'text',
     metadata: data.metadata || {},
   };
 
   // Generate embedding if requested
-  if (data.generateEmbedding && data.content) {
+  if (data.generateEmbedding && contentStr) {
     try {
-      const embedding = await generateEmbedding(data.content);
+      const embedding = await generateEmbedding(contentStr);
       messageData.embedding = embedding;
     } catch (error) {
       console.error('Failed to generate embedding:', error);
