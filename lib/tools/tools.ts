@@ -22,13 +22,9 @@ export const getTools = () => {
 
   const addFileSearch = () => {
     if (!state.fileSearchEnabled) return;
-    // Only add file_search tool if we have a valid vector store ID
-    if (state.vectorStore?.id) {
-      tools.push({ type: "file_search", vector_store_ids: [state.vectorStore.id] });
-    } else {
-      // Add file_search without vector_store_ids if no vector store is configured
-      tools.push({ type: "file_search" });
-    }
+    // Always include vector_store_ids array - empty if no vector store configured
+    const vectorStoreIds = state.vectorStore?.id ? [state.vectorStore.id] : [];
+    tools.push({ type: "file_search", vector_store_ids: vectorStoreIds });
   };
 
   const addCodeInterpreter = () => {
