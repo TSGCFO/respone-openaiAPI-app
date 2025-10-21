@@ -269,34 +269,98 @@ export function ModernChatFixed() {
     
     haptic(10);
     
-    // Include file information if files are selected
-    const fileInfo = selectedFiles.length > 0 
-      ? `\n[Attached ${selectedFiles.length} file(s): ${selectedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ')}]`
-      : '';
+    let uploadedFileUrls: any[] = [];
+    let messageContent = message;
+    
+    // Upload files if selected
+    if (selectedFiles.length > 0) {
+      setIsStreaming(true); // Show loading state during upload
+      
+      try {
+        const formData = new FormData();
+        selectedFiles.forEach(file => {
+          formData.append('files', file);
+        });
+        
+        const uploadResponse = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!uploadResponse.ok) {
+          const error = await uploadResponse.json();
+          setFileError(error.error || 'Failed to upload files');
+          haptic(20);
+          setTimeout(() => setFileError(null), 3000);
+          setIsStreaming(false);
+          return;
+        }
+        
+        const { files } = await uploadResponse.json();
+        uploadedFileUrls = files;
+        
+        // Add file info to message for display
+        const fileInfo = `\n\n📎 Attached files:\n${files.map((f: any) => `- [${f.originalName}](${f.url})`).join('\n')}`;
+        messageContent = message + fileInfo;
+        
+      } catch (error) {
+        console.error('Upload error:', error);
+        setFileError('Failed to upload files. Please try again.');
+        haptic(20);
+        setTimeout(() => setFileError(null), 3000);
+        setIsStreaming(false);
+        return;
+      }
+    }
     
     const userMessage = {
       type: 'message' as const,
       id: Date.now().toString(),
       role: 'user' as const,
-      content: [{ type: 'input_text' as const, text: message + fileInfo }],
+      content: [{ type: 'input_text' as const, text: messageContent }],
       metadata: {
         timestamp: new Date().toISOString(),
-        files: selectedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
+        files: uploadedFileUrls
       },
     };
     
     // Add to chat messages for display
     addChatMessage(userMessage);
     
+    // Prepare content for OpenAI API
+    let apiContent = message;
+    
+    // For images, we can include them as image_url content
+    const imageFiles = uploadedFileUrls.filter(f => 
+      f.type?.startsWith('image/') || 
+      ['jpg', 'jpeg', 'png', 'gif', 'webp'].some(ext => f.originalName.toLowerCase().endsWith(`.${ext}`))
+    );
+    
+    // Build content array for conversation
+    const contentArray: any[] = [{ type: 'text', text: message }];
+    
+    // Add images to content array for vision models
+    imageFiles.forEach(img => {
+      // Use the full URL for the image
+      const imageUrl = window.location.origin + img.url;
+      contentArray.push({
+        type: 'image_url',
+        image_url: {
+          url: imageUrl,
+          detail: 'auto'
+        }
+      });
+    });
+    
     // Add to conversation items for API with correct format
     const conversationMessage: any = {
       role: 'user',
-      content: message + fileInfo,
+      content: contentArray.length > 1 ? contentArray : message,
     };
     addConversationItem(conversationMessage);
     
     // Save user message to database for persistence
-    await saveMessage('user', message + fileInfo);
+    await saveMessage('user', messageContent);
     
     // Clear message and selected files
     setMessage('');
@@ -348,7 +412,7 @@ export function ModernChatFixed() {
     }
   };
 
-  const formatMessage = (content: any) => {
+  const formatMessage = (content: any, metadata?: any) => {
     // Extract text from MessageItem content array structure
     if (Array.isArray(content)) {
       const textContent = content
@@ -358,33 +422,173 @@ export function ModernChatFixed() {
       if (textContent) content = textContent;
     }
     
+    // Helper function to get file icon based on type
+    const getFileIcon = (fileType: string, fileName: string) => {
+      const ext = fileName.split('.').pop()?.toLowerCase() || '';
+      
+      // Images
+      if (fileType?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+          </svg>
+        );
+      }
+      // PDFs
+      if (fileType === 'application/pdf' || ext === 'pdf') {
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+          </svg>
+        );
+      }
+      // Word docs
+      if (fileType?.includes('word') || ['doc', 'docx'].includes(ext)) {
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM16 18H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+          </svg>
+        );
+      }
+      // Excel
+      if (fileType?.includes('excel') || fileType?.includes('spreadsheet') || ['xls', 'xlsx', 'csv'].includes(ext)) {
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h3v-2H8v-2h3v-2H8V8h8v10zm-3-9V3.5L18.5 9H13z"/>
+          </svg>
+        );
+      }
+      // PowerPoint
+      if (fileType?.includes('powerpoint') || fileType?.includes('presentation') || ['ppt', 'pptx'].includes(ext)) {
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 8v8l5-4-5-4zm9-5H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+          </svg>
+        );
+      }
+      // Default file icon
+      return (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+        </svg>
+      );
+    };
+    
     if (typeof content === 'string') {
       return (
-        <ReactMarkdown
-          className="prose prose-sm max-w-none"
-          components={{
-            code({ inline, className, children, ...props }: any) {
-              const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
-                <SyntaxHighlighter
-                  style={oneDark as any}
-                  language={match[1]}
-                  PreTag="div"
-                  className="!mt-2 !mb-2 !text-xs rounded-xl overflow-hidden"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : (
-                <code className="bg-purple-100 dark:bg-purple-900/30 px-1.5 py-0.5 rounded-md text-xs" {...props}>
-                  {children}
-                </code>
-              );
-            }
-          }}
-        >
-          {content}
-        </ReactMarkdown>
+        <div className="space-y-2">
+          <ReactMarkdown
+            className="prose prose-sm max-w-none"
+            components={{
+              code({ inline, className, children, ...props }: any) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <SyntaxHighlighter
+                    style={oneDark as any}
+                    language={match[1]}
+                    PreTag="div"
+                    className="!mt-2 !mb-2 !text-xs rounded-xl overflow-hidden"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code className="bg-purple-100 dark:bg-purple-900/30 px-1.5 py-0.5 rounded-md text-xs" {...props}>
+                    {children}
+                  </code>
+                );
+              },
+              a({ href, children, ...props }: any) {
+                // Check if this is a file link
+                if (href?.startsWith('/uploads/')) {
+                  const fileName = children?.toString() || href.split('/').pop();
+                  const fileType = metadata?.files?.find((f: any) => f.url === href)?.type || '';
+                  
+                  // For images, show inline
+                  if (fileType?.startsWith('image/') || 
+                      ['jpg', 'jpeg', 'png', 'gif', 'webp'].some(ext => href.toLowerCase().endsWith(`.${ext}`))) {
+                    return (
+                      <div className="my-3">
+                        <img 
+                          src={href} 
+                          alt={fileName} 
+                          className="max-w-full rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer"
+                          onClick={() => window.open(href, '_blank')}
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{fileName}</p>
+                      </div>
+                    );
+                  }
+                  
+                  // For other files, show download link with icon
+                  return (
+                    <a
+                      href={href}
+                      download={fileName}
+                      className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 px-3 py-2 rounded-lg transition-colors my-1"
+                      {...props}
+                    >
+                      {getFileIcon(fileType, fileName)}
+                      <span className="text-sm font-medium text-purple-700 dark:text-purple-300">{fileName}</span>
+                    </a>
+                  );
+                }
+                
+                // Regular link
+                return (
+                  <a href={href} className="text-purple-600 hover:text-purple-700 underline" {...props}>
+                    {children}
+                  </a>
+                );
+              }
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+          
+          {/* Display attached files that might not be in markdown */}
+          {metadata?.files && metadata.files.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {metadata.files.map((file: any, index: number) => {
+                const isImage = file.type?.startsWith('image/') || 
+                  ['jpg', 'jpeg', 'png', 'gif', 'webp'].some(ext => 
+                    file.originalName?.toLowerCase().endsWith(`.${ext}`) ||
+                    file.url?.toLowerCase().endsWith(`.${ext}`)
+                  );
+                
+                if (isImage) {
+                  return (
+                    <div key={index} className="my-3">
+                      <img 
+                        src={file.url} 
+                        alt={file.originalName || 'Uploaded image'} 
+                        className="max-w-full rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer"
+                        onClick={() => window.open(file.url, '_blank')}
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {file.originalName || 'Uploaded image'}
+                      </p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <a
+                    key={index}
+                    href={file.url}
+                    download={file.originalName}
+                    className="inline-flex items-center gap-2 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 px-3 py-2 rounded-lg transition-colors"
+                  >
+                    {getFileIcon(file.type, file.originalName || file.filename || '')}
+                    <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                      {file.originalName || file.filename || 'Download file'}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
       );
     }
     return <pre className="text-xs opacity-70">{JSON.stringify(content, null, 2)}</pre>;
@@ -592,7 +796,7 @@ export function ModernChatFixed() {
                   } px-5 py-4 relative`}
                 >
                   <div className="text-sm leading-relaxed">
-                    {formatMessage(msg.content)}
+                    {formatMessage(msg.content, msg.metadata)}
                   </div>
                   {msg.metadata?.timestamp && (
                     <div className={`text-[11px] mt-2 font-medium ${
