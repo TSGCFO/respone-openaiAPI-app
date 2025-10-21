@@ -3,7 +3,7 @@ import React from "react";
 import FileSearchSetup from "./file-search-setup";
 import WebSearchConfig from "./websearch-config";
 import FunctionsView from "./functions-view";
-import McpConfig from "./mcp-config";
+import McpServersPanel from "./mcp-servers-panel";
 import PanelConfig from "./panel-config";
 import useToolsStore from "@/stores/useToolsStore";
 import GoogleIntegrationPanel from "@/components/google-integration";
@@ -93,12 +93,12 @@ export default function ContextPanel() {
             {/* MCP Panel */}
             <div className="lg:col-span-1">
               <PanelConfig
-                title="MCP"
-                tooltip="Allows to call tools via remote MCP server"
+                title="MCP Servers"
+                tooltip="Configure multiple MCP servers for tool integration"
                 enabled={mcpEnabled}
                 setEnabled={setMcpEnabled}
               >
-                <McpConfig />
+                <McpServersPanel />
               </PanelConfig>
             </div>
             

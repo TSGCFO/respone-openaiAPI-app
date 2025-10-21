@@ -12,16 +12,25 @@ interface ConversationState {
   conversationItems: any[];
   // Whether we are waiting for the assistant response
   isAssistantLoading: boolean;
+  // Whether messages are currently streaming
+  isStreaming: boolean;
   // User ID for the current session
   userId: string;
+  // Selected AI model
+  selectedModel: string;
+  // Reasoning effort for GPT-5 models
+  reasoningEffort: 'low' | 'medium' | 'high';
 
   setChatMessages: (items: Item[]) => void;
   setConversationItems: (messages: any[]) => void;
   addChatMessage: (item: Item) => void;
   addConversationItem: (message: ChatCompletionMessageParam) => void;
   setAssistantLoading: (loading: boolean) => void;
+  setIsStreaming: (streaming: boolean) => void;
   setCurrentConversationId: (id: number | null) => void;
   setUserId: (id: string) => void;
+  setSelectedModel: (model: string) => void;
+  setReasoningEffort: (effort: 'low' | 'medium' | 'high') => void;
   rawSet: (state: any) => void;
   resetConversation: () => void;
   createNewConversation: () => Promise<number>;
@@ -45,7 +54,10 @@ const useConversationStore = create<ConversationState>((set, get) => ({
   ],
   conversationItems: [],
   isAssistantLoading: false,
+  isStreaming: false,
   userId: 'default_user',
+  selectedModel: 'gpt-4.1',
+  reasoningEffort: 'medium' as const,
   
   setChatMessages: (items) => set({ chatMessages: items }),
   setConversationItems: (messages) => set({ conversationItems: messages }),
@@ -56,8 +68,11 @@ const useConversationStore = create<ConversationState>((set, get) => ({
       conversationItems: [...state.conversationItems, message],
     })),
   setAssistantLoading: (loading) => set({ isAssistantLoading: loading }),
+  setIsStreaming: (streaming) => set({ isStreaming: streaming }),
   setCurrentConversationId: (id) => set({ currentConversationId: id }),
   setUserId: (id) => set({ userId: id }),
+  setSelectedModel: (model) => set({ selectedModel: model }),
+  setReasoningEffort: (effort) => set({ reasoningEffort: effort }),
   rawSet: set,
   
   resetConversation: () =>
@@ -138,21 +153,17 @@ const useConversationStore = create<ConversationState>((set, get) => ({
         };
       }).flat();
       
-      // Add initial message if empty
-      if (chatMessages.length === 0) {
-        chatMessages.push({
-          type: "message",
-          role: "assistant",
-          content: [{ type: "output_text", text: INITIAL_MESSAGE }],
-        });
-      }
+      // Don't add initial message - let welcome screen show
       
       set({ 
         currentConversationId: conversationId,
         chatMessages,
         conversationItems: messages.map((m: any) => ({
           role: m.role,
-          content: m.content,
+          content: [{ 
+            type: m.role === 'user' ? 'input_text' : 'output_text', 
+            text: m.content 
+          }],
         })),
       });
     } catch (error) {

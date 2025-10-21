@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -51,50 +50,12 @@ export default {
         '3xl': ['1.875rem', { lineHeight: '2.25rem' }],  // 30px
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],    // 36px
         '5xl': ['3rem', { lineHeight: '1' }],            // 48px
-        // Responsive sizes
-        'responsive-xs': ['0.75rem', {
-          lineHeight: '1rem',
-          '@media (min-width: 768px)': {
-            fontSize: '0.875rem',
-            lineHeight: '1.25rem',
-          },
-        }],
-        'responsive-sm': ['0.875rem', {
-          lineHeight: '1.25rem',
-          '@media (min-width: 768px)': {
-            fontSize: '1rem',
-            lineHeight: '1.5rem',
-          },
-        }],
-        'responsive-base': ['1rem', {
-          lineHeight: '1.5rem',
-          '@media (min-width: 768px)': {
-            fontSize: '1.125rem',
-            lineHeight: '1.75rem',
-          },
-        }],
-        'responsive-lg': ['1.125rem', {
-          lineHeight: '1.75rem',
-          '@media (min-width: 768px)': {
-            fontSize: '1.25rem',
-            lineHeight: '1.875rem',
-          },
-          '@media (min-width: 1024px)': {
-            fontSize: '1.5rem',
-            lineHeight: '2rem',
-          },
-        }],
-        'responsive-xl': ['1.25rem', {
-          lineHeight: '1.875rem',
-          '@media (min-width: 768px)': {
-            fontSize: '1.5rem',
-            lineHeight: '2rem',
-          },
-          '@media (min-width: 1024px)': {
-            fontSize: '1.875rem',
-            lineHeight: '2.25rem',
-          },
-        }],
+        // Additional utility sizes
+        'responsive-xs': ['0.75rem', { lineHeight: '1rem' }],
+        'responsive-sm': ['0.875rem', { lineHeight: '1.25rem' }],
+        'responsive-base': ['1rem', { lineHeight: '1.5rem' }],
+        'responsive-lg': ['1.125rem', { lineHeight: '1.75rem' }],
+        'responsive-xl': ['1.25rem', { lineHeight: '1.875rem' }],
       },
       spacing: {
         // Mobile-first spacing
@@ -172,5 +133,5 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [],
 } satisfies Config;

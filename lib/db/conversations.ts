@@ -83,19 +83,24 @@ export async function deleteConversation(id: number): Promise<void> {
 }
 
 // Message management
-export async function createMessage(data: NewMessage & { generateEmbedding?: boolean }): Promise<Message> {
+export async function createMessage(data: Omit<NewMessage, 'content'> & { content: string | any[], generateEmbedding?: boolean }): Promise<Message> {
+  // Convert array content to JSON string if needed
+  const contentStr = typeof data.content === 'string' 
+    ? data.content 
+    : JSON.stringify(data.content);
+    
   const messageData: NewMessage = {
     conversationId: data.conversationId,
     role: data.role,
-    content: data.content,
+    content: contentStr,
     contentType: data.contentType || 'text',
     metadata: data.metadata || {},
   };
 
   // Generate embedding if requested
-  if (data.generateEmbedding && data.content) {
+  if (data.generateEmbedding && contentStr) {
     try {
-      const embedding = await generateEmbedding(data.content);
+      const embedding = await generateEmbedding(contentStr);
       messageData.embedding = embedding;
     } catch (error) {
       console.error('Failed to generate embedding:', error);
@@ -209,7 +214,7 @@ export async function searchSemanticMemories(
           accessCount: sql`${semanticMemories.accessCount} + 1`,
           lastAccessed: new Date(),
         })
-        .where(sql`${semanticMemories.id} = ANY(ARRAY[${memoryIds.join(',')}]::int[])`);
+        .where(sql`${semanticMemories.id} = ANY(ARRAY[${sql.raw(memoryIds.join(','))}]::int[])`);
     }
     
     return result;
@@ -392,16 +397,16 @@ export async function searchMessages(
   try {
     const queryEmbedding = await generateEmbedding(query);
     
-    let baseQuery = db
-      .select()
-      .from(messages)
-      .where(sql`${messages.embedding} IS NOT NULL`);
+    const conditions = [sql`${messages.embedding} IS NOT NULL`];
     
     if (conversationId) {
-      baseQuery = baseQuery.where(eq(messages.conversationId, conversationId));
+      conditions.push(eq(messages.conversationId, conversationId));
     }
     
-    const result = await baseQuery
+    const result = await db
+      .select()
+      .from(messages)
+      .where(and(...conditions))
       .orderBy(sql`${messages.embedding} <=> ${JSON.stringify(queryEmbedding)}::vector`)
       .limit(limit);
     
@@ -419,20 +424,17 @@ export async function searchMessagesByText(
   conversationId?: number,
   limit: number = 20
 ): Promise<Message[]> {
-  let baseQuery = db
+  const whereCondition = conversationId 
+    ? and(
+        eq(messages.conversationId, conversationId),
+        ilike(messages.content, `%${query}%`)
+      )
+    : ilike(messages.content, `%${query}%`);
+  
+  const result = await db
     .select()
-    .from(messages);
-  
-  if (conversationId) {
-    baseQuery = baseQuery.where(and(
-      eq(messages.conversationId, conversationId),
-      ilike(messages.content, `%${query}%`)
-    ));
-  } else {
-    baseQuery = baseQuery.where(ilike(messages.content, `%${query}%`));
-  }
-  
-  const result = await baseQuery
+    .from(messages)
+    .where(whereCondition)
     .orderBy(desc(messages.timestamp))
     .limit(limit);
   

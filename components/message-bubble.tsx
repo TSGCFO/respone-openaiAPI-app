@@ -13,7 +13,6 @@ import {
   Heart, 
   Trash2, 
   Reply, 
-  MoreVertical,
   Check,
   CheckCheck,
   Clock,
@@ -126,7 +125,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
       try {
         await navigator.share({ text: messageText });
         haptic.trigger("selection");
-      } catch (err) {
+      } catch {
         console.log('Share cancelled');
       }
     }
@@ -149,7 +148,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
   }, [isLiked]);
   
   // Double tap handler
-  const handleDoubleTap = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+  const handleDoubleTap = useCallback(() => {
     const now = Date.now();
     if (now - doubleTapRef.current < 300) {
       handleLike();
@@ -250,7 +249,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
         setSwipeOffset(Math.max(deltaX, -80));
       }
     },
-    onSwipeEnd: (direction, velocity) => {
+    onSwipeEnd: (direction) => {
       if (direction === 'right' && swipeOffset > 50 && onReply) {
         haptic.trigger("selection");
         onReply();
@@ -311,7 +310,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
   
   // Custom markdown components
   const markdownComponents = useMemo(() => ({
-    code({ node, inline, className, children, ...props }: any) {
+    code({ inline, className, children, ...props }: any) {
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
       
@@ -443,7 +442,7 @@ const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(({
               longPressHandlers.onMouseUp(e.nativeEvent);
             }
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={() => {
             setIsPressed(false);
             if (longPressHandlers.onMouseLeave) {
               longPressHandlers.onMouseLeave();

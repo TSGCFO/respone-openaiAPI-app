@@ -1,0 +1,23 @@
+Error: Cannot find module '/home/runner/workspace/.next/server/middleware-manifest.json'
+Require stack:
+- /home/runner/workspace/node_modules/next/dist/server/next-server.js
+- /home/runner/workspace/node_modules/next/dist/server/dev/next-dev-server.js
+- /home/runner/workspace/node_modules/next/dist/server/next.js
+- /home/runner/workspace/node_modules/next/dist/server/lib/start-server.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)
+    at <unknown> (file:///home/runner/workspace/node_modules/next/dist/server/require-hook.js:55:36)
+    at Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Module.require (node:internal/modules/cjs/loader:1298:19)
+    at mod.require (file:///home/runner/workspace/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:182:18)
+    at DevServer.getMiddlewareManifest (file:///home/runner/workspace/node_modules/next/dist/server/next-server.js:953:30)
+    at DevServer.getEdgeFunctionsPages (file:///home/runner/workspace/node_modules/next/dist/server/next-server.js:983:31)
+    at NextNodeServer.handleCatchallRenderRequest (file:///home/runner/workspace/node_modules/next/dist/server/next-server.js:260:49)
+    at async DevServer.handleRequestImpl (file:///home/runner/workspace/node_modules/next/dist/server/base-server.js:895:17)
+    at async (file:///home/runner/workspace/node_modules/next/dist/server/dev/next-dev-server.js:371:20)
+    at async Span.traceAsyncFn (file:///home/runner/workspace/node_modules/next/dist/trace/trace.js:157:20)
+    at async DevServer.handleRequest (file:///home/runner/workspace/node_modules/next/dist/server/dev/next-dev-server.js:368:24)
+    at async invokeRender (file:///home/runner/workspace/node_modules/next/dist/server/lib/router-server.js:247:21)
+    at async handleRequest (file:///home/runner/workspace/node_modules/next/dist/server/lib/router-server.js:438:24)
+    at async requestHandlerImpl (file:///home/runner/workspace/node_modules/next/dist/server/lib/router-server.js:462:13)
+    at async Server.requestListener (file:///home/runner/workspace/node_modules/next/dist/server/lib/start-server.js:158:13)

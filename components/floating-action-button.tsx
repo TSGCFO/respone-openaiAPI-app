@@ -5,7 +5,7 @@ import { Plus, MessageSquarePlus, Mic, FileText, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import haptic from '@/lib/haptic';
 import { useLongPress } from '@/hooks/useLongPress';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useSpring } from 'framer-motion';
 
 interface FABAction {
   icon: React.ReactNode;
@@ -71,7 +71,6 @@ export function FloatingActionButton({
     
     // Show ripple on Android
     if (platform === 'android' && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
       setRipplePosition({ x: 28, y: 28 });
       setShowRipple(true);
     }

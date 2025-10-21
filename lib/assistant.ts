@@ -83,6 +83,8 @@ export const handleTurn = async (
 ) => {
   try {
     const { googleIntegrationEnabled } = useToolsStore.getState();
+    const { selectedModel, reasoningEffort } = useConversationStore.getState();
+    
     // Get response from the API (defined in app/api/turn_response/route.ts)
     const response = await fetch("/api/turn_response", {
       method: "POST",
@@ -91,6 +93,8 @@ export const handleTurn = async (
         messages: messages,
         tools: tools,
         googleIntegrationEnabled,
+        model: selectedModel,
+        reasoningEffort: reasoningEffort,
       }),
     });
 
