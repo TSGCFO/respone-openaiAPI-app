@@ -23,11 +23,12 @@ export const getTools = () => {
   const addFileSearch = () => {
     if (!state.fileSearchEnabled) return;
     // Only add file_search tool if we have a valid vector store ID
-    // OpenAI API requires at least one vector store ID if file_search is included
     if (state.vectorStore?.id) {
       tools.push({ type: "file_search", vector_store_ids: [state.vectorStore.id] });
+    } else {
+      // Add file_search without vector_store_ids if no vector store is configured
+      tools.push({ type: "file_search" });
     }
-    // Don't add file_search at all if no vector store is configured
   };
 
   const addCodeInterpreter = () => {
