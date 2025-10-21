@@ -117,6 +117,13 @@ export function ModernChatFixed() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
   
+  // File attachment states and refs
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounter = useRef(0);
+  
   const {
     isRecording,
     startRecording,
@@ -154,18 +161,127 @@ export function ModernChatFixed() {
     }
   };
 
+  // File validation constants
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_FILE_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'application/pdf',
+    'text/plain', 'text/csv',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  ];
+
+  // File validation function
+  const validateFile = (file: File): boolean => {
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError(`File "${file.name}" exceeds 10MB limit`);
+      haptic(20);
+      setTimeout(() => setFileError(null), 3000);
+      return false;
+    }
+    
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      const extension = file.name.split('.').pop();
+      // Allow common extensions even if MIME type is unknown
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'];
+      if (!extension || !allowedExtensions.includes(extension.toLowerCase())) {
+        setFileError(`File type not supported for "${file.name}"`);
+        haptic(20);
+        setTimeout(() => setFileError(null), 3000);
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  // Format file size for display
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // Handle file selection from input
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const validFiles = files.filter(validateFile);
+    
+    if (validFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      haptic(10);
+    }
+    
+    // Reset input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove selected file
+  const removeFile = (index: number) => {
+    haptic(5);
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounter.current = 0;
+    
+    const files = Array.from(e.dataTransfer.files);
+    const validFiles = files.filter(validateFile);
+    
+    if (validFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      haptic(10);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim() || isStreaming) return;
     
     haptic(10);
     
+    // Include file information if files are selected
+    const fileInfo = selectedFiles.length > 0 
+      ? `\n[Attached ${selectedFiles.length} file(s): ${selectedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ')}]`
+      : '';
+    
     const userMessage = {
       type: 'message' as const,
       id: Date.now().toString(),
       role: 'user' as const,
-      content: [{ type: 'input_text' as const, text: message }],
+      content: [{ type: 'input_text' as const, text: message + fileInfo }],
       metadata: {
         timestamp: new Date().toISOString(),
+        files: selectedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
       },
     };
     
@@ -175,14 +291,16 @@ export function ModernChatFixed() {
     // Add to conversation items for API with correct format
     const conversationMessage: any = {
       role: 'user',
-      content: message,
+      content: message + fileInfo,
     };
     addConversationItem(conversationMessage);
     
     // Save user message to database for persistence
-    await saveMessage('user', message);
+    await saveMessage('user', message + fileInfo);
     
+    // Clear message and selected files
     setMessage('');
+    setSelectedFiles([]);
     setIsStreaming(true);
     
     try {
@@ -273,7 +391,13 @@ export function ModernChatFixed() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div 
+      className="h-screen flex flex-col bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {/* Beautiful Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-2xl">
         <div className="px-4 py-4 flex items-center justify-between">
@@ -502,9 +626,56 @@ export function ModernChatFixed() {
 
       {/* Beautiful Input Area */}
       <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-t dark:border-gray-700 px-4 py-4 shadow-2xl">
+        {/* File Preview Area */}
+        {selectedFiles.length > 0 && (
+          <div className="mb-3 px-2 animate-slideDown">
+            <div className="flex flex-wrap gap-2">
+              {selectedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="bg-gradient-to-r from-purple-100 to-purple-50 dark:from-purple-900/30 dark:to-purple-800/30 border border-purple-300 dark:border-purple-700 rounded-xl px-3 py-2 flex items-center gap-2 animate-fadeIn shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                  </svg>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium text-gray-800 dark:text-gray-200 max-w-[120px] truncate">
+                      {file.name}
+                    </span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                      {formatFileSize(file.size)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => removeFile(index)}
+                    className="w-5 h-5 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+        />
+
         <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-inner">
           <button 
-            onClick={() => haptic()}
+            onClick={() => {
+              haptic();
+              fileInputRef.current?.click();
+            }}
             className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-purple-600 transition-colors duration-200 rounded-full hover:bg-white/50"
           >
             <AttachIcon />
@@ -567,6 +738,35 @@ export function ModernChatFixed() {
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
               </svg>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Drag and Drop Overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 bg-purple-600/20 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-none animate-fadeIn">
+          <div className="bg-white/95 dark:bg-gray-800/95 rounded-3xl p-12 shadow-2xl border-4 border-dashed border-purple-600 animate-pulse">
+            <svg className="w-20 h-20 text-purple-600 mx-auto mb-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z" />
+            </svg>
+            <p className="text-xl font-bold text-purple-700 dark:text-purple-300 text-center">
+              Drop files here to attach
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
+              Images, PDFs, and documents up to 10MB
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* File Error Toast */}
+      {fileError && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-slideDown">
+          <div className="bg-red-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <span className="font-medium">{fileError}</span>
           </div>
         </div>
       )}
