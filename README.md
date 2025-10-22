@@ -59,6 +59,60 @@ This app is meant to be used as a starting point to build a conversational assis
 
    The app will be available at [`http://localhost:3000`](http://localhost:3000).
 
+## Firecrawl MCP Integration
+
+This app supports Firecrawl MCP server integration, enabling the assistant to scrape, crawl, and extract content from websites. Firecrawl provides powerful web data extraction capabilities through its MCP server.
+
+### Setup (Firecrawl MCP)
+
+1. **Get a Firecrawl API key:**
+   - Sign up at [Firecrawl](https://firecrawl.dev)
+   - Get your API key from [https://firecrawl.dev/app/api-keys](https://firecrawl.dev/app/api-keys)
+
+2. **Install Firecrawl MCP server globally:**
+   ```bash
+   npm install -g firecrawl-mcp
+   ```
+
+3. **Start the Firecrawl MCP server:**
+   ```bash
+   env HTTP_STREAMABLE_SERVER=true FIRECRAWL_API_KEY=your_api_key npx -y firecrawl-mcp
+   ```
+   
+   This will start the MCP server at `http://localhost:3000/v2/mcp`
+   
+   **Note:** If port 3000 is already in use by this Next.js app, the Firecrawl server will automatically use the next available port (e.g., 3001). Check the console output to confirm the actual port.
+
+4. **Configure the MCP server in the app:**
+   - Open the app at `http://localhost:5000`
+   - Navigate to the Tools panel
+   - Click on "MCP Servers" section
+   - Click "Add Server" and enter:
+     - **Server Label:** `Firecrawl`
+     - **Server URL:** `http://localhost:3000/v2/mcp` (or the actual port shown in console)
+     - **Allowed Tools:** Leave empty to enable all tools
+     - **Skip approval:** Toggle ON for easier testing
+     - **Enable server:** Toggle ON
+   - Click "Add Server"
+
+5. **Enable MCP in the app:**
+   - In the Tools panel, toggle "MCP" to ON
+
+### Available Tools
+
+Firecrawl MCP provides these tools to the assistant:
+- **firecrawl_scrape**: Extract clean content from a single webpage
+- **firecrawl_crawl**: Start an async crawl job to extract content from multiple pages
+- **firecrawl_check_crawl_status**: Check the status of a crawl job
+- **firecrawl_deep_research**: Conduct comprehensive research using intelligent crawling and analysis
+- **firecrawl_map**: Discover and map all URLs on a website
+
+### Demo flow
+
+- Ask the assistant to scrape a website: "Can you scrape the content from https://example.com?"
+- Request a deep research: "Do deep research on the latest trends in AI"
+- Map a website: "Map all the pages on https://docs.firecrawl.dev"
+
 ## Google integration (Calendar & Gmail)
 
 This starter app includes a built-in Google integration that lets the assistant read your calendar and email inbox via OpenAI's 1P connectors. The app performs a secure OAuth (PKCE) flow in your browser, stores tokens per session, and attaches the Google connector to the Responses API tool list at request time.
