@@ -4,9 +4,10 @@ import useToolsStore from "@/stores/useToolsStore";
 import FileUpload from "@/components/file-upload";
 import { Input } from "./ui/input";
 import { CircleX } from "lucide-react";
-import { TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { Tooltip } from "./ui/tooltip";
-import { TooltipProvider } from "./ui/tooltip";
+// TODO: Replace with Framework7 Tooltip component
+// import { TooltipContent, TooltipTrigger } from "./ui/tooltip";
+// import { Tooltip } from "./ui/tooltip";
+// import { TooltipProvider } from "./ui/tooltip";
 
 export default function FileSearchSetup() {
   const { vectorStore, setVectorStore } = useToolsStore();
@@ -49,20 +50,17 @@ export default function FileSearchSetup() {
                 <div className="text-zinc-400  text-xs font-mono flex-1 text-ellipsis truncate">
                   {vectorStore.id}
                 </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <CircleX
-                        onClick={() => unlinkStore()}
-                        size={16}
-                        className="cursor-pointer text-zinc-400 mb-0.5 shrink-0 mt-0.5 hover:text-zinc-700 transition-all"
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent className="mr-2">
-                      <p>Unlink vector store</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {/* TODO: Replace with Framework7 Tooltip component */}
+                <div className="relative group">
+                  <CircleX
+                    onClick={() => unlinkStore()}
+                    size={16}
+                    className="cursor-pointer text-zinc-400 mb-0.5 shrink-0 mt-0.5 hover:text-zinc-700 transition-all"
+                  />
+                  <div className="absolute bottom-full mb-2 hidden group-hover:block bg-black text-white text-sm rounded p-2 whitespace-nowrap">
+                    Unlink vector store
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

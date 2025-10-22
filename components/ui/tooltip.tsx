@@ -1,3 +1,8 @@
+// TODO: Replace with Framework7 Tooltip component
+// This component previously used @radix-ui/react-tooltip which has been removed
+// Need to implement using Framework7 components
+
+/*
 "use client"
 
 import * as React from "react"
@@ -30,3 +35,7 @@ const TooltipContent = React.forwardRef<
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+*/
+
+// Temporary export to prevent build errors
+export {}

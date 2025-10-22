@@ -1,3 +1,8 @@
+// TODO: Replace with Framework7 Popover component
+// This component previously used @radix-ui/react-popover which has been removed
+// Need to implement using Framework7 components
+
+/*
 "use client"
 
 import * as React from "react"
@@ -31,3 +36,7 @@ const PopoverContent = React.forwardRef<
 PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
+*/
+
+// Temporary export to prevent build errors
+export {}

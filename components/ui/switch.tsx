@@ -1,3 +1,8 @@
+// TODO: Replace with Framework7 Toggle component
+// This component previously used @radix-ui/react-switch which has been removed
+// Need to implement using Framework7 components
+
+/*
 "use client"
 
 import * as React from "react"
@@ -27,3 +32,7 @@ const Switch = React.forwardRef<
 Switch.displayName = SwitchPrimitives.Root.displayName
 
 export { Switch }
+*/
+
+// Temporary export to prevent build errors
+export {}

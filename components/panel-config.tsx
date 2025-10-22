@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
-import { Switch } from "./ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { TooltipProvider } from "./ui/tooltip";
+// TODO: Replace with Framework7 Toggle component
+// import { Switch } from "./ui/switch";
+// TODO: Replace with Framework7 Tooltip component  
+// import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+// import { TooltipProvider } from "./ui/tooltip";
 
 export default function PanelConfig({
   title,
@@ -27,22 +29,25 @@ export default function PanelConfig({
   return (
     <div className="space-y-4 mb-6">
       <div className="flex justify-between items-center">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <h1 className="text-black font-medium">{title}</h1>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{tooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <Switch
-          id={title}
-          checked={enabled}
-          onCheckedChange={handleToggle}
-          disabled={disabled}
-        />
+        {/* TODO: Replace with Framework7 Tooltip component */}
+        <div className="relative group">
+          <h1 className="text-black font-medium">{title}</h1>
+          <div className="absolute bottom-full mb-2 hidden group-hover:block bg-black text-white text-sm rounded p-2 whitespace-nowrap z-10">
+            {tooltip}
+          </div>
+        </div>
+        {/* TODO: Replace with Framework7 Toggle component */}
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input 
+            type="checkbox" 
+            id={title}
+            checked={enabled}
+            onChange={handleToggle}
+            disabled={disabled}
+            className="sr-only peer"
+          />
+          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
       </div>
       <div className="mt-1">{children}</div>
     </div>

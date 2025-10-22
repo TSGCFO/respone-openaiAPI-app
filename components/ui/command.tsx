@@ -1,3 +1,8 @@
+// TODO: Replace with Framework7 equivalent components
+// This component previously used @radix-ui/react-dialog and cmdk which have been removed
+// Need to implement using Framework7 components
+
+/*
 "use client"
 
 import * as React from "react"
@@ -151,3 +156,7 @@ export {
   CommandShortcut,
   CommandSeparator,
 }
+*/
+
+// Temporary export to prevent build errors
+export {}

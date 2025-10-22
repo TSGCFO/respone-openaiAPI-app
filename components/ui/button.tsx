@@ -1,3 +1,8 @@
+// TODO: Replace with Framework7 Button component
+// This component previously used @radix-ui/react-slot which has been removed
+// Need to implement using Framework7 components
+
+/*
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
@@ -55,3 +60,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button'
 
 export { Button, buttonVariants }
+*/
+
+// Temporary export to prevent build errors
+export {}

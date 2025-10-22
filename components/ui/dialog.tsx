@@ -1,3 +1,8 @@
+// TODO: Replace with Framework7 Dialog/Popup components
+// This component previously used @radix-ui/react-dialog which has been removed
+// Need to implement using Framework7 components
+
+/*
 "use client"
 
 import * as React from "react"
@@ -120,3 +125,7 @@ export {
   DialogTitle,
   DialogDescription,
 }
+*/
+
+// Temporary export to prevent build errors
+export {}

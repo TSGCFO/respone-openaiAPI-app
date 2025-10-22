@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+// TODO: Replace with Framework7 Button component
+// import { Button } from "./ui/button";
+// TODO: Replace with Framework7 Tooltip component
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import useToolsStore from "@/stores/useToolsStore";
 
 export default function GoogleIntegrationPanel() {
@@ -29,28 +31,32 @@ export default function GoogleIntegrationPanel() {
           {oauthConfigured ? (
             googleIntegrationEnabled ? (
               <a href="/api/google/auth">
-                <Button>Connect Google Integration</Button>
+                {/* TODO: Replace with Framework7 Button */}
+                <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                  Connect Google Integration
+                </button>
               </a>
             ) : (
               <span className="inline-flex">
-                <Button disabled>Connect Google Integration</Button>
+                {/* TODO: Replace with Framework7 Button */}
+                <button disabled className="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed">
+                  Connect Google Integration
+                </button>
               </span>
             )
           ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button disabled>Connect Google Integration</Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI must be set in .env.local to use the Google Integration.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            /* TODO: Replace with Framework7 Tooltip component */
+            <div className="relative group inline-flex">
+              <span className="inline-flex">
+                {/* TODO: Replace with Framework7 Button */}
+                <button disabled className="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed">
+                  Connect Google Integration
+                </button>
+              </span>
+              <div className="absolute bottom-full mb-2 hidden group-hover:block bg-black text-white text-sm rounded p-2 whitespace-nowrap">
+                GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI must be set in .env.local to use the Google Integration.
+              </div>
+            </div>
           )}
         </div>
       ) : (
