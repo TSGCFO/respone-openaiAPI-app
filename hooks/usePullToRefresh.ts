@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { haptics } from '@/lib/haptic';
 
 interface PullToRefreshOptions {
   threshold?: number;
@@ -41,6 +42,10 @@ export function usePullToRefresh(
   const startY = useRef(0);
   const currentY = useRef(0);
   const touchingRef = useRef(false);
+  const hapticTriggeredRef = useRef<{ halfway: boolean; threshold: boolean }>({
+    halfway: false,
+    threshold: false
+  });
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     const container = containerRef.current;
@@ -49,6 +54,9 @@ export function usePullToRefresh(
     touchingRef.current = true;
     startY.current = e.touches[0].clientY;
     currentY.current = e.touches[0].clientY;
+    
+    // Reset haptic triggers
+    hapticTriggeredRef.current = { halfway: false, threshold: false };
   }, [containerRef]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -71,6 +79,18 @@ export function usePullToRefresh(
       const easeOut = 1 - Math.pow((pullDistance / maxPull), 2);
       const easedDistance = pullDistance * easeOut;
       
+      // Haptic feedback at 50% threshold
+      if (easedDistance >= threshold * 0.5 && !hapticTriggeredRef.current.halfway) {
+        haptics.pull();
+        hapticTriggeredRef.current.halfway = true;
+      }
+      
+      // Stronger haptic when reaching refresh threshold
+      if (easedDistance >= threshold && !hapticTriggeredRef.current.threshold) {
+        haptics.release();
+        hapticTriggeredRef.current.threshold = true;
+      }
+      
       setState(prev => ({
         ...prev,
         isPulling: true,
@@ -86,6 +106,9 @@ export function usePullToRefresh(
     touchingRef.current = false;
     
     if (state.canRefresh && !state.isRefreshing) {
+      // Trigger refresh haptic
+      haptics.refresh();
+      
       setState(prev => ({
         ...prev,
         isRefreshing: true,
@@ -99,6 +122,12 @@ export function usePullToRefresh(
             new Promise(resolve => setTimeout(resolve, refreshTimeout))
           ]);
         }
+        // Success haptic after refresh completes
+        haptics.success();
+      } catch (error) {
+        // Error haptic if refresh fails
+        haptics.error();
+        console.error('Refresh failed:', error);
       } finally {
         setState({
           isPulling: false,
@@ -108,6 +137,11 @@ export function usePullToRefresh(
         });
       }
     } else {
+      // Light haptic for cancelled pull
+      if (state.pullDistance > 20) {
+        haptics.light();
+      }
+      
       setState({
         isPulling: false,
         isRefreshing: false,
@@ -115,7 +149,10 @@ export function usePullToRefresh(
         canRefresh: false,
       });
     }
-  }, [state.canRefresh, state.isRefreshing, threshold, onRefresh, refreshTimeout]);
+    
+    // Reset haptic triggers
+    hapticTriggeredRef.current = { halfway: false, threshold: false };
+  }, [state.canRefresh, state.isRefreshing, state.pullDistance, threshold, onRefresh, refreshTimeout]);
 
   useEffect(() => {
     const container = containerRef.current;

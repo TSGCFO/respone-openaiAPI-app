@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import useConversationStore from '@/stores/useConversationStore';
 import useToolsStore from '@/stores/useToolsStore';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { processMessages } from '@/lib/assistant';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -12,6 +15,8 @@ import ToolsPanel from '@/components/tools-panel';
 import McpServersPanel from '@/components/mcp-servers-panel';
 import ModernSettingsPanel from '@/components/modern-settings-panel';
 import ModernMemoriesPanel from '@/components/modern-memories-panel';
+import { AppUpdateNotification } from '@/components/app-update-notification';
+import { haptics } from '@/lib/haptic';
 
 // Close Icon
 const CloseIcon = () => (
@@ -93,6 +98,13 @@ const QuestionIcon = () => (
   </svg>
 );
 
+// Offline indicator icon
+const OfflineIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M23.64 7c-.45-.34-4.93-4-11.64-4-1.5 0-2.89.19-4.15.48L18.18 13.8 23.64 7zm-6.6 8.22L3.27 1.44 2 2.72l2.05 2.06C1.91 5.76.59 6.82.36 7l11.63 14.49.01.01.01-.01 3.9-4.86 3.32 3.32 1.27-1.27-3.46-3.46z"/>
+  </svg>
+);
+
 export function ModernChatFixed() {
   const {
     chatMessages,
@@ -102,6 +114,7 @@ export function ModernChatFixed() {
     setIsStreaming,
     resetConversation,
     saveMessage,
+    loadConversation,
   } = useConversationStore();
   
   const { selectedModel, reasoningEffort, setSelectedModel, setReasoningEffort } = useToolsStore();
@@ -113,8 +126,11 @@ export function ModernChatFixed() {
   const [showMcpPanel, setShowMcpPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showMemoriesPanel, setShowMemoriesPanel] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
   const [screenReaderAnnouncement, setScreenReaderAnnouncement] = useState('');
   
@@ -132,6 +148,92 @@ export function ModernChatFixed() {
     audioBlob,
     resetRecording,
   } = useAudioRecorder();
+
+  // Handle refresh for pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    haptics.refresh();
+    // Reload the conversation from the database
+    await loadConversation();
+    haptics.success();
+  }, [loadConversation]);
+
+  // Pull-to-refresh hook
+  const pullToRefresh = usePullToRefresh(
+    messageListRef,
+    handleRefresh,
+    {
+      threshold: 80,
+      maxPull: 150,
+      refreshTimeout: 2000,
+      resistance: 2.5
+    }
+  );
+
+  // Callback for sending messages
+  const sendMessageCallback = useCallback(async (messageContent: string) => {
+    // This is the callback for offline queue to send messages
+    const userMessage = {
+      type: 'message' as const,
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: [{ type: 'input_text' as const, text: messageContent }],
+      metadata: {
+        timestamp: new Date().toISOString(),
+      },
+    };
+    
+    addChatMessage(userMessage);
+    addConversationItem({ role: 'user', content: messageContent });
+    await saveMessage('user', messageContent);
+    setIsStreaming(true);
+    
+    try {
+      await processMessages();
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [addChatMessage, addConversationItem, saveMessage, setIsStreaming]);
+
+  // Offline queue hook
+  const offlineQueue = useOfflineQueue(sendMessageCallback);
+
+  // Virtual keyboard detection
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) {
+      return;
+    }
+
+    const handleViewportChange = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+      
+      // Calculate keyboard height
+      const windowHeight = window.innerHeight;
+      const viewportHeight = viewport.height;
+      const keyboardHeight = windowHeight - viewportHeight;
+      
+      setKeyboardHeight(keyboardHeight);
+      
+      // Scroll to bottom when keyboard opens
+      if (keyboardHeight > 100) {
+        haptics.light();
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    };
+
+    // Listen for viewport changes
+    window.visualViewport.addEventListener('resize', handleViewportChange);
+    window.visualViewport.addEventListener('scroll', handleViewportChange);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      }
+    };
+  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -204,13 +306,6 @@ export function ModernChatFixed() {
     }
   }, [isRecording, isProcessingAudio]);
 
-  // Add haptic feedback
-  const haptic = (intensity: number = 1) => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(intensity);
-    }
-  };
-
   // File validation constants
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   const ALLOWED_FILE_TYPES = [
@@ -226,7 +321,7 @@ export function ModernChatFixed() {
   const validateFile = (file: File): boolean => {
     if (file.size > MAX_FILE_SIZE) {
       setFileError(`File "${file.name}" exceeds 10MB limit`);
-      haptic(20);
+      haptics.error();
       setTimeout(() => setFileError(null), 3000);
       return false;
     }
@@ -237,7 +332,7 @@ export function ModernChatFixed() {
       const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'];
       if (!extension || !allowedExtensions.includes(extension.toLowerCase())) {
         setFileError(`File type not supported for "${file.name}"`);
-        haptic(20);
+        haptics.error();
         setTimeout(() => setFileError(null), 3000);
         return false;
       }
@@ -260,7 +355,7 @@ export function ModernChatFixed() {
     
     if (validFiles.length > 0) {
       setSelectedFiles(prev => [...prev, ...validFiles]);
-      haptic(10);
+      haptics.selection();
     }
     
     // Reset input to allow selecting the same file again
@@ -271,7 +366,7 @@ export function ModernChatFixed() {
 
   // Remove selected file
   const removeFile = (index: number) => {
-    haptic(5);
+    haptics.light();
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -310,14 +405,23 @@ export function ModernChatFixed() {
     
     if (validFiles.length > 0) {
       setSelectedFiles(prev => [...prev, ...validFiles]);
-      haptic(10);
+      haptics.selection();
     }
   };
 
   const handleSendMessage = async () => {
     if (!message.trim() || isStreaming) return;
     
-    haptic(10);
+    // Check if offline
+    if (offlineQueue.isOffline) {
+      // Add to offline queue
+      offlineQueue.addToQueue(message);
+      setMessage('');
+      haptics.warning();
+      return;
+    }
+    
+    haptics.selection();
     
     let uploadedFileUrls: any[] = [];
     let messageContent = message;
@@ -340,7 +444,7 @@ export function ModernChatFixed() {
         if (!uploadResponse.ok) {
           const error = await uploadResponse.json();
           setFileError(error.error || 'Failed to upload files');
-          haptic(20);
+          haptics.error();
           setTimeout(() => setFileError(null), 3000);
           setIsStreaming(false);
           return;
@@ -356,7 +460,7 @@ export function ModernChatFixed() {
       } catch (error) {
         console.error('Upload error:', error);
         setFileError('Failed to upload files. Please try again.');
-        haptic(20);
+        haptics.error();
         setTimeout(() => setFileError(null), 3000);
         setIsStreaming(false);
         return;
@@ -420,15 +524,17 @@ export function ModernChatFixed() {
     try {
       // processMessages reads from store directly, no parameters needed
       await processMessages();
+      haptics.success();
     } catch (error) {
       console.error('Error processing messages:', error);
+      haptics.error();
     } finally {
       setIsStreaming(false);
     }
   };
 
   const handleVoiceRecord = async () => {
-    haptic(20);
+    haptics.medium();
     
     if (isRecording) {
       stopRecording();
@@ -448,9 +554,13 @@ export function ModernChatFixed() {
             const { text } = await response.json();
             setMessage(text);
             setIsFabExpanded(false);
+            haptics.success();
+          } else {
+            haptics.error();
           }
         } catch (error) {
           console.error('Transcription error:', error);
+          haptics.error();
         } finally {
           setIsProcessingAudio(false);
           resetRecording();
@@ -554,16 +664,20 @@ export function ModernChatFixed() {
                   const fileName = children?.toString() || href.split('/').pop();
                   const fileType = metadata?.files?.find((f: any) => f.url === href)?.type || '';
                   
-                  // For images, show inline
+                  // For images, show inline with Next.js Image component
                   if (fileType?.startsWith('image/') || 
                       ['jpg', 'jpeg', 'png', 'gif', 'webp'].some(ext => href.toLowerCase().endsWith(`.${ext}`))) {
                     return (
-                      <div className="my-3">
-                        <img 
+                      <div className="my-3 relative">
+                        <Image 
                           src={href} 
-                          alt={fileName} 
+                          alt={fileName}
+                          width={400}
+                          height={300}
                           className="max-w-full rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer"
                           onClick={() => window.open(href, '_blank')}
+                          loading="lazy"
+                          style={{ width: 'auto', height: 'auto', maxWidth: '100%' }}
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{fileName}</p>
                       </div>
@@ -590,6 +704,27 @@ export function ModernChatFixed() {
                     {children}
                   </a>
                 );
+              },
+              img({ src, alt, ...props }: any) {
+                // Use Next.js Image component for all images in markdown
+                if (src) {
+                  return (
+                    <div className="my-3 relative">
+                      <Image
+                        src={src}
+                        alt={alt || 'Image'}
+                        width={400}
+                        height={300}
+                        className="max-w-full rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer"
+                        onClick={() => window.open(src, '_blank')}
+                        loading="lazy"
+                        style={{ width: 'auto', height: 'auto', maxWidth: '100%' }}
+                        {...props}
+                      />
+                    </div>
+                  );
+                }
+                return null;
               }
             }}
           >
@@ -608,12 +743,16 @@ export function ModernChatFixed() {
                 
                 if (isImage) {
                   return (
-                    <div key={index} className="my-3">
-                      <img 
+                    <div key={index} className="my-3 relative">
+                      <Image 
                         src={file.url} 
-                        alt={file.originalName || 'Uploaded image'} 
+                        alt={file.originalName || 'Uploaded image'}
+                        width={400}
+                        height={300}
                         className="max-w-full rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer"
                         onClick={() => window.open(file.url, '_blank')}
+                        loading="lazy"
+                        style={{ width: 'auto', height: 'auto', maxWidth: '100%' }}
                       />
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {file.originalName || 'Uploaded image'}
@@ -651,27 +790,66 @@ export function ModernChatFixed() {
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      style={{ paddingBottom: keyboardHeight }}
     >
+      {/* App Update Notification */}
+      <AppUpdateNotification />
+
       {/* Screen reader announcements */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {screenReaderAnnouncement}
       </div>
+
+      {/* Pull to Refresh Indicator */}
+      {pullToRefresh.isPulling && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex justify-center items-center z-50 transition-all duration-300"
+          style={{ 
+            height: `${Math.min(pullToRefresh.pullIndicatorOffset, 80)}px`,
+            opacity: pullToRefresh.pullIndicatorOpacity
+          }}
+        >
+          <div className={`${pullToRefresh.isRefreshing ? 'animate-spin' : ''}`}>
+            <svg className="w-6 h-6 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+          </div>
+        </div>
+      )}
+
       {/* Beautiful Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-2xl">
         <div className="px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
               <ChatIcon />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-wide">AI Assistant</h1>
-              <p className="text-xs opacity-90 font-medium">Powered by GPT</p>
+              <h1 className="text-2xl font-bold tracking-tight">AI Assistant</h1>
+              <p className="text-xs text-purple-200 font-medium">Always here to help</p>
             </div>
           </div>
-          <div className="relative" ref={menuRef}>
-            <button 
-              onClick={() => {haptic(); setShowMenu(!showMenu);}}
-              className="w-10 h-10 hover:bg-white/10 rounded-full flex items-center justify-center transition-all duration-200"
+          
+          {/* Right Section */}
+          <div className="flex items-center gap-2" ref={menuRef}>
+            {/* Offline Indicator */}
+            {offlineQueue.isOffline && (
+              <div className="flex items-center gap-2 bg-yellow-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <OfflineIcon />
+                <span className="text-xs font-medium">Offline</span>
+              </div>
+            )}
+
+            {/* Queued Messages Indicator */}
+            {offlineQueue.queuedMessages.length > 0 && (
+              <div className="flex items-center gap-1 bg-orange-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <span className="text-xs font-medium">{offlineQueue.queuedMessages.length} queued</span>
+              </div>
+            )}
+
+            <button
+              onClick={() => {haptics.light(); setShowMenu(!showMenu);}}
+              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               aria-label="Open menu"
               aria-expanded={showMenu}
               aria-haspopup="true"
@@ -688,7 +866,7 @@ export function ModernChatFixed() {
               >
                 <button
                   onClick={() => {
-                    haptic();
+                    haptics.light();
                     setShowSettingsPanel(!showSettingsPanel);
                     setShowMenu(false);
                   }}
@@ -706,7 +884,7 @@ export function ModernChatFixed() {
                 
                 <button
                   onClick={() => {
-                    haptic();
+                    haptics.light();
                     setShowMemoriesPanel(!showMemoriesPanel);
                     setShowMenu(false);
                   }}
@@ -726,7 +904,7 @@ export function ModernChatFixed() {
                 
                 <button
                   onClick={() => {
-                    haptic();
+                    haptics.light();
                     setShowToolsPanel(!showToolsPanel);
                     setShowMenu(false);
                   }}
@@ -744,7 +922,7 @@ export function ModernChatFixed() {
                 
                 <button
                   onClick={() => {
-                    haptic();
+                    haptics.light();
                     setShowMcpPanel(!showMcpPanel);
                     setShowMenu(false);
                   }}
@@ -759,14 +937,39 @@ export function ModernChatFixed() {
                     MCP Servers
                   </span>
                 </button>
+
+                {/* Sync Queue Button (only show if messages are queued) */}
+                {offlineQueue.queuedMessages.length > 0 && (
+                  <>
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-1" role="separator"></div>
+                    <button
+                      onClick={() => {
+                        haptics.light();
+                        offlineQueue.syncQueue();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-3 transition-colors"
+                      role="menuitem"
+                      aria-label="Sync offline messages"
+                    >
+                      <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                      </svg>
+                      <span className="text-gray-800 dark:text-gray-200 font-medium">
+                        Sync {offlineQueue.queuedMessages.length} Messages
+                      </span>
+                    </button>
+                  </>
+                )}
                 
                 <div className="border-t border-gray-200 dark:border-gray-700 my-1" role="separator"></div>
                 
                 <button
                   onClick={() => {
-                    haptic();
+                    haptics.warning();
                     if (confirm('Are you sure you want to clear the chat? This will delete all messages.')) {
                       resetConversation();
+                      haptics.success();
                     }
                     setShowMenu(false);
                   }}
@@ -790,7 +993,7 @@ export function ModernChatFixed() {
         <div className="px-4 pb-4 flex items-center gap-2 overflow-x-auto">
           <select 
             value={selectedModel} 
-            onChange={(e) => {haptic(); setSelectedModel(e.target.value);}}
+            onChange={(e) => {haptics.light(); setSelectedModel(e.target.value);}}
             className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-4 py-2 text-sm font-medium outline-none focus:bg-white/30 transition-all cursor-pointer"
             aria-label="Select AI model"
           >
@@ -805,7 +1008,7 @@ export function ModernChatFixed() {
               {['low', 'medium', 'high'].map(level => (
                 <button
                   key={level}
-                  onClick={() => {haptic(); setReasoningEffort(level as any);}}
+                  onClick={() => {haptics.light(); setReasoningEffort(level as any);}}
                   className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-200 ${
                     reasoningEffort === level 
                       ? 'bg-white text-purple-600 shadow-lg scale-105' 
@@ -823,7 +1026,12 @@ export function ModernChatFixed() {
       </div>
 
       {/* Messages Area with Beautiful Styling */}
-      <div className="flex-1 overflow-y-auto px-4 py-6" role="log" aria-label="Chat messages">
+      <div 
+        ref={messageListRef}
+        className="flex-1 overflow-y-auto px-4 py-6 message-list-scroll" 
+        role="log" 
+        aria-label="Chat messages"
+      >
         {chatMessages.filter(msg => msg.type === 'message').length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-8 animate-fadeIn">
             <div className="w-28 h-28 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mb-8 shadow-2xl animate-pulse">
@@ -844,7 +1052,7 @@ export function ModernChatFixed() {
               ].map((item, i) => (
                 <button
                   key={i}
-                  onClick={() => {haptic(); setMessage(`Help me ${item.text.toLowerCase()}`);}}
+                  onClick={() => {haptics.selection(); setMessage(`Help me ${item.text.toLowerCase()}`);}}
                   className={`bg-gradient-to-br ${item.color} text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95`}
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -926,9 +1134,10 @@ export function ModernChatFixed() {
                   </div>
                   <button
                     onClick={() => removeFile(index)}
-                    className="w-5 h-5 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
+                    className="ml-1 text-red-500 hover:text-red-700 transition-colors p-1"
+                    aria-label={`Remove ${file.name}`}
                   >
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                     </svg>
                   </button>
@@ -937,218 +1146,105 @@ export function ModernChatFixed() {
             </div>
           </div>
         )}
+        
+        {/* File error display */}
+        {fileError && (
+          <div className="mb-3 px-2 py-2 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg flex items-center gap-2 animate-slideDown">
+            <svg className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <p className="text-xs text-red-700 dark:text-red-300 font-medium">{fileError}</p>
+          </div>
+        )}
 
-        {/* Hidden File Input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-        />
-
-        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-1 shadow-inner">
-          <button 
-            onClick={() => {
-              haptic();
-              fileInputRef.current?.click();
-            }}
-            className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-purple-600 transition-colors duration-200 rounded-full hover:bg-white/50"
-            aria-label="Attach file"
-            aria-describedby={selectedFiles.length > 0 ? "file-attachment-status" : undefined}
-          >
-            <AttachIcon />
-          </button>
-          
-          <input
-            type="text"
+        {/* Drag and drop overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 bg-purple-600/10 backdrop-blur-sm flex items-center justify-center z-40 animate-fadeIn">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border-2 border-dashed border-purple-500 animate-bounce">
+              <svg className="w-16 h-16 text-purple-600 dark:text-purple-400 mx-auto mb-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+              </svg>
+              <p className="text-gray-700 dark:text-gray-300 font-medium text-center">Drop files here to upload</p>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex gap-2">
+          <textarea
+            ref={inputRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-            placeholder="Type your message..."
-            disabled={isStreaming || isRecording || isProcessingAudio}
-            className="flex-1 bg-transparent px-3 py-2.5 outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400 font-medium"
+            onKeyDown={(e) => {
+              haptics.keypress();
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            placeholder={offlineQueue.isOffline ? "Type a message (offline - will queue)..." : "Type a message..."}
+            className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all text-gray-800 dark:text-gray-200 placeholder-gray-400"
+            rows={1}
+            style={{ minHeight: '48px', maxHeight: '120px' }}
             aria-label="Message input"
-            aria-describedby={isStreaming ? "streaming-status" : undefined}
           />
           
-          <button 
-            onClick={() => haptic()}
-            className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-purple-600 transition-colors duration-200 rounded-full hover:bg-white/50"
-            aria-label="Insert emoji"
-          >
-            <EmojiIcon />
-          </button>
-          
-          {message.trim() ? (
+          <div className="flex gap-2">
+            {/* File Attach Button */}
+            <label className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all duration-200 cursor-pointer group shadow-md hover:shadow-lg">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                aria-label="Attach files"
+              />
+              <AttachIcon />
+            </label>
+            
+            {/* Send Button */}
             <button
               onClick={handleSendMessage}
-              disabled={isStreaming}
-              className="w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-50"
+              disabled={!message.trim() || isStreaming}
+              className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full hover:from-purple-700 hover:to-purple-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl active:scale-95"
               aria-label="Send message"
             >
               <SendIcon />
             </button>
-          ) : (
-            <button
-              onClick={handleVoiceRecord}
-              disabled={isStreaming || isProcessingAudio}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 ${
-                isRecording 
-                  ? 'bg-red-500 text-white animate-pulse shadow-xl' 
-                  : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-              }`}
-              aria-label={isRecording ? "Stop recording" : "Start voice recording"}
-              aria-pressed={isRecording}
-            >
-              {isRecording ? <StopIcon /> : <MicIcon />}
-            </button>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Floating Action Buttons */}
-      {isFabExpanded && (
-        <div className="absolute bottom-24 right-4 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 animate-slideUp">
-          <p className="text-sm font-bold mb-2">Recording...</p>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div className="h-full bg-red-500 animate-pulse"></div>
-            </div>
-            <button
-              onClick={() => {haptic(); stopRecording(); setIsFabExpanded(false);}}
-              className="text-gray-500"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-              </svg>
-            </button>
+      {/* Voice Recording FAB */}
+      <div className={`fixed right-4 bottom-24 transition-all duration-300 ${isFabExpanded ? 'scale-110' : ''}`}>
+        <button
+          onClick={handleVoiceRecord}
+          className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-95 ${
+            isRecording 
+              ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+              : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'
+          }`}
+          aria-label={isRecording ? 'Stop recording' : 'Start voice recording'}
+        >
+          {isRecording ? (
+            <StopIcon />
+          ) : (
+            <MicIcon />
+          )}
+        </button>
+        {isProcessingAudio && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Drag and Drop Overlay */}
-      {isDragging && (
-        <div className="fixed inset-0 bg-purple-600/20 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-none animate-fadeIn">
-          <div className="bg-white/95 dark:bg-gray-800/95 rounded-3xl p-12 shadow-2xl border-4 border-dashed border-purple-600 animate-pulse">
-            <svg className="w-20 h-20 text-purple-600 mx-auto mb-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z" />
-            </svg>
-            <p className="text-xl font-bold text-purple-700 dark:text-purple-300 text-center">
-              Drop files here to attach
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
-              Images, PDFs, and documents up to 10MB
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* File Error Toast */}
-      {fileError && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-slideDown">
-          <div className="bg-red-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-            </svg>
-            <span className="font-medium">{fileError}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Processing Overlay */}
-      {isProcessingAudio && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 shadow-2xl">
-            <div className="w-20 h-20 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-            <p className="mt-6 text-gray-600 dark:text-gray-300 font-bold text-lg">Processing audio...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Tools Panel Sliding Drawer */}
-      {showToolsPanel && (
-        <div className="fixed inset-0 z-50 flex">
-          <div 
-            className="flex-1 bg-black/50 backdrop-blur-sm" 
-            onClick={() => setShowToolsPanel(false)}
-          />
-          <div className="w-full max-w-lg bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight overflow-y-auto">
-            <div className="p-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-between">
-              <h2 className="text-lg font-bold">Tools Settings</h2>
-              <button 
-                onClick={() => setShowToolsPanel(false)}
-                className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-all"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="p-4">
-              <ToolsPanel />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MCP Servers Panel */}
-      {showMcpPanel && (
-        <div className="fixed inset-0 z-50 flex">
-          <div 
-            className="flex-1 bg-black/50 backdrop-blur-sm" 
-            onClick={() => setShowMcpPanel(false)}
-          />
-          <div className="w-full max-w-lg bg-white dark:bg-gray-800 shadow-2xl animate-slideInRight overflow-y-auto">
-            <div className="p-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-between">
-              <h2 className="text-lg font-bold">MCP Servers</h2>
-              <button 
-                onClick={() => setShowMcpPanel(false)}
-                className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-all"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="p-4 h-full">
-              <McpServersPanel />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Panel */}
-      <ModernSettingsPanel 
-        isOpen={showSettingsPanel}
-        onClose={() => setShowSettingsPanel(false)}
-      />
-
-      {/* Memories Panel */}
-      <ModernMemoriesPanel 
-        isOpen={showMemoriesPanel}
-        onClose={() => setShowMemoriesPanel(false)}
-      />
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(100%); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        .animate-slideUp { animation: slideUp 0.3s ease-out; }
-        .animate-slideInRight { animation: slideInRight 0.3s ease-out; }
-        .prose pre { background: transparent !important; padding: 0 !important; }
-        .prose code { font-size: 0.875rem; }
-        .prose { color: inherit; }
-        .prose strong { color: inherit; }
-        .prose a { color: #9333ea; text-decoration: underline; }
-      `}</style>
+      {/* Side Panels */}
+      {showToolsPanel && <ToolsPanel onClose={() => {haptics.light(); setShowToolsPanel(false);}} />}
+      {showMcpPanel && <McpServersPanel onClose={() => {haptics.light(); setShowMcpPanel(false);}} />}
+      {showSettingsPanel && <ModernSettingsPanel onClose={() => {haptics.light(); setShowSettingsPanel(false);}} />}
+      {showMemoriesPanel && <ModernMemoriesPanel onClose={() => {haptics.light(); setShowMemoriesPanel(false);}} />}
     </div>
   );
 }
