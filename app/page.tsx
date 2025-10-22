@@ -5,14 +5,9 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import useConversationStore from '@/stores/useConversationStore';
 
-// Dynamically import Framework7 components to avoid SSR issues
-const F7AppProvider = dynamic(
-  () => import('@/components/f7-app-provider').then(mod => ({ default: mod.F7AppProvider })),
-  { ssr: false }
-);
-
-const F7ChatPage = dynamic(
-  () => import('@/components/f7-chat-page').then(mod => ({ default: mod.F7ChatPage })),
+// Dynamically import the working chat component
+const ModernChatFixed = dynamic(
+  () => import('@/components/modern-chat-fixed').then(mod => ({ default: mod.ModernChatFixed })),
   { ssr: false }
 );
 
@@ -36,9 +31,9 @@ export default function Main() {
   }, [router, resetConversation]);
 
   return (
-    <F7AppProvider>
-      <F7ChatPage />
+    <>
+      <ModernChatFixed />
       <PWAInstallPrompt />
-    </F7AppProvider>
+    </>
   );
 }

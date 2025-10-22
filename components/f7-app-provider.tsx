@@ -1,8 +1,6 @@
 'use client';
 
 import React from 'react';
-import { App, View } from 'framework7-react';
-import Framework7 from 'framework7/bundle';
 import 'framework7/css/bundle';
 import 'framework7-icons/css/framework7-icons.css';
 import 'swiper/css';
@@ -13,31 +11,22 @@ interface F7AppProviderProps {
 }
 
 export function F7AppProvider({ children }: F7AppProviderProps) {
-  // Framework7 parameters - simplified configuration
-  const f7params = {
-    name: 'AI Assistant',
-    theme: 'md',
-    darkMode: true,
-    colors: {
-      primary: '#9c27b0',
-    },
-    routes: [],
-  };
-
   React.useEffect(() => {
+    // Add Framework7 theme classes to body
+    document.body.classList.add('theme-dark', 'color-theme-purple', 'md');
+    
     // Set up haptic feedback for Android
     if ('vibrate' in navigator) {
-      document.addEventListener('click', () => {
+      const handleClick = () => {
         navigator.vibrate(1);
-      });
+      };
+      document.addEventListener('click', handleClick);
+      
+      return () => {
+        document.removeEventListener('click', handleClick);
+      };
     }
   }, []);
 
-  return (
-    <App {...f7params}>
-      <View main>
-        {children}
-      </View>
-    </App>
-  );
+  return <>{children}</>;
 }
