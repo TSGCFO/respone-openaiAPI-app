@@ -2,8 +2,19 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernChatFixed } from '@/components/modern-chat-fixed';
+import dynamic from 'next/dynamic';
 import useConversationStore from '@/stores/useConversationStore';
+
+// Dynamically import Framework7 components to avoid SSR issues
+const F7AppProvider = dynamic(
+  () => import('@/components/f7-app-provider').then(mod => ({ default: mod.F7AppProvider })),
+  { ssr: false }
+);
+
+const F7ChatPage = dynamic(
+  () => import('@/components/f7-chat-page').then(mod => ({ default: mod.F7ChatPage })),
+  { ssr: false }
+);
 
 export default function Main() {
   const router = useRouter();
@@ -19,13 +30,9 @@ export default function Main() {
     }
   }, [router, resetConversation]);
 
-  // Add dark mode support
-  useEffect(() => {
-    document.body.classList.add('font-sans', 'antialiased');
-    return () => {
-      document.body.classList.remove('font-sans', 'antialiased');
-    };
-  }, []);
-
-  return <ModernChatFixed />;
+  return (
+    <F7AppProvider>
+      <F7ChatPage />
+    </F7AppProvider>
+  );
 }
