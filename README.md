@@ -57,11 +57,33 @@ This app is meant to be used as a starting point to build a conversational assis
    npm run dev
    ```
 
-   The app will be available at [`http://localhost:3000`](http://localhost:3000).
+   The app will be available at [`http://localhost:5000`](http://localhost:5000).
+
+## Testing Firecrawl MCP Integration
+
+**Want to test the Firecrawl MCP integration right away?** 
+
+Follow the [Quick Test Guide](FIRECRAWL_QUICK_TEST.md) for a 5-minute setup, or use these convenience scripts:
+
+```bash
+# Linux/Mac
+./start-firecrawl-mcp.sh
+
+# Windows  
+start-firecrawl-mcp.bat
+
+# Or using npm
+npm run firecrawl:install  # One-time install
+FIRECRAWL_API_KEY=your_key npm run firecrawl:start
+```
+
+See the full [Firecrawl MCP Setup Guide](FIRECRAWL_MCP_SETUP.md) for detailed instructions.
 
 ## Firecrawl MCP Integration
 
 This app supports Firecrawl MCP server integration, enabling the assistant to scrape, crawl, and extract content from websites. Firecrawl provides powerful web data extraction capabilities through its MCP server.
+
+> **Quick Start:** See [FIRECRAWL_QUICK_TEST.md](FIRECRAWL_QUICK_TEST.md) for a fast 5-minute setup guide!
 
 ### Setup (Firecrawl MCP)
 
