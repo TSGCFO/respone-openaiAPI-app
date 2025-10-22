@@ -38,6 +38,24 @@ export function F7McpServersPanel() {
     skip_approval: true,
   });
 
+  // Keyboard navigation support
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (sheetOpened) {
+          setSheetOpened(false);
+        } else {
+          f7.panel.close();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [sheetOpened]);
+
   const closePanel = () => {
     f7.panel.close();
   };
@@ -119,7 +137,7 @@ export function F7McpServersPanel() {
         <Navbar>
           <NavTitle>MCP Servers</NavTitle>
           <NavRight>
-            <Link iconF7="xmark" onClick={closePanel} />
+            <Link iconF7="xmark" onClick={closePanel} aria-label="Close MCP servers panel" />
           </NavRight>
         </Navbar>
 
@@ -146,6 +164,7 @@ export function F7McpServersPanel() {
                     <Toggle
                       checked={server.enabled}
                       onToggleChange={(checked) => handleToggle(server, checked)}
+                      aria-label={`Toggle ${server.label} server`}
                     />
                   </div>
                 </CardHeader>
@@ -166,8 +185,8 @@ export function F7McpServersPanel() {
                   )}
                 </CardContent>
                 <CardFooter>
-                  <Link onClick={() => openEditSheet(server)}>Edit</Link>
-                  <Link onClick={() => handleDelete(server)} className="color-red">
+                  <Link onClick={() => openEditSheet(server)} aria-label={`Edit ${server.label} server`}>Edit</Link>
+                  <Link onClick={() => handleDelete(server)} className="color-red" aria-label={`Delete ${server.label} server`}>
                     Delete
                   </Link>
                 </CardFooter>
@@ -182,6 +201,7 @@ export function F7McpServersPanel() {
           slot="fixed"
           color="purple"
           onClick={openAddSheet}
+          aria-label="Add new MCP server"
         >
           <Icon f7="plus" />
         </Fab>
@@ -193,13 +213,15 @@ export function F7McpServersPanel() {
         onSheetClosed={() => setSheetOpened(false)}
         swipeToClose
         backdrop
+        aria-label={editingServer ? 'Edit server dialog' : 'Add server dialog'}
+        aria-modal="true"
       >
         <Toolbar>
           <div className="left">
-            <Link onClick={() => setSheetOpened(false)}>Cancel</Link>
+            <Link onClick={() => setSheetOpened(false)} aria-label="Cancel">Cancel</Link>
           </div>
           <div className="right">
-            <Link onClick={handleSave} className="font-bold">
+            <Link onClick={handleSave} className="font-bold" aria-label={editingServer ? 'Update server' : 'Add server'}>
               {editingServer ? 'Update' : 'Add'}
             </Link>
           </div>

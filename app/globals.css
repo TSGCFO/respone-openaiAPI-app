@@ -199,6 +199,43 @@
     min-height: 44px;
   }
   
+  /* Focus visible styles for keyboard navigation */
+  :focus-visible {
+    outline: 3px solid #9333ea !important; /* Purple outline */
+    outline-offset: 2px !important;
+    border-radius: 0.375rem;
+  }
+  
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [role="menuitem"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid #9333ea !important; /* Purple outline */
+    outline-offset: 2px !important;
+  }
+  
+  /* Dark mode focus styles */
+  .dark :focus-visible {
+    outline-color: #a855f7 !important; /* Lighter purple for dark mode */
+  }
+  
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
   /* Smooth animations */
   .smooth-transform {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);

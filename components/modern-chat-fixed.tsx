@@ -15,80 +15,80 @@ import ModernMemoriesPanel from '@/components/modern-memories-panel';
 
 // Close Icon
 const CloseIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
   </svg>
 );
 
 // Material Design Icons SVG components
 const ChatIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
   </svg>
 );
 
 const MenuIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
   </svg>
 );
 
 const AttachIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
   </svg>
 );
 
 const EmojiIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
   </svg>
 );
 
 const SendIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
   </svg>
 );
 
 const MicIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
   </svg>
 );
 
 const StopIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill="currentColor"/>
   </svg>
 );
 
 const StarIcon = () => (
-  <svg className="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-12 h-12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
   </svg>
 );
 
 const IdeaIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/>
   </svg>
 );
 
 const WriteIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
   </svg>
 );
 
 const MagicIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zm-7.63-5.27L3 19l8.87-8.87c.39.39.39 1.02 0 1.41l-8.87 8.87 8.87-8.87c.39-.39 1.02-.39 1.41 0z"/>
   </svg>
 );
 
 const QuestionIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
   </svg>
 );
@@ -116,6 +116,7 @@ export function ModernChatFixed() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
+  const [screenReaderAnnouncement, setScreenReaderAnnouncement] = useState('');
   
   // File attachment states and refs
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -153,6 +154,55 @@ export function ModernChatFixed() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showMenu]);
+
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape key to close panels
+      if (e.key === 'Escape') {
+        if (showToolsPanel) {
+          setShowToolsPanel(false);
+          setScreenReaderAnnouncement('Tools panel closed');
+        } else if (showMcpPanel) {
+          setShowMcpPanel(false);
+          setScreenReaderAnnouncement('MCP servers panel closed');
+        } else if (showSettingsPanel) {
+          setShowSettingsPanel(false);
+          setScreenReaderAnnouncement('Settings panel closed');
+        } else if (showMemoriesPanel) {
+          setShowMemoriesPanel(false);
+          setScreenReaderAnnouncement('Memories panel closed');
+        } else if (showMenu) {
+          setShowMenu(false);
+          setScreenReaderAnnouncement('Menu closed');
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showToolsPanel, showMcpPanel, showSettingsPanel, showMemoriesPanel, showMenu]);
+
+  // Screen reader announcements for message state changes
+  useEffect(() => {
+    if (isStreaming) {
+      setScreenReaderAnnouncement('AI is typing a response');
+    } else if (chatMessages.length > 0) {
+      const lastMessage = chatMessages[chatMessages.length - 1];
+      if (lastMessage.role === 'assistant') {
+        setScreenReaderAnnouncement('AI has responded');
+      }
+    }
+  }, [isStreaming, chatMessages]);
+
+  // Recording state announcements
+  useEffect(() => {
+    if (isRecording) {
+      setScreenReaderAnnouncement('Recording started. Press stop to finish recording.');
+    } else if (isProcessingAudio) {
+      setScreenReaderAnnouncement('Processing audio. Please wait.');
+    }
+  }, [isRecording, isProcessingAudio]);
 
   // Add haptic feedback
   const haptic = (intensity: number = 1) => {
@@ -602,6 +652,10 @@ export function ModernChatFixed() {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {/* Screen reader announcements */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {screenReaderAnnouncement}
+      </div>
       {/* Beautiful Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-2xl">
         <div className="px-4 py-4 flex items-center justify-between">
@@ -618,13 +672,20 @@ export function ModernChatFixed() {
             <button 
               onClick={() => {haptic(); setShowMenu(!showMenu);}}
               className="w-10 h-10 hover:bg-white/10 rounded-full flex items-center justify-center transition-all duration-200"
+              aria-label="Open menu"
+              aria-expanded={showMenu}
+              aria-haspopup="true"
             >
               <MenuIcon />
             </button>
             
             {/* Dropdown Menu */}
             {showMenu && (
-              <div className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 w-56 z-50 animate-fadeIn">
+              <div 
+                className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 w-56 z-50 animate-fadeIn"
+                role="menu"
+                aria-orientation="vertical"
+              >
                 <button
                   onClick={() => {
                     haptic();
@@ -632,8 +693,10 @@ export function ModernChatFixed() {
                     setShowMenu(false);
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                  role="menuitem"
+                  aria-label="Open settings panel"
                 >
-                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
                   </svg>
                   <span className="text-gray-800 dark:text-gray-200 font-medium">
@@ -648,8 +711,10 @@ export function ModernChatFixed() {
                     setShowMenu(false);
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                  role="menuitem"
+                  aria-label="Open memories panel"
                 >
-                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M13 3C9.23 3 6.19 5.95 6 9.66l-1.92 2.53c-.24.31.05.81.4.81H6v3c0 1.11.89 2 2 2h1v3h7v-4.68c3.3-1.3 5.65-4.5 5.65-8.26C21.65 5.21 18.79 2 15 2l-2 1zm3.5 8.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                   </svg>
                   <span className="text-gray-800 dark:text-gray-200 font-medium">
@@ -666,8 +731,10 @@ export function ModernChatFixed() {
                     setShowMenu(false);
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                  role="menuitem"
+                  aria-label="Open tools settings"
                 >
-                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
                   </svg>
                   <span className="text-gray-800 dark:text-gray-200 font-medium">
@@ -682,8 +749,10 @@ export function ModernChatFixed() {
                     setShowMenu(false);
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-purple-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                  role="menuitem"
+                  aria-label="Open MCP servers panel"
                 >
-                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-6c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-4v-7h4v7z"/>
                   </svg>
                   <span className="text-gray-800 dark:text-gray-200 font-medium">
@@ -691,7 +760,7 @@ export function ModernChatFixed() {
                   </span>
                 </button>
                 
-                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                <div className="border-t border-gray-200 dark:border-gray-700 my-1" role="separator"></div>
                 
                 <button
                   onClick={() => {
@@ -702,8 +771,10 @@ export function ModernChatFixed() {
                     setShowMenu(false);
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors"
+                  role="menuitem"
+                  aria-label="Clear chat conversation"
                 >
-                  <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                   </svg>
                   <span className="text-gray-800 dark:text-gray-200 font-medium">
@@ -721,6 +792,7 @@ export function ModernChatFixed() {
             value={selectedModel} 
             onChange={(e) => {haptic(); setSelectedModel(e.target.value);}}
             className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-4 py-2 text-sm font-medium outline-none focus:bg-white/30 transition-all cursor-pointer"
+            aria-label="Select AI model"
           >
             <option value="gpt-4" className="text-gray-800">GPT-4</option>
             <option value="gpt-4.1" className="text-gray-800">GPT-4.1</option>
@@ -729,7 +801,7 @@ export function ModernChatFixed() {
           </select>
           
           {selectedModel.includes('gpt-5') && (
-            <div className="flex gap-1">
+            <div className="flex gap-1" role="group" aria-label="Reasoning effort level">
               {['low', 'medium', 'high'].map(level => (
                 <button
                   key={level}
@@ -739,6 +811,8 @@ export function ModernChatFixed() {
                       ? 'bg-white text-purple-600 shadow-lg scale-105' 
                       : 'bg-white/20 backdrop-blur-sm hover:bg-white/30'
                   }`}
+                  aria-label={`Set reasoning effort to ${level}`}
+                  aria-pressed={reasoningEffort === level}
                 >
                   {level.charAt(0).toUpperCase() + level.slice(1)}
                 </button>
@@ -749,7 +823,7 @@ export function ModernChatFixed() {
       </div>
 
       {/* Messages Area with Beautiful Styling */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6" role="log" aria-label="Chat messages">
         {chatMessages.filter(msg => msg.type === 'message').length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-8 animate-fadeIn">
             <div className="w-28 h-28 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mb-8 shadow-2xl animate-pulse">
@@ -881,6 +955,8 @@ export function ModernChatFixed() {
               fileInputRef.current?.click();
             }}
             className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-purple-600 transition-colors duration-200 rounded-full hover:bg-white/50"
+            aria-label="Attach file"
+            aria-describedby={selectedFiles.length > 0 ? "file-attachment-status" : undefined}
           >
             <AttachIcon />
           </button>
@@ -893,11 +969,14 @@ export function ModernChatFixed() {
             placeholder="Type your message..."
             disabled={isStreaming || isRecording || isProcessingAudio}
             className="flex-1 bg-transparent px-3 py-2.5 outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400 font-medium"
+            aria-label="Message input"
+            aria-describedby={isStreaming ? "streaming-status" : undefined}
           />
           
           <button 
             onClick={() => haptic()}
             className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-purple-600 transition-colors duration-200 rounded-full hover:bg-white/50"
+            aria-label="Insert emoji"
           >
             <EmojiIcon />
           </button>
@@ -907,6 +986,7 @@ export function ModernChatFixed() {
               onClick={handleSendMessage}
               disabled={isStreaming}
               className="w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-50"
+              aria-label="Send message"
             >
               <SendIcon />
             </button>
@@ -919,6 +999,8 @@ export function ModernChatFixed() {
                   ? 'bg-red-500 text-white animate-pulse shadow-xl' 
                   : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
               }`}
+              aria-label={isRecording ? "Stop recording" : "Start voice recording"}
+              aria-pressed={isRecording}
             >
               {isRecording ? <StopIcon /> : <MicIcon />}
             </button>
