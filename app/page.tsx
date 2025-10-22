@@ -16,6 +16,11 @@ const F7ChatPage = dynamic(
   { ssr: false }
 );
 
+const PWAInstallPrompt = dynamic(
+  () => import('@/components/pwa-install-prompt').then(mod => ({ default: mod.PWAInstallPrompt })),
+  { ssr: false }
+);
+
 export default function Main() {
   const router = useRouter();
   const { resetConversation } = useConversationStore();
@@ -33,6 +38,7 @@ export default function Main() {
   return (
     <F7AppProvider>
       <F7ChatPage />
+      <PWAInstallPrompt />
     </F7AppProvider>
   );
 }
