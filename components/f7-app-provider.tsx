@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { App } from 'framework7-react';
 
 // Import Framework7 styles
 import 'framework7/css/bundle';
@@ -15,25 +16,59 @@ interface F7AppProviderProps {
 }
 
 export function F7AppProvider({ children }: F7AppProviderProps) {
-  // Simplified provider without Framework7 App wrapper
-  // to avoid conflicts with Next.js
-  
-  React.useEffect(() => {
-    // Add Android-specific classes to body
-    document.body.classList.add('theme-dark', 'color-theme-purple', 'md');
-    
-    // Set up haptic feedback for Android
-    if ('vibrate' in navigator) {
-      document.addEventListener('click', () => {
-        // Light haptic feedback on all clicks (Android pattern)
+  // Framework7 app parameters
+  const f7params = {
+    name: 'AI Chat Assistant',
+    theme: 'md', // Android Material Design
+    darkMode: true,
+    colors: {
+      primary: '#9c27b0',
+    },
+    touch: {
+      tapHold: true,
+      tapHoldDelay: 750,
+      tapHoldPreventClicks: true,
+      iosTouchRipple: false,
+      mdTouchRipple: true,
+    },
+    navbar: {
+      mdCenterTitle: false,
+      iosCenterTitle: true,
+    },
+    toolbar: {
+      hideOnPageScroll: false,
+    },
+    statusbar: {
+      androidBackgroundColor: '#7b1fa2',
+      androidTextColor: 'white',
+      iosBackgroundColor: '#9c27b0',
+      iosTextColor: 'white',
+    },
+    // Android-specific settings
+    material: {
+      materialDynamicTheme: true,
+    },
+  };
+
+  // Set up global haptic feedback for Android
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      // Light haptic feedback on all taps (Android pattern)
+      const handleClick = () => {
         navigator.vibrate(1);
-      });
+      };
+
+      document.addEventListener('click', handleClick, { passive: true });
+
+      return () => {
+        document.removeEventListener('click', handleClick);
+      };
     }
-    
-    return () => {
-      document.body.classList.remove('theme-dark', 'color-theme-purple', 'md');
-    };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <App {...f7params}>
+      {children}
+    </App>
+  );
 }
