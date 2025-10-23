@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { App } from 'framework7-react';
+import dynamic from 'next/dynamic';
+import { App, Panel } from 'framework7-react';
 
 // Import Framework7 styles
 import 'framework7/css/bundle';
@@ -10,6 +11,17 @@ import 'swiper/css';
 
 // Custom styles for additional theming
 import './f7-custom-styles.css';
+
+// Dynamic imports for code splitting
+const F7ToolsPanel = dynamic(() => import('./f7-tools-panel').then(mod => ({ default: mod.F7ToolsPanel })), {
+  loading: () => <div className="p-4">Loading tools...</div>,
+  ssr: false
+});
+
+const F7McpServersPanel = dynamic(() => import('./f7-mcp-servers-panel').then(mod => ({ default: mod.F7McpServersPanel })), {
+  loading: () => <div className="p-4">Loading MCP servers...</div>,
+  ssr: false
+});
 
 interface F7AppProviderProps {
   children: React.ReactNode;
@@ -68,6 +80,16 @@ export function F7AppProvider({ children }: F7AppProviderProps) {
 
   return (
     <App {...f7params}>
+      {/* Left Panel - Tools */}
+      <Panel left cover themeDark>
+        <F7ToolsPanel />
+      </Panel>
+
+      {/* Right Panel - MCP Servers */}
+      <Panel right reveal themeDark>
+        <F7McpServersPanel />
+      </Panel>
+
       {children}
     </App>
   );

@@ -2,7 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernChatFixed } from '@/components/modern-chat-fixed';
+import { View, Page } from 'framework7-react';
+import { F7ChatPage } from '@/components/f7-chat-page';
 import useConversationStore from '@/stores/useConversationStore';
 
 export default function Main() {
@@ -19,13 +20,11 @@ export default function Main() {
     }
   }, [router, resetConversation]);
 
-  // Add dark mode support
-  useEffect(() => {
-    document.body.classList.add('font-sans', 'antialiased');
-    return () => {
-      document.body.classList.remove('font-sans', 'antialiased');
-    };
-  }, []);
-
-  return <ModernChatFixed />;
+  return (
+    <View main>
+      <Page>
+        <F7ChatPage />
+      </Page>
+    </View>
+  );
 }

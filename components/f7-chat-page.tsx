@@ -121,13 +121,21 @@ export function F7ChatPage() {
       <Navbar>
         <NavTitle sliding>
           <div className="flex items-center gap-2">
-            <Icon f7="bubble_left_bubble_right" size={20} />
+            <Icon f7="bubble_left_bubble_right" size={20} aria-hidden="true" />
             <span>AI Assistant</span>
           </div>
         </NavTitle>
         <NavRight>
-          <Link iconF7="gear_alt" onClick={openMcpServersPanel} />
-          <Link iconF7="square_grid_3x2" onClick={openToolsPanel} />
+          <Link
+            iconF7="gear_alt"
+            onClick={openMcpServersPanel}
+            aria-label="Open MCP servers settings"
+          />
+          <Link
+            iconF7="square_grid_3x2"
+            onClick={openToolsPanel}
+            aria-label="Open tools panel"
+          />
         </NavRight>
       </Navbar>
 
@@ -146,11 +154,17 @@ export function F7ChatPage() {
       )}
 
       {/* Messages Area */}
-      <Messages ref={messagesRef}>
+      <Messages
+        ref={messagesRef}
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="Chat messages"
+      >
         {chatMessages.length === 0 ? (
           <Block className="text-center">
             <div className="empty-state">
-              <Icon f7="bubble_left_bubble_right" size={48} color="gray" />
+              <Icon f7="bubble_left_bubble_right" size={48} color="gray" aria-hidden="true" />
               <p className="text-gray-500 mt-2">Start a conversation</p>
             </div>
           </Block>
@@ -186,6 +200,7 @@ export function F7ChatPage() {
         value={message}
         onInput={(e) => setMessage(e.target.value)}
         sheetVisible={false}
+        aria-label="Message input"
       >
         <Link
           iconF7="paperclip"
@@ -194,28 +209,34 @@ export function F7ChatPage() {
             // Handle attachments
             f7.dialog.alert('Attachments coming soon!');
           }}
+          aria-label="Attach file"
         />
-        
+
         {/* Voice Recording Button */}
         <Link
           slot="inner-end"
           onClick={handleVoiceRecord}
+          aria-label={isRecording ? "Stop recording" : "Start voice recording"}
+          aria-pressed={isRecording}
         >
-          <Icon 
-            f7={isRecording ? 'stop_circle' : 'mic'} 
+          <Icon
+            f7={isRecording ? 'stop_circle' : 'mic'}
             size={24}
             color={isRecording ? 'red' : 'primary'}
             className={isRecording ? 'recording-active' : ''}
+            aria-hidden="true"
           />
         </Link>
-        
+
         {/* Send Button */}
         <Link
           slot="inner-end"
           onClick={handleSendMessage}
           className={!message.trim() ? 'disabled' : ''}
+          aria-label="Send message"
+          aria-disabled={!message.trim() || isStreaming}
         >
-          <Icon f7="paperplane" size={24} color="primary" />
+          <Icon f7="paperplane" size={24} color="primary" aria-hidden="true" />
         </Link>
       </Messagebar>
     </Page>
