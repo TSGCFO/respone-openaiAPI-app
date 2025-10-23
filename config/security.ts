@@ -10,9 +10,15 @@ const isProduction = process.env.NODE_ENV === 'production';
  * CORS Configuration
  */
 export const CORS_CONFIG = {
-  // In production, replace with actual domain(s)
+  // Dynamic origin checking - never use '*' with credentials
   allowedOrigins: isDevelopment 
-    ? '*' // Allow all in development for Replit preview
+    ? [
+        'http://localhost:3000',
+        'http://localhost:5000', 
+        'http://0.0.0.0:5000',
+        // Add Replit domain if available
+        ...(process.env.REPLIT_DEV_DOMAIN ? [`https://${process.env.REPLIT_DEV_DOMAIN}`] : [])
+      ]
     : (process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
         'https://your-production-domain.com',
         'https://www.your-production-domain.com'

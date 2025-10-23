@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import useConversationStore from '@/stores/useConversationStore';
+import ChatErrorBoundary from '@/components/chat-error-boundary';
 
 // Dynamically import the working chat component
 const ModernChatFixed = dynamic(
@@ -32,7 +33,9 @@ export default function Main() {
 
   return (
     <>
-      <ModernChatFixed />
+      <ChatErrorBoundary>
+        <ModernChatFixed />
+      </ChatErrorBoundary>
       <PWAInstallPrompt />
     </>
   );

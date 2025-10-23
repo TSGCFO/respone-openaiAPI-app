@@ -18,7 +18,6 @@ const securityHeaders = {
 function getClientId(request: NextRequest): string {
   return request.headers.get('x-forwarded-for') || 
          request.headers.get('x-real-ip') || 
-         request.ip || 
          'unknown';
 }
 
@@ -43,15 +42,38 @@ function checkRateLimit(clientId: string): boolean {
   return true;
 }
 
-// Clean up old rate limit entries periodically
-setInterval(() => {
+// Allowed origins for CORS
+const getAllowedOrigins = (): string[] => {
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (isDev) {
+    return [
+      'http://localhost:3000',
+      'http://localhost:5000',
+      'http://0.0.0.0:5000',
+      // Add Replit domain if available
+      ...(process.env.REPLIT_DEV_DOMAIN ? [`https://${process.env.REPLIT_DEV_DOMAIN}`] : [])
+    ];
+  }
+  
+  // Production origins from environment variable
+  const prodOrigins = process.env.ALLOWED_ORIGINS || '';
+  return prodOrigins.split(',').map(o => o.trim()).filter(o => o.length > 0);
+};
+
+// Clean up old entries on each request (passive cleanup)
+function cleanupRateLimitMap() {
   const now = Date.now();
+  // Limit cleanup to prevent performance impact
+  let cleaned = 0;
   for (const [key, value] of rateLimitMap.entries()) {
     if (now > value.resetTime) {
       rateLimitMap.delete(key);
+      cleaned++;
+      if (cleaned >= 10) break; // Clean max 10 entries per request
     }
   }
-}, 5 * 60 * 1000); // Clean up every 5 minutes
+}
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -129,6 +151,9 @@ export function middleware(request: NextRequest) {
     }
   }
   
+  // Passive cleanup of old rate limit entries
+  cleanupRateLimitMap();
+  
   // Add security headers to response
   const response = NextResponse.next();
   
@@ -136,15 +161,37 @@ export function middleware(request: NextRequest) {
     response.headers.set(key, value);
   });
   
+  // Handle CORS dynamically based on origin
+  const origin = request.headers.get('origin');
+  if (origin) {
+    const allowedOrigins = getAllowedOrigins();
+    
+    // Check if the origin is allowed
+    if (allowedOrigins.includes(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
+    }
+    // In development, be more permissive for Replit and local hosts
+    else if (process.env.NODE_ENV === 'development' && 
+             (origin.includes('localhost') || origin.includes('0.0.0.0') || origin.includes('replit'))) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
+    }
+  }
+  
   // Add additional security for authenticated endpoints
   if (pathname.startsWith('/api/google/')) {
     // Ensure proper referrer for OAuth endpoints
     const referrer = request.headers.get('referer');
-    const origin = request.headers.get('origin');
+    const requestOrigin = request.headers.get('origin');
     
     if (pathname === '/api/google/auth' || pathname === '/api/google/callback') {
       // These should only be accessed from our own domain
-      if (origin && !origin.includes(request.nextUrl.hostname)) {
+      if (requestOrigin && !requestOrigin.includes(request.nextUrl.hostname)) {
         return new NextResponse('Forbidden', { 
           status: 403,
           headers: securityHeaders 

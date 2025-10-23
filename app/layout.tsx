@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import { F7AppProvider } from "@/components/f7-app-provider";
+import ErrorBoundary from "@/components/error-boundary";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -49,11 +50,13 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={roboto.className}>
-        <F7AppProvider>
-          <div id="app">
-            {children}
-          </div>
-        </F7AppProvider>
+        <ErrorBoundary>
+          <F7AppProvider>
+            <div id="app">
+              {children}
+            </div>
+          </F7AppProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

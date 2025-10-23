@@ -28,13 +28,6 @@ const nextConfig = {
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     
-    // Define allowed origins based on environment
-    const allowedOrigins = isDev 
-      ? '*' // Allow all in development for Replit preview
-      : process.env.ALLOWED_ORIGINS 
-        ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).join(', ')
-        : 'https://your-production-domain.com'; // Replace with actual production domain
-    
     // Content Security Policy configuration
     const cspDirectives = [
       "default-src 'self'",
@@ -57,26 +50,53 @@ const nextConfig = {
       cspDirectives[4] = "connect-src 'self' https: wss: ws: http://localhost:* http://0.0.0.0:*"; // Allow local connections
     }
     
+    // CORS headers - Note: For production, implement dynamic origin checking in middleware.ts
+    // Static headers can't properly handle multiple origins with credentials
+    const corsHeaders = isDev ? [
+      // Development: Allow Replit preview domain without credentials
+      {
+        key: 'Access-Control-Allow-Origin',
+        value: process.env.REPLIT_DEV_DOMAIN 
+          ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+          : 'http://localhost:3000'
+      },
+      {
+        key: 'Access-Control-Allow-Methods',
+        value: 'GET, POST, PUT, DELETE, OPTIONS'
+      },
+      {
+        key: 'Access-Control-Allow-Headers',
+        value: 'X-Requested-With, Content-Type, Authorization'
+      },
+      {
+        key: 'Access-Control-Allow-Credentials',
+        value: 'true'
+      },
+    ] : [
+      // Production: Use specific origin from environment
+      {
+        key: 'Access-Control-Allow-Origin',
+        value: process.env.PRODUCTION_ORIGIN || 'https://your-domain.com'
+      },
+      {
+        key: 'Access-Control-Allow-Methods',
+        value: 'GET, POST, PUT, DELETE, OPTIONS'
+      },
+      {
+        key: 'Access-Control-Allow-Headers',
+        value: 'X-Requested-With, Content-Type, Authorization'
+      },
+      {
+        key: 'Access-Control-Allow-Credentials',
+        value: 'true'
+      },
+    ];
+
     return [
       {
         source: '/:path*',
         headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: allowedOrigins
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization'
-          },
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'true'
-          },
+          ...corsHeaders,
           {
             key: 'Content-Security-Policy',
             value: cspDirectives.join('; ')
