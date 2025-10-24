@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { App, Panel } from 'framework7-react';
+import React, { useEffect, useState } from 'react';
+import { App, Panel, View, Page, Block } from 'framework7-react';
+import { F7ToolsPanel } from './f7-tools-panel';
+import { F7McpServersPanel } from './f7-mcp-servers-panel';
 
 // Import Framework7 styles
 import 'framework7/css/bundle';
@@ -12,22 +13,13 @@ import 'swiper/css';
 // Custom styles for additional theming
 import './f7-custom-styles.css';
 
-// Dynamic imports for code splitting
-const F7ToolsPanel = dynamic(() => import('./f7-tools-panel').then(mod => ({ default: mod.F7ToolsPanel })), {
-  loading: () => <div className="p-4">Loading tools...</div>,
-  ssr: false
-});
-
-const F7McpServersPanel = dynamic(() => import('./f7-mcp-servers-panel').then(mod => ({ default: mod.F7McpServersPanel })), {
-  loading: () => <div className="p-4">Loading MCP servers...</div>,
-  ssr: false
-});
-
 interface F7AppProviderProps {
   children: React.ReactNode;
 }
 
 export function F7AppProvider({ children }: F7AppProviderProps) {
+  const [mounted, setMounted] = useState(false);
+
   // Framework7 app parameters - simplified to avoid circular references in SSR
   const f7params = {
     name: 'AI Chat Assistant',
@@ -40,6 +32,8 @@ export function F7AppProvider({ children }: F7AppProviderProps) {
 
   // Set up global haptic feedback for Android
   useEffect(() => {
+    setMounted(true);
+
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       // Light haptic feedback on all taps (Android pattern)
       const handleClick = () => {
@@ -56,15 +50,30 @@ export function F7AppProvider({ children }: F7AppProviderProps) {
 
   return (
     <App {...f7params}>
-      {/* Left Panel - Tools */}
-      <Panel left cover>
-        <F7ToolsPanel />
-      </Panel>
+      {/* Panels - only render after mounted */}
+      {mounted && (
+        <>
+          <Panel left cover>
+            <View>
+              <Page>
+                <Block>
+                  <F7ToolsPanel />
+                </Block>
+              </Page>
+            </View>
+          </Panel>
 
-      {/* Right Panel - MCP Servers */}
-      <Panel right reveal>
-        <F7McpServersPanel />
-      </Panel>
+          <Panel right reveal>
+            <View>
+              <Page>
+                <Block>
+                  <F7McpServersPanel />
+                </Block>
+              </Page>
+            </View>
+          </Panel>
+        </>
+      )}
 
       {children}
     </App>
