@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation';
 import { View, Page } from 'framework7-react';
 import { F7ChatPage } from '@/components/f7-chat-page';
 import useConversationStore from '@/stores/useConversationStore';
+import { useAccessibility } from '@/hooks/useAccessibility';
 
 export default function Main() {
   const router = useRouter();
   const { resetConversation } = useConversationStore();
+
+  // Initialize accessibility preferences
+  useAccessibility();
 
   // Handle OAuth redirect
   useEffect(() => {

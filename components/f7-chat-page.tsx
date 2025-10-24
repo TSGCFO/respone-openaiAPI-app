@@ -21,6 +21,9 @@ import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { processMessages } from '@/lib/assistant';
 import { ModelSelector } from './f7-model-selector';
 import { ReasoningEffortSelector } from './f7-reasoning-selector';
+import { InstallPrompt } from './install-prompt';
+import { OfflineIndicator } from './offline-indicator';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 export function F7ChatPage() {
   const {
@@ -42,7 +45,17 @@ export function F7ChatPage() {
     audioBlob,
     resetRecording,
   } = useAudioRecorder();
-  
+
+  // Offline queue management
+  const { isOnline, queue, addToQueue } = useOfflineQueue(async (queuedMessage) => {
+    // Sync function: send queued message when back online
+    addChatMessage({
+      type: 'message',
+      role: 'user' as const,
+      content: [{ type: 'input_text', text: queuedMessage.content }]
+    });
+    await processMessages();
+  });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -57,15 +70,28 @@ export function F7ChatPage() {
   const handleSendMessage = async () => {
     if (!message.trim()) return;
     if (isStreaming) return;
-    
+
+    const messageText = message;
+    setMessage('');
+
+    // If offline, queue the message
+    if (!isOnline) {
+      addToQueue(messageText);
+      f7.toast.create({
+        text: 'Message queued. Will send when online.',
+        position: 'center',
+        closeTimeout: 2000,
+      }).open();
+      return;
+    }
+
     addChatMessage({
       type: 'message',
       role: 'user' as const,
-      content: [{ type: 'input_text', text: message }]
+      content: [{ type: 'input_text', text: messageText }]
     });
-    setMessage('');
     setIsStreaming(true);
-    
+
     try {
       await processMessages();
     } catch (error) {
@@ -239,6 +265,12 @@ export function F7ChatPage() {
           <Icon f7="paperplane" size={24} color="primary" aria-hidden="true" />
         </Link>
       </Messagebar>
+
+      {/* Offline Indicator */}
+      <OfflineIndicator isOnline={isOnline} queueLength={queue.length} />
+
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
     </Page>
   );
 }

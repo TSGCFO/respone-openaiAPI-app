@@ -416,4 +416,48 @@
       overscroll-behavior-y: contain;
     }
   }
+
+  /* Reduced Motion Accessibility */
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* High Contrast Mode Accessibility */
+  .high-contrast {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --border: 0 0% 0%;
+  }
+
+  .high-contrast * {
+    border-color: currentColor !important;
+  }
+
+  .high-contrast button,
+  .high-contrast a,
+  .high-contrast .link {
+    text-decoration: underline;
+    font-weight: bold;
+  }
+
+  .high-contrast .message-bubble {
+    border: 2px solid currentColor !important;
+  }
+
+  /* Focus visible enhancements */
+  *:focus-visible {
+    outline: 3px solid #9c27b0;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .high-contrast *:focus-visible {
+    outline: 4px solid currentColor;
+    outline-offset: 3px;
+  }
 }
