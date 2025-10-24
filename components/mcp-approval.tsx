@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "framework7-react";
 import { McpApprovalRequestItem } from "@/lib/assistant";
 
 interface Props {
@@ -26,14 +26,13 @@ export default function McpApproval({ item, onRespond }: Props) {
             <span className="font-medium">{item.server_label}</span>.
           </div>
           <div className="flex gap-2">
-            <Button size="sm" disabled={disabled} onClick={() => handle(true)}>
+            <Button fill small disabled={disabled} onClick={() => handle(true)}>
               Approve
             </Button>
             <Button
-              size="sm"
+              small
               disabled={disabled}
               onClick={() => handle(false)}
-              className="bg-gray-200 text-gray-700 hover:bg-gray-300 hover:text-gray-800"
             >
               Decline
             </Button>

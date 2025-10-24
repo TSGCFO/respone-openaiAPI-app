@@ -2,11 +2,7 @@
 import React, { useState } from "react";
 import useToolsStore from "@/stores/useToolsStore";
 import FileUpload from "@/components/file-upload";
-import { Input } from "./ui/input";
 import { CircleX } from "lucide-react";
-import { TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { Tooltip } from "./ui/tooltip";
-import { TooltipProvider } from "./ui/tooltip";
 
 export default function FileSearchSetup() {
   const { vectorStore, setVectorStore } = useToolsStore();
@@ -49,30 +45,23 @@ export default function FileSearchSetup() {
                 <div className="text-zinc-400  text-xs font-mono flex-1 text-ellipsis truncate">
                   {vectorStore.id}
                 </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <CircleX
-                        onClick={() => unlinkStore()}
-                        size={16}
-                        className="cursor-pointer text-zinc-400 mb-0.5 shrink-0 mt-0.5 hover:text-zinc-700 transition-all"
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent className="mr-2">
-                      <p>Unlink vector store</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <div title="Unlink vector store">
+                  <CircleX
+                    onClick={() => unlinkStore()}
+                    size={16}
+                    className="cursor-pointer text-zinc-400 mb-0.5 shrink-0 mt-0.5 hover:text-zinc-700 transition-all"
+                  />
+                </div>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input
+              <input
                 type="text"
                 placeholder="ID (vs_XXXX...)"
                 value={newStoreId}
                 onChange={(e) => setNewStoreId(e.target.value)}
-                className="border border-zinc-300 rounded text-sm bg-white"
+                className="border border-zinc-300 rounded text-sm bg-white px-3 py-2 flex-1"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleAddStore(newStoreId);

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Chip, Icon } from 'framework7-react';
+import { Icon } from 'framework7-react';
 
 interface OfflineIndicatorProps {
   isOnline: boolean;
@@ -26,27 +26,39 @@ export function OfflineIndicator({ isOnline, queueLength }: OfflineIndicatorProp
       }}
     >
       {!isOnline ? (
-        <Chip
-          text="Offline"
-          mediaBgColor="red"
-          media={<Icon f7="wifi_slash" size={16} />}
+        <div
           style={{
             backgroundColor: '#ff3b30',
             color: 'white',
             boxShadow: '0 2px 8px rgba(255, 59, 48, 0.4)',
+            padding: '8px 16px',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '14px',
           }}
-        />
+        >
+          <Icon f7="wifi_slash" size={16} />
+          <span>Offline</span>
+        </div>
       ) : queueLength > 0 ? (
-        <Chip
-          text={`Syncing ${queueLength} message${queueLength > 1 ? 's' : ''}...`}
-          mediaBgColor="orange"
-          media={<Icon f7="arrow_clockwise" size={16} className="spin-animation" />}
+        <div
           style={{
             backgroundColor: '#ff9500',
             color: 'white',
             boxShadow: '0 2px 8px rgba(255, 149, 0, 0.4)',
+            padding: '8px 16px',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '14px',
           }}
-        />
+        >
+          <Icon f7="arrow_clockwise" size={16} className="spin-animation" />
+          <span>Syncing {queueLength} message{queueLength > 1 ? 's' : ''}...</span>
+        </div>
       ) : null}
 
       <style jsx>{`

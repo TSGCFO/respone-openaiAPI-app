@@ -81,12 +81,12 @@ export function F7AppProvider({ children }: F7AppProviderProps) {
   return (
     <App {...f7params}>
       {/* Left Panel - Tools */}
-      <Panel left cover themeDark>
+      <Panel left cover>
         <F7ToolsPanel />
       </Panel>
 
       {/* Right Panel - MCP Servers */}
-      <Panel right reveal themeDark>
+      <Panel right reveal>
         <F7McpServersPanel />
       </Panel>
 

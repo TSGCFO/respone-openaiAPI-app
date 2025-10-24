@@ -180,13 +180,8 @@ export function F7ChatPage() {
       )}
 
       {/* Messages Area */}
-      <Messages
-        ref={messagesRef}
-        role="log"
-        aria-live="polite"
-        aria-atomic="false"
-        aria-label="Chat messages"
-      >
+      <div role="log" aria-live="polite" aria-atomic="false" aria-label="Chat messages">
+        <Messages ref={messagesRef}>
         {chatMessages.length === 0 ? (
           <Block className="text-center">
             <div className="empty-state">
@@ -219,6 +214,7 @@ export function F7ChatPage() {
           />
         )}
       </Messages>
+      </div>
 
       {/* Android-style Message Input Bar */}
       <Messagebar

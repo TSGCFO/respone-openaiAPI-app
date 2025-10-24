@@ -2,7 +2,6 @@
 
 import React from "react";
 import useToolsStore from "@/stores/useToolsStore";
-import { Input } from "./ui/input";
 import CountrySelector from "./country-selector";
 
 export default function WebSearchSettings() {
@@ -60,11 +59,11 @@ export default function WebSearchSettings() {
           <label htmlFor="region" className="text-sm w-20">
             Region
           </label>
-          <Input
+          <input
             id="region"
             type="text"
             placeholder="Region"
-            className="bg-white border text-sm flex-1 text-zinc-900 placeholder:text-zinc-400"
+            className="bg-white border border-zinc-300 rounded text-sm flex-1 text-zinc-900 placeholder:text-zinc-400 px-3 py-2"
             value={webSearchConfig.user_location?.region ?? ""}
             onChange={(e) => handleLocationChange("region", e.target.value)}
           />
@@ -74,11 +73,11 @@ export default function WebSearchSettings() {
           <label htmlFor="city" className="text-sm w-20">
             City
           </label>
-          <Input
+          <input
             id="city"
             type="text"
             placeholder="City"
-            className="bg-white border text-sm flex-1 text-zinc-900 placeholder:text-zinc-400"
+            className="bg-white border border-zinc-300 rounded text-sm flex-1 text-zinc-900 placeholder:text-zinc-400 px-3 py-2"
             value={webSearchConfig.user_location?.city ?? ""}
             onChange={(e) => handleLocationChange("city", e.target.value)}
           />

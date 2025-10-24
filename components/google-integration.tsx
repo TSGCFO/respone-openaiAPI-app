@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Button } from "framework7-react";
 import useToolsStore from "@/stores/useToolsStore";
 
 export default function GoogleIntegrationPanel() {
@@ -29,28 +28,20 @@ export default function GoogleIntegrationPanel() {
           {oauthConfigured ? (
             googleIntegrationEnabled ? (
               <a href="/api/google/auth">
-                <Button>Connect Google Integration</Button>
+                <Button fill>Connect Google Integration</Button>
               </a>
             ) : (
-              <span className="inline-flex">
-                <Button disabled>Connect Google Integration</Button>
-              </span>
+              <Button fill disabled>Connect Google Integration</Button>
             )
           ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button disabled>Connect Google Integration</Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI must be set in .env.local to use the Google Integration.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div>
+              <Button fill disabled>
+                Connect Google Integration
+              </Button>
+              <div className="text-xs text-zinc-500 mt-1">
+                Requires Google OAuth environment variables (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI)
+              </div>
+            </div>
           )}
         </div>
       ) : (
