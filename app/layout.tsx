@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
-import { F7AppProvider } from "@/components/f7-app-provider";
+import { ClientAppWrapper } from "@/components/client-app-wrapper";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -49,11 +49,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className={roboto.className}>
-        <F7AppProvider>
+        <ClientAppWrapper>
           <div id="app">
             {children}
           </div>
-        </F7AppProvider>
+        </ClientAppWrapper>
       </body>
     </html>
   );

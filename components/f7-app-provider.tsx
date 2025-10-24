@@ -28,37 +28,13 @@ interface F7AppProviderProps {
 }
 
 export function F7AppProvider({ children }: F7AppProviderProps) {
-  // Framework7 app parameters
+  // Framework7 app parameters - simplified to avoid circular references in SSR
   const f7params = {
     name: 'AI Chat Assistant',
-    theme: 'md', // Android Material Design
+    theme: 'md',
     darkMode: true,
     colors: {
       primary: '#9c27b0',
-    },
-    touch: {
-      tapHold: true,
-      tapHoldDelay: 750,
-      tapHoldPreventClicks: true,
-      iosTouchRipple: false,
-      mdTouchRipple: true,
-    },
-    navbar: {
-      mdCenterTitle: false,
-      iosCenterTitle: true,
-    },
-    toolbar: {
-      hideOnPageScroll: false,
-    },
-    statusbar: {
-      androidBackgroundColor: '#7b1fa2',
-      androidTextColor: 'white',
-      iosBackgroundColor: '#9c27b0',
-      iosTextColor: 'white',
-    },
-    // Android-specific settings
-    material: {
-      materialDynamicTheme: true,
     },
   };
 
